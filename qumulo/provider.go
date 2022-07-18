@@ -33,17 +33,6 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("QUMULO_PASSWORD", nil),
 			},
 		},
-		ResourcesMap: map[string]*schema.Resource{
-			"qumulo_user":  resourceQumuloUser(),
-			"qumulo_group": resourceQumuloGroup(),
-		},
-		DataSourcesMap: map[string]*schema.Resource{
-			/* "qumulo_version":             dataSourceQumuloVersion(),
-			"qumulo_nfs_exports":         dataSourceQumuloNFSExports(),
-			"qumulo_network_connections": dataSourceQumuloNetworkConnections(), */
-			"qumulo_user":  dataSourceQumuloUser(),
-			"qumulo_group": dataSourceQumuloGroup(),
-		},
 		ConfigureContextFunc: providerConfigure,
 	}
 }
