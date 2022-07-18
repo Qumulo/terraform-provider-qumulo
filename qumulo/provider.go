@@ -33,6 +33,9 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("QUMULO_PASSWORD", nil),
 			},
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"clutser_name": dataSourceName(),
+		},
 		ConfigureContextFunc: providerConfigure,
 	}
 }
