@@ -14,12 +14,16 @@ provider "qumulo" {
   port= "24100"
 }
 
-//variable "some_cluster_name" {
-//  type    = string
-//  default = "Some random name"
-//}
+variable "some_cluster_name" {
+  type    = string
+  default = "Some random name"
+}
 
 data "qumulo_cluster_name" "all" {}
+
+output "some_name" {
+  value = data.qumulo_cluster_name.all
+}
 
 # Returns all coffees
 //output "some_name" {

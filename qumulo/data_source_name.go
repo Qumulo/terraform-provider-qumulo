@@ -31,17 +31,25 @@ func dataSourceNameRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
+	rb, err := json.Marshal(client.Auth)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/cluster/settings", "https://10.116.100.110:24100"), nil)
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	r, err := client.HTTPClient.Do(req)
+	r, err := client.doRequest(req)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	defer r.Body.Close()
+
+	ar := AuthResponse{}
+	err = json.Unmarshal(r, &ar)
 
 	Name := make([]map[string]interface{}, 0)
 	err = json.NewDecoder(r.Body).Decode(&Name)
