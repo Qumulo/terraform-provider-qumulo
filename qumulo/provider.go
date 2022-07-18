@@ -34,7 +34,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"clutser_name": dataSourceName(),
+			"qumulo_cluster_name": dataSourceName(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

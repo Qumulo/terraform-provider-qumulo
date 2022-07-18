@@ -25,17 +25,19 @@ func dataSourceName() *schema.Resource {
 }
 
 func dataSourceNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := &http.Client{Timeout: 10 * time.Second}
+
+	//client := &http.Cli ent{Timeout: 10 * time.Second}
+	client := m.(*Client)
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/cluster/settings", "http://10.116.100.110:24100"), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/cluster/settings", "https://10.116.100.110:24100"), nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	r, err := client.Do(req)
+	r, err := client.HTTPClient.Do(req)
 	if err != nil {
 		return diag.FromErr(err)
 	}

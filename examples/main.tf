@@ -8,20 +8,20 @@ terraform {
 }
 
 provider "qumulo" {
-  username = "somerandomuser"
-  password = "hdiosfhsdi"
-  host= "10.116.100.110"
+  username = "admin"
+  password = "Admin123"
+  host= "https://10.116.100.110:24100"
   port= "24100"
 }
 
-variable "cluster_name" {
-  type    = string
-  default = "Some random name"
-}
+//variable "some_cluster_name" {
+//  type    = string
+//  default = "Some random name"
+//}
 
-data "only_one_name" "all" {}
+data "qumulo_cluster_name" "all" {}
 
 # Returns all coffees
-output "only_one_name" {
-  value = data.hashicups_coffees.all.coffees
-}
+//output "some_name" {
+//  value = data.qumulo.all.cluster_name
+//}

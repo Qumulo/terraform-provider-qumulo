@@ -17,7 +17,7 @@ func (c *Client) SignIn() (*AuthResponse, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/v1/session/login", c.HostURL), strings.NewReader(string(rb)))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/v1/session/login", "https://10.116.100.110:24100"), strings.NewReader(string(rb)))
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
