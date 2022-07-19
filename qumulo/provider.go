@@ -2,7 +2,6 @@ package qumulo
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -33,11 +32,8 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("QUMULO_PASSWORD", nil),
 			},
 		},
-		DataSourcesMap: map[string]*schema.Resource{
-			"qumulo_cluster_name": dataSourceName(),
-		},
 		ResourcesMap: map[string]*schema.Resource{
-			"qumulo_cluster_name": resourceName(),
+			"qumulo_cluster_name": resourceClusterSettings(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

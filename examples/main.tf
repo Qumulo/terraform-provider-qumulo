@@ -19,14 +19,8 @@ variable "some_cluster_name" {
   default = "NewName"
 }
 
-data "qumulo_cluster_name" "all" {}
-
 resource "qumulo_cluster_name" "update_name" {
   name = var.some_cluster_name
-}
-
-output "some_name" {
-  value = data.qumulo_cluster_name.all
 }
 
 output "updated_name" {
