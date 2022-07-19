@@ -38,6 +38,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"qumulo_cluster_name": resourceName(),
+			"qumulo_ad_settings":  resourceActiveDirectory(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
