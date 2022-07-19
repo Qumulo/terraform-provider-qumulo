@@ -33,7 +33,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"qumulo_cluster_name": ResourceClusterSettings(),
+			"qumulo_cluster_name": resourceClusterSettings(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

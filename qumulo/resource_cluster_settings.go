@@ -14,7 +14,7 @@ type ClusterSettings struct {
 	ClusterName string `json:"cluster_name"`
 }
 
-func ResourceClusterSettings() *schema.Resource {
+func resourceClusterSettings() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceClusterSettingsCreate,
 		ReadContext:   resourceClusterSettingsRead,
