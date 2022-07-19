@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -96,21 +97,19 @@ func DoRequest[RQ interface{}, R interface{}](client *Client, method Method, end
 	bearerToken := "Bearer " + client.Bearer_Token
 	HostURL := client.HostURL
 
-	var reqBodyParsed *strings.Reader
-	var req *http.Request
-	var err error
+	var parsedReqBody io.Reader
 
 	if reqBody != nil {
 		rb, err := json.Marshal(reqBody)
 		if err != nil {
 			return nil, err
 		}
-		reqBodyParsed = strings.NewReader(string(rb))
-		req, err = http.NewRequest(method.String(), fmt.Sprintf("%s%s", HostURL, endpointUri), reqBodyParsed)
+		parsedReqBody = strings.NewReader(string(rb))
 	} else {
-		req, err = http.NewRequest(method.String(), fmt.Sprintf("%s%s", HostURL, endpointUri), nil)
+		parsedReqBody = nil
 	}
 
+	req, err := http.NewRequest(method.String(), fmt.Sprintf("%s%s", HostURL, endpointUri), parsedReqBody)
 	req.Header.Set("Authorization", bearerToken)
 	req.Header.Add("Content-Type", "application/json")
 	if err != nil {
