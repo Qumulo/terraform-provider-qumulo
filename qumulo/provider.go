@@ -40,6 +40,7 @@ func Provider() *schema.Provider {
 			"qumulo_cluster_name": resourceName(),
 			"qumulo_ssl_cert":     resourceSSL(),
 			"qumulo_ssl_ca":       resourceSSLCA(),
+			"qumulo_monitoring":   resourceMonitoring(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
