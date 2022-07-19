@@ -10,8 +10,8 @@ terraform {
 provider "qumulo" {
   username = "admin"
   password = "Admin123"
-  host= "https://10.116.100.110:24100"
-  port= "24100"
+  host= "https://10.116.100.110:26064"
+  port= "26064"
 }
 
 variable "some_cluster_name" {

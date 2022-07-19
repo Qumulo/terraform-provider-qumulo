@@ -24,6 +24,10 @@ func dataSourceName() *schema.Resource {
 	}
 }
 
+type ClusterResponse struct {
+	ClusterName string `json:"cluster_name"`
+}
+
 func dataSourceNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	//client := &http.Cli ent{Timeout: 10 * time.Second}
@@ -31,12 +35,12 @@ func dataSourceNameRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
-	rb, err := json.Marshal(client.Auth)
+	_, err := json.Marshal(client.Auth)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/cluster/settings", "https://10.116.100.110:24100"), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/cluster/settings", "https://10.116.100.110:26064"), nil)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return diag.FromErr(err)
@@ -46,17 +50,16 @@ func dataSourceNameRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	defer r.Body.Close()
+	fmt.Println(r)
+	cr := ClusterResponse{}
+	err = json.Unmarshal(r, &cr)
 
-	ar := AuthResponse{}
-	err = json.Unmarshal(r, &ar)
-
-	Name := make([]map[string]interface{}, 0)
-	err = json.NewDecoder(r.Body).Decode(&Name)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
+	//Name := make([]map[string]interface{}, 0)
+	//err = json.NewDecoder(r.Body).Decode(&Name)
+	//if err != nil {
+	//	return diag.FromErr(err)
+	//}
+	Name := cr.ClusterName
 	if err := d.Set("name", Name); err != nil {
 		return diag.FromErr(err)
 	}
