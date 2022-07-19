@@ -19,10 +19,28 @@ variable "some_cluster_name" {
   default = "NewName"
 }
 
+variable "some_cert" {
+  type    = string
+  default = "randomcert"
+}
+variable "some_key" {
+  type    = string
+  default = "randomkey"
+}
+
 data "qumulo_cluster_name" "all" {}
 
 resource "qumulo_cluster_name" "update_name" {
   name = var.some_cluster_name
+}
+
+resource "qumulo_ssl_cert" "update_ssl" {
+  certificate = var.some_cert
+  private_key = var.some_key
+}
+
+output "some_ssl" {
+  value = qumulo_ssl_cert.update_ssl
 }
 
 output "some_name" {
