@@ -21,6 +21,14 @@ variable "some_cluster_name" {
 
 data "qumulo_cluster_name" "all" {}
 
+resource "qumulo_cluster_name" "update_name" {
+  name = "qumuloisalive"
+}
+
 output "some_name" {
   value = data.qumulo_cluster_name.all
+}
+
+output "updated_name" {
+  value = qumulo_cluster_name.update_name
 }

@@ -35,10 +35,6 @@ func dataSourceNameRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
-	_, err := json.Marshal(client.Auth)
-	if err != nil {
-		return nil
-	}
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/cluster/settings", client.HostURL), nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -50,7 +46,7 @@ func dataSourceNameRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	fmt.Println(r)
+
 	cr := ClusterResponse{}
 	err = json.Unmarshal(r, &cr)
 
