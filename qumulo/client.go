@@ -2,18 +2,33 @@ package qumulo
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
+type Method int
+
+const (
+	GET Method = iota + 1
+	PUT
+	POST
+)
+
+func (m Method) String() string {
+	return [...]string{"GET", "PUT", "POST"}[m-1]
+}
+
 // Client -
 type Client struct {
-	HostURL      string
-	HTTPClient   *http.Client
-	Bearer_Token string
-	Auth         AuthStruct
+	HostURL     string
+	HTTPClient  *http.Client
+	BearerToken string
+	Auth        AuthStruct
 }
 
 // AuthStruct -
@@ -26,7 +41,7 @@ type AuthStruct struct {
 
 // AuthResponse -
 type AuthResponse struct {
-	Bearer_Token string `json:"bearer_token"`
+	BearerToken string `json:"bearer_token"`
 }
 
 // NewClient -
@@ -39,8 +54,7 @@ func NewClient(host, port, username, password *string) (*Client, error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 10 * time.Second, Transport: transCfg},
-		// Default Qumulo URL
-		HostURL: HostURL,
+		HostURL:    HostURL,
 		Auth: AuthStruct{
 			Username: *username,
 			Password: *password,
@@ -52,13 +66,13 @@ func NewClient(host, port, username, password *string) (*Client, error) {
 		return nil, err
 	}
 
-	c.Bearer_Token = ar.Bearer_Token
+	c.BearerToken = ar.BearerToken
 	c.HostURL = HostURL
 
 	return &c, nil
 }
 
-func (c *Client) doRequest(req *http.Request) ([]byte, error) {
+func (c *Client) MakeHTTPRequest(req *http.Request) ([]byte, error) {
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -76,4 +90,40 @@ func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 	}
 
 	return body, err
+}
+
+func DoRequest[RQ interface{}, R interface{}](client *Client, method Method, endpointUri string, reqBody *RQ) (*R, error) {
+	bearerToken := "Bearer " + client.BearerToken
+	HostURL := client.HostURL
+
+	var parsedReqBody io.Reader
+
+	if reqBody != nil {
+		rb, err := json.Marshal(reqBody)
+		if err != nil {
+			return nil, err
+		}
+		parsedReqBody = strings.NewReader(string(rb))
+	} else {
+		parsedReqBody = nil
+	}
+
+	req, err := http.NewRequest(method.String(), fmt.Sprintf("%s%s", HostURL, endpointUri), parsedReqBody)
+	req.Header.Set("Authorization", bearerToken)
+	req.Header.Add("Content-Type", "application/json")
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := client.MakeHTTPRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var cr R
+	err = json.Unmarshal(body, &cr)
+	if err != nil {
+		return nil, err
+	}
+	return &cr, nil
 }
