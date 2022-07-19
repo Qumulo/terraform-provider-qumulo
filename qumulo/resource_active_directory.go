@@ -25,7 +25,7 @@ type ActiveDirectoryRequest struct {
 }
 
 type ActiveDirectoryResponse struct {
-	Name string `json:"test"`
+	Settings ActiveDirectorySettings
 }
 
 func resourceActiveDirectory() *schema.Resource {
@@ -69,7 +69,11 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 		Crypto:  adCrypto,
 	}
 
-	_, err := client.UpdateActiveDirectory(updatedAdSettings)
+	updatedAdRequest := ActiveDirectoryRequest{
+		Settings: updatedAdSettings,
+	}
+
+	_, err := client.UpdateActiveDirectory(updatedAdRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,10 +86,13 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
+	bearerToken := "Bearer " + client.Bearer_Token
+
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/ad/settings", client.HostURL), nil)
+	req.Header.Set("Authorization", bearerToken)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return diag.FromErr(err)
@@ -144,12 +151,12 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectorySettings) (*ActiveDirectorySettings, error) {
+func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
 	bearerToken := "Bearer " + c.Bearer_Token
 
 	HostURL := c.HostURL
 
-	rb, err := json.Marshal(clusterReq)
+	rb, err := json.Marshal(clusterReq.Settings)
 	if err != nil {
 		return nil, err
 	}
@@ -172,5 +179,9 @@ func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectorySettings) (*Act
 		return nil, err
 	}
 
-	return &cr, nil
+	response := ActiveDirectoryResponse{
+		Settings: cr,
+	}
+
+	return &response, nil
 }
