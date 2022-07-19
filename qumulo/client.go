@@ -25,10 +25,10 @@ func (m Method) String() string {
 
 // Client -
 type Client struct {
-	HostURL      string
-	HTTPClient   *http.Client
-	Bearer_Token string
-	Auth         AuthStruct
+	HostURL     string
+	HTTPClient  *http.Client
+	BearerToken string
+	Auth        AuthStruct
 }
 
 // AuthStruct -
@@ -41,7 +41,7 @@ type AuthStruct struct {
 
 // AuthResponse -
 type AuthResponse struct {
-	Bearer_Token string `json:"bearer_token"`
+	BearerToken string `json:"bearer_token"`
 }
 
 // NewClient -
@@ -54,8 +54,7 @@ func NewClient(host, port, username, password *string) (*Client, error) {
 
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 10 * time.Second, Transport: transCfg},
-		// Default Qumulo URL
-		HostURL: HostURL,
+		HostURL:    HostURL,
 		Auth: AuthStruct{
 			Username: *username,
 			Password: *password,
@@ -67,7 +66,7 @@ func NewClient(host, port, username, password *string) (*Client, error) {
 		return nil, err
 	}
 
-	c.Bearer_Token = ar.Bearer_Token
+	c.BearerToken = ar.BearerToken
 	c.HostURL = HostURL
 
 	return &c, nil
@@ -94,7 +93,7 @@ func (c *Client) MakeHTTPRequest(req *http.Request) ([]byte, error) {
 }
 
 func DoRequest[RQ interface{}, R interface{}](client *Client, method Method, endpointUri string, reqBody *RQ) (*R, error) {
-	bearerToken := "Bearer " + client.Bearer_Token
+	bearerToken := "Bearer " + client.BearerToken
 	HostURL := client.HostURL
 
 	var parsedReqBody io.Reader
