@@ -16,13 +16,13 @@ provider "qumulo" {
 
 variable "some_cluster_name" {
   type    = string
-  default = "Some random name"
+  default = "NewName"
 }
 
 data "qumulo_cluster_name" "all" {}
 
 resource "qumulo_cluster_name" "update_name" {
-  name = "qumuloisalive"
+  name = var.some_cluster_name
 }
 
 output "some_name" {
