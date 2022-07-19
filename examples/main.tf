@@ -21,7 +21,7 @@ variable "some_cluster_name" {
 
 variable "some_cert" {
   type    = string
-  default = "randomcert"
+  default = "randomcertauth"
 }
 variable "some_key" {
   type    = string
@@ -34,14 +34,23 @@ resource "qumulo_cluster_name" "update_name" {
   name = var.some_cluster_name
 }
 
-resource "qumulo_ssl_cert" "update_ssl" {
-  certificate = var.some_cert
-  private_key = var.some_key
+//resource "qumulo_ssl_cert" "update_ssl" {
+//  certificate = var.some_cert
+//  private_key = var.some_key
+//}
+
+resource "qumulo_ssl_ca" "update_ssl_ca" {
+  ca_certificate = var.some_cert
 }
 
-output "some_ssl" {
-  value = qumulo_ssl_cert.update_ssl
+
+output "some_authority" {
+  value = qumulo_ssl_ca.update_ssl_ca
 }
+
+//output "some_ssl" {
+//  value = qumulo_ssl_cert.update_ssl
+//}
 
 output "some_name" {
   value = data.qumulo_cluster_name.all
