@@ -16,7 +16,7 @@ provider "qumulo" {
 
 variable "some_cluster_name" {
   type    = string
-  default = "WhatsInAName"
+  default = "NewName"
 }
 
 resource "qumulo_cluster_name" "update_name" {
