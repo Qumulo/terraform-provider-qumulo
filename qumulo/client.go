@@ -47,10 +47,6 @@ func NewClient(host, port, username, password *string) (*Client, error) {
 		},
 	}
 
-	if host != nil {
-		c.HostURL = *host
-	}
-
 	ar, err := c.SignIn()
 	if err != nil {
 		return nil, err

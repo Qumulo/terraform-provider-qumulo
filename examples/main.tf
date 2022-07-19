@@ -10,7 +10,7 @@ terraform {
 provider "qumulo" {
   username = "admin"
   password = "Admin123"
-  host= "https://10.116.100.110:26064"
+  host= "10.116.100.110"
   port= "26064"
 }
 
@@ -24,8 +24,3 @@ data "qumulo_cluster_name" "all" {}
 output "some_name" {
   value = data.qumulo_cluster_name.all
 }
-
-# Returns all coffees
-//output "some_name" {
-//  value = data.qumulo.all.cluster_name
-//}

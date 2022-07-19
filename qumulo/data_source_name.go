@@ -40,7 +40,7 @@ func dataSourceNameRead(ctx context.Context, d *schema.ResourceData, m interface
 		return nil
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/cluster/settings", "https://10.116.100.110:26064"), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/cluster/settings", client.HostURL), nil)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return diag.FromErr(err)
