@@ -38,7 +38,8 @@ func resourceMonitoring() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"enabled": &schema.Schema{
 				Type:     schema.TypeBool,
-				Required: true,
+				Required: false,
+				Optional: true,
 			},
 			"mq_host": &schema.Schema{
 				Type:     schema.TypeString,
@@ -66,11 +67,13 @@ func resourceMonitoring() *schema.Resource {
 			},
 			"s3_proxy_disable_https": &schema.Schema{
 				Type:     schema.TypeBool,
-				Required: true,
+				Required: false,
+				Optional: true,
 			},
 			"vpn_enabled": &schema.Schema{
 				Type:     schema.TypeBool,
-				Required: true,
+				Required: false,
+				Optional: true,
 			},
 			"vpn_host": &schema.Schema{
 				Type:     schema.TypeString,

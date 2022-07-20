@@ -28,9 +28,9 @@ variable "some_key" {
   default = "randomkey"
 }
 
-//resource "qumulo_cluster_name" "update_name" {
-//  name = var.some_cluster_name
-//}
+resource "qumulo_cluster_name" "update_name" {
+  name = var.some_cluster_name
+}
 
 //resource "qumulo_ssl_cert" "update_ssl" {
 //  certificate = var.some_cert
@@ -57,6 +57,10 @@ resource "qumulo_monitoring" "update_monitoring" {
 
 output "some_monitoring_config" {
   value = qumulo_monitoring.update_monitoring
+}
+
+output "some_name" {
+  value = qumulo_cluster_name.update_name
 }
 
 //output "some_authority" {
