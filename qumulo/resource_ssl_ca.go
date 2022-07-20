@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const SSLCAEndpoint = "/v2/cluster/settings/ssl/ca-certificate"
+
 type SSLCARequest struct {
 	Certificate string `json:"ca_certificate"`
 }
@@ -67,24 +69,7 @@ func resourceSSLCARead(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceSSLCAUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	certificate := d.Get("ca_certificate").(string)
-
-	updatedSSLCA := SSLCARequest{
-		Certificate: certificate,
-	}
-	_, err := c.UpdateSSLCA(updatedSSLCA)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
-	return diags
+	return resourceSSLCACreate(ctx, d, m)
 }
 
 func resourceSSLCADelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

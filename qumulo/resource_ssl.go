@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const SSLEndpoint = "/v2/cluster/settings/ssl/certificate"
+
 type SSLRequest struct {
 	Certificate string `json:"certificate"`
 	PrivateKey  string `json:"private_key"`
@@ -74,26 +76,7 @@ func resourceSSLRead(ctx context.Context, d *schema.ResourceData, m interface{})
 }
 
 func resourceSSLUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	certificate := d.Get("certificate").(string)
-	key := d.Get("private_key").(string)
-
-	updatedSSL := SSLRequest{
-		Certificate: certificate,
-		PrivateKey:  key,
-	}
-	_, err := c.UpdateSSL(updatedSSL)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
-	return diags
+	return resourceSSLCreate(ctx, d, m)
 }
 
 func resourceSSLDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

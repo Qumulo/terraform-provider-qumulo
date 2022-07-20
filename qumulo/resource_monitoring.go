@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const MonitoringEndpoint = "/v1/support/settings"
+
 type MonitorRequest struct {
 	Enabled             bool   `json:"enabled"`
 	MQHost              string `json:"mq_host"`
@@ -124,33 +126,7 @@ func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceMonitoringUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	MonitoringConfig := MonitorRequest{
-		Enabled:             d.Get("enabled").(bool),
-		MQHost:              d.Get("mq_host").(string),
-		MQPort:              d.Get("mq_port").(int),
-		MQProxyHost:         d.Get("mq_proxy_host").(string),
-		MQProxyPort:         d.Get("mq_proxy_port").(int),
-		S3ProxyHost:         d.Get("s3_proxy_host").(string),
-		S3ProxyPort:         d.Get("s3_proxy_port").(int),
-		S3ProxyDisableHTTPS: d.Get("s3_proxy_disable_https").(bool),
-		VPNEnabled:          d.Get("vpn_enabled").(bool),
-		VPNHost:             d.Get("vpn_host").(string),
-		Period:              d.Get("period").(int),
-	}
-
-	_, err := c.UpdateMonitoring(MonitoringConfig)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
-	return diags
+	return resourceMonitoringCreate(ctx, d, m)
 }
 
 func resourceMonitoringDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
