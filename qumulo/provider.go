@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -34,6 +35,9 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"qumulo_cluster_name": resourceClusterSettings(),
+			"qumulo_ssl_cert":     resourceSSL(),
+			"qumulo_ssl_ca":       resourceSSLCA(),
+			"qumulo_monitoring":   resourceMonitoring(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
