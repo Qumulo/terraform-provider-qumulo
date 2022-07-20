@@ -33,11 +33,8 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("QUMULO_PASSWORD", nil),
 			},
 		},
-		DataSourcesMap: map[string]*schema.Resource{
-			"qumulo_cluster_name": dataSourceName(),
-		},
 		ResourcesMap: map[string]*schema.Resource{
-			"qumulo_cluster_name": resourceName(),
+			"qumulo_cluster_name": resourceClusterSettings(),
 			"qumulo_ssl_cert":     resourceSSL(),
 			"qumulo_ssl_ca":       resourceSSLCA(),
 			"qumulo_monitoring":   resourceMonitoring(),
