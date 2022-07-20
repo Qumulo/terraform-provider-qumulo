@@ -46,15 +46,12 @@ func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	certificate := d.Get("certificate").(string)
-	key := d.Get("private_key").(string)
-
-	sslr := SSLRequest{
-		Certificate: certificate,
-		PrivateKey:  key,
+	SSLConfig := SSLRequest{
+		Certificate: d.Get("certificate").(string),
+		PrivateKey:  d.Get("private_key").(string),
 	}
 
-	_, err := DoRequest[SSLRequest, SSLResponse](c, PUT, SSLEndpoint, &sslr)
+	_, err := DoRequest[SSLRequest, SSLResponse](c, PUT, SSLEndpoint, &SSLConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}

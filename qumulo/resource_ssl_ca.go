@@ -41,10 +41,8 @@ func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interfac
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	certificate := d.Get("ca_certificate").(string)
-
 	SSLCAConfig := SSLCARequest{
-		Certificate: certificate,
+		Certificate: d.Get("ca_certificate").(string),
 	}
 
 	_, err := DoRequest[SSLCARequest, SSLCAResponse](c, PUT, SSLCAEndpoint, &SSLCAConfig)
