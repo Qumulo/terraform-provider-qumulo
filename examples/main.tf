@@ -55,6 +55,12 @@ resource "qumulo_monitoring" "update_monitoring" {
   period = 60
 }
 
+resource "qumulo_vpn_keys" "update_vpn_keys" {
+  mqvpn_client_crt = "some_cert"
+  mqvpn_client_key = "some_key"
+  qumulo_ca_crt = "some_qumulo_cert"
+}
+
 output "some_monitoring_config" {
   value = qumulo_monitoring.update_monitoring
 }
