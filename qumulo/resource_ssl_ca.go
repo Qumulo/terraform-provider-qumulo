@@ -2,11 +2,7 @@ package qumulo
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -47,11 +43,11 @@ func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interfac
 
 	certificate := d.Get("ca_certificate").(string)
 
-	updatedSSLCA := SSLCARequest{
+	SSLCAConfig := SSLCARequest{
 		Certificate: certificate,
 	}
 
-	_, err := c.UpdateSSLCA(updatedSSLCA)
+	_, err := DoRequest[SSLCARequest, SSLCAResponse](c, PUT, SSLCAEndpoint, &SSLCAConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -77,36 +73,4 @@ func resourceSSLCADelete(ctx context.Context, d *schema.ResourceData, m interfac
 	var diags diag.Diagnostics
 
 	return diags
-}
-
-func (c *Client) UpdateSSLCA(sslReq SSLCARequest) (*SSLCAResponse, error) {
-	bearerToken := "Bearer " + c.Bearer_Token
-
-	HostURL := c.HostURL
-
-	rb, err := json.Marshal(sslReq)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/v2/cluster/settings/ssl/ca-certificate", HostURL),
-		strings.NewReader(string(rb)))
-	req.Header.Set("Authorization", bearerToken)
-	req.Header.Add("Content-Type", "application/json")
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := c.doRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	cr := SSLCAResponse{}
-	err = json.Unmarshal(body, &cr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cr, nil
 }

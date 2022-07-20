@@ -2,11 +2,7 @@ package qumulo
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -108,7 +104,7 @@ func resourceMonitoringCreate(ctx context.Context, d *schema.ResourceData, m int
 		Period:              d.Get("period").(int),
 	}
 
-	_, err := c.UpdateMonitoring(MonitoringConfig)
+	_, err := DoRequest[MonitorRequest, MonitorResponse](c, PUT, MonitoringEndpoint, &MonitoringConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,36 +130,4 @@ func resourceMonitoringDelete(ctx context.Context, d *schema.ResourceData, m int
 	var diags diag.Diagnostics
 
 	return diags
-}
-
-func (c *Client) UpdateMonitoring(config MonitorRequest) (*MonitorResponse, error) {
-	bearerToken := "Bearer " + c.Bearer_Token
-
-	HostURL := c.HostURL
-
-	rb, err := json.Marshal(config)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/v1/support/settings", HostURL),
-		strings.NewReader(string(rb)))
-	req.Header.Set("Authorization", bearerToken)
-	req.Header.Add("Content-Type", "application/json")
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := c.doRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	cr := MonitorResponse{}
-	err = json.Unmarshal(body, &cr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cr, nil
 }

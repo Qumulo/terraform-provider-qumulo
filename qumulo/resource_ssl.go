@@ -2,11 +2,7 @@ package qumulo
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -53,12 +49,12 @@ func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	certificate := d.Get("certificate").(string)
 	key := d.Get("private_key").(string)
 
-	updatedSSL := SSLRequest{
+	sslr := SSLRequest{
 		Certificate: certificate,
 		PrivateKey:  key,
 	}
 
-	_, err := c.UpdateSSL(updatedSSL)
+	_, err := DoRequest[SSLRequest, SSLResponse](c, PUT, SSLEndpoint, &sslr)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -84,36 +80,4 @@ func resourceSSLDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	var diags diag.Diagnostics
 
 	return diags
-}
-
-func (c *Client) UpdateSSL(sslReq SSLRequest) (*SSLResponse, error) {
-	bearerToken := "Bearer " + c.Bearer_Token
-
-	HostURL := c.HostURL
-
-	rb, err := json.Marshal(sslReq)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/v2/cluster/settings/ssl/certificate", HostURL),
-		strings.NewReader(string(rb)))
-	req.Header.Set("Authorization", bearerToken)
-	req.Header.Add("Content-Type", "application/json")
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := c.doRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	cr := SSLResponse{}
-	err = json.Unmarshal(body, &cr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cr, nil
 }
