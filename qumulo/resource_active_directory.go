@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"time"
 
@@ -202,31 +203,68 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 
 func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
 
-	activeDirectorySettings := clusterReq.Settings
-
-	// TODO check if AD settings is empty or not
-
-	settingsResponse, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](c, PUT, ADSettingsEndpoint, activeDirectorySettings)
+	settingsResponsePointer, err := c.UpdateActiveDirectorySettings(clusterReq.Settings)
 	if err != nil {
 		return nil, err
 	}
 
-	var joinResponsePointer *ActiveDirectoryJoinResponse
-
-	if clusterReq.JoinSettings != nil {
-		joinResponse, err := DoRequest[ActiveDirectoryJoinRequest, ActiveDirectoryJoinResponse](c, POST, ADSettingsEndpoint, clusterReq.JoinSettings)
-		if err != nil {
-			return nil, err
-		}
-		joinResponsePointer = joinResponse
-	} else {
-		joinResponsePointer = nil
+	joinResponsePointer, err := c.UpdateActiveDirectoryStatus(clusterReq.JoinSettings)
+	if err != nil {
+		return nil, err
 	}
 
 	response := ActiveDirectoryResponse{
-		Settings:     settingsResponse,
+		Settings:     settingsResponsePointer,
 		JoinResponse: joinResponsePointer,
 	}
 
 	return &response, nil
+}
+
+func (c *Client) UpdateActiveDirectorySettings(activeDirectorySettings *ActiveDirectorySettings) (*ActiveDirectorySettings, error) {
+	// The AD settings API endpoint expects all of the AD settings set.
+	// If the config has all settings set, use them.
+	// If the config has no settings set, don't hit the endpoint.
+	// If the config has SOME settings set, return an error sicne we can't apply that.
+
+	// Get a count of all of the AD settings which are set.
+	// (We have front-end validation on proper types; the field is empty if it was absent in the Terraform file.)
+	adSettingsCount := 0
+	if activeDirectorySettings.Signing != "" {
+		adSettingsCount++
+	}
+	if activeDirectorySettings.Sealing != "" {
+		adSettingsCount++
+	}
+	if activeDirectorySettings.Crypto != "" {
+		adSettingsCount++
+	}
+
+	// Perform the appropriate action based on the number of fields set.
+	if adSettingsCount == 3 {
+		settingsResponse, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](c, PUT, ADSettingsEndpoint, activeDirectorySettings)
+		if err != nil {
+			return nil, err
+		}
+		return settingsResponse, nil
+	} else if adSettingsCount == 1 || adSettingsCount == 2 {
+		// TODO: decide if this should return an error
+		log.Printf("[WARN] Incomplete Active Directory settings detected, will not apply changes. Specify all or none of Signing, Sealing, and Crypto.")
+		return nil, nil
+	} else {
+		log.Printf("[DEBUG] No Active Directory settings detected, will not apply changes.")
+		return nil, nil
+	}
+}
+
+func (c *Client) UpdateActiveDirectoryStatus(joinRequest *ActiveDirectoryJoinRequest) (*ActiveDirectoryJoinResponse, error) {
+	if joinRequest == nil {
+		return nil, nil
+	}
+
+	joinResponse, err := DoRequest[ActiveDirectoryJoinRequest, ActiveDirectoryJoinResponse](c, POST, ADJoinEndpoint, joinRequest)
+	if err != nil {
+		return nil, err
+	}
+	return joinResponse, nil
 }
