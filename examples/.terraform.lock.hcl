@@ -5,6 +5,6 @@ provider "qumulo.com/terraform-intern/qumulo" {
   version     = "0.2.0"
   constraints = "0.2.0"
   hashes = [
-    "h1:Rfrk5nfunu5t4I8eElQ7htWk47f06AfRmOXKYnPVFUQ=",
+    "h1:7ymnAnLunKxuxn9IPV9PYHPX/kA7nyaQ7UdURU/r07E=",
   ]
 }
