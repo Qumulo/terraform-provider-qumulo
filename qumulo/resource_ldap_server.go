@@ -36,7 +36,7 @@ type LdapSchemaDescription struct {
 
 var ldapSchema = []string{"RFC2307", "CUSTOM"}
 
-func ResourceLdapServer() *schema.Resource {
+func resourceLdapServer() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceLdapServerCreate,
 		ReadContext:   resourceLdapServerRead,
