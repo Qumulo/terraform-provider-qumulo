@@ -11,7 +11,7 @@ provider "qumulo" {
   username = "admin"
   password = "Admin123"
   host= "10.116.100.110"
-  port= "26064"
+  port= "17437"
 }
 
 variable "some_cluster_name" {

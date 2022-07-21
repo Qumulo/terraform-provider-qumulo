@@ -160,8 +160,29 @@ func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	client := m.(*Client)
+
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
+
+	// TODO verify value is valid for enum
+
+	updatedAdSettings := ActiveDirectorySettings{
+		Signing: d.Get("signing").(string),
+		Sealing: d.Get("sealing").(string),
+		Crypto:  d.Get("crypto").(string),
+	}
+
+	updatedAdRequest := ActiveDirectoryRequest{
+		Settings: updatedAdSettings,
+	}
+
+	_, err := client.UpdateActiveDirectory(updatedAdRequest)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
 	return diags
 }
