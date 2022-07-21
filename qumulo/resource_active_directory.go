@@ -2,11 +2,7 @@ package qumulo
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -20,13 +16,32 @@ type ActiveDirectorySettings struct {
 	Crypto  string `json:"crypto"`
 }
 
+type ActiveDirectoryJoinRequest struct {
+	Domain               string `json:"domain"`
+	Domain_NetBIOS       string `json:"domain_netbios"`
+	User                 string `json:"user"`
+	Password             string `json:"password"`
+	OU                   string `json:"ou"`
+	UseADPosixAttributes bool   `json:"use_ad_posix_attributes"`
+	BaseDN               string `json:"base_dn"`
+}
+
+type ActiveDirectoryJoinResponse struct {
+	MonitorURI string `json:"monitor_uri"`
+}
+
 type ActiveDirectoryRequest struct {
-	Settings ActiveDirectorySettings
+	Settings     ActiveDirectorySettings
+	JoinSettings ActiveDirectoryJoinRequest
 }
 
 type ActiveDirectoryResponse struct {
-	Settings ActiveDirectorySettings
+	Settings     ActiveDirectorySettings
+	JoinResponse ActiveDirectoryJoinResponse
 }
+
+const ADSettingsEndpoint = "/v1/ad/settings"
+const ADJoinEndpoint = "/v1/ad/join"
 
 func resourceActiveDirectory() *schema.Resource {
 	return &schema.Resource{
@@ -35,6 +50,34 @@ func resourceActiveDirectory() *schema.Resource {
 		UpdateContext: resourceActiveDirectoryUpdate,
 		DeleteContext: resourceActiveDirectoryDelete,
 		Schema: map[string]*schema.Schema{
+			// "domain": &schema.Schema{
+			// 	Type:     schema.TypeString,
+			// 	Required: true,
+			// },
+			// "domain_netbios": &schema.Schema{
+			// 	Type:     schema.TypeString,
+			// 	Optional: true,
+			// },
+			// "ad_username": &schema.Schema{
+			// 	Type:     schema.TypeString,
+			// 	Required: true,
+			// },
+			// "ad_password": &schema.Schema{
+			// 	Type:     schema.TypeString,
+			// 	Required: true,
+			// },
+			// "ou": &schema.Schema{
+			// 	Type:     schema.TypeString,
+			// 	Optional: true,
+			// },
+			// "use_ad_posix_attributes": &schema.Schema{
+			// 	Type:     schema.TypeBool,
+			// 	Optional: true,
+			// },
+			// "base_dn": &schema.Schema{
+			// 	Type:     schema.TypeString,
+			// 	Optional: true,
+			// },
 			"signing": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -57,20 +100,27 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	adSigning := d.Get("signing").(string)
-	adSealing := d.Get("sealing").(string)
-	adCrypto := d.Get("crypto").(string)
-
 	// TODO verify value is valid for enum
 
 	updatedAdSettings := ActiveDirectorySettings{
-		Signing: adSigning,
-		Sealing: adSealing,
-		Crypto:  adCrypto,
+		Signing: d.Get("signing").(string),
+		Sealing: d.Get("sealing").(string),
+		Crypto:  d.Get("crypto").(string),
 	}
+
+	// joinSettings := ActiveDirectoryJoinRequest{
+	// 	Domain:               d.Get("domain").(string),
+	// 	Domain_NetBIOS:       d.Get("domain_netbios").(string),
+	// 	User:                 d.Get("user").(string),
+	// 	Password:             d.Get("password").(string),
+	// 	OU:                   d.Get("ou").(string),
+	// 	UseADPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
+	// 	BaseDN:               d.Get("base_dn").(string),
+	// }
 
 	updatedAdRequest := ActiveDirectoryRequest{
 		Settings: updatedAdSettings,
+		// JoinSettings: joinSettings,
 	}
 
 	_, err := client.UpdateActiveDirectory(updatedAdRequest)
@@ -86,25 +136,14 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	bearerToken := "Bearer " + client.Bearer_Token
-
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/ad/settings", client.HostURL), nil)
-	req.Header.Set("Authorization", bearerToken)
-	req.Header.Set("Content-Type", "application/json")
+	cr, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](client, GET, ADSettingsEndpoint, nil)
+
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	r, err := client.doRequest(req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	cr := ActiveDirectorySettings{}
-	err = json.Unmarshal(r, &cr)
 
 	// TODO make Go-idiomatic
 	if err := d.Set("signing", cr.Signing); err != nil {
@@ -117,29 +156,12 @@ func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	// always run
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
 	return diags
 }
 
 func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// c := m.(*Client)
-
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
-
-	// name := d.Get("name").(string)
-
-	// updatedCluster := ClusterRequest{
-	// 	// ClusterActiveDirectory: name,
-	// }
-	// _, err := c.UpdateActiveDirectory(updatedCluster)
-	// if err != nil {
-	// 	return diag.FromErr(err)
-	// }
-
-	// d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
 	return diags
 }
@@ -152,35 +174,14 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
-	bearerToken := "Bearer " + c.Bearer_Token
 
-	HostURL := c.HostURL
-
-	rb, err := json.Marshal(clusterReq.Settings)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/v1/ad/settings", HostURL), strings.NewReader(string(rb)))
-	req.Header.Set("Authorization", bearerToken)
-	req.Header.Add("Content-Type", "application/json")
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := c.doRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	cr := ActiveDirectorySettings{}
-	err = json.Unmarshal(body, &cr)
+	settingsResponse, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](c, PUT, ADSettingsEndpoint, &clusterReq.Settings)
 	if err != nil {
 		return nil, err
 	}
 
 	response := ActiveDirectoryResponse{
-		Settings: cr,
+		Settings: *settingsResponse,
 	}
 
 	return &response, nil

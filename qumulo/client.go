@@ -109,11 +109,11 @@ func DoRequest[RQ interface{}, R interface{}](client *Client, method Method, end
 	}
 
 	req, err := http.NewRequest(method.String(), fmt.Sprintf("%s%s", HostURL, endpointUri), parsedReqBody)
-	req.Header.Set("Authorization", bearerToken)
-	req.Header.Add("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("Authorization", bearerToken)
+	req.Header.Add("Content-Type", "application/json")
 
 	body, err := client.MakeHTTPRequest(req)
 	if err != nil {
