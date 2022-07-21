@@ -2,11 +2,9 @@ package qumulo
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -29,7 +27,7 @@ type SMBServerResponse struct {
 }
 
 var encryptionSettings = []string{"NONE", "PREFERRED", "REQUIRED"}
-var validDialects = []string{"SMB2_DIALECT_002", "SMB2_DIALECT_2_1", "SMB2_DIALECT_3_0", "SMB2_DIALECT_3_11",
+var validDialects = []string{"SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1", "SMB2_DIALECT_3_0", "SMB2_DIALECT_3_11",
 	"API_SMB2_DIALECT_2_002", "API_SMB2_DIALECT_2_1", "API_SMB2_DIALECT_3_0",
 	"API_SMB2_DIALECT_3_11"}
 var snapshotDirectoryMode = []string{"DISABLED", "HIDDEN", "VISIBLE"}
@@ -47,11 +45,11 @@ func resourceSMBServer() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(encryptionSettings, false)),
 			},
 			"supported_dialects": &schema.Schema{
-				Type:             schema.TypeSet,
-				Required:         true,
-				ValidateDiagFunc: validateDialects,
+				Type:     schema.TypeList,
+				Required: true,
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(validDialects, false)),
 				},
 			},
 			"hide_shares_from_unauthorized_users": &schema.Schema{
@@ -79,41 +77,16 @@ func resourceSMBServer() *schema.Resource {
 	}
 }
 
-func validateDialects(v interface{}, p cty.Path) diag.Diagnostics {
-	// Returns a set with only the items in the first set but not the second
-	var diags diag.Diagnostics
-	value := v.(*schema.Set).List()
-
-	for _, val := range value {
-		// Check if val is in validDialects (loop is fine, only 8 members, unlikely to scale)
-		valid := false
-		for _, dialect := range validDialects {
-			if val == dialect {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			d := diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "invalid dialect",
-				Detail:   fmt.Sprintf("%q is not a valid supported dialect", val),
-			}
-			diags = append(diags, d)
-		}
-	}
-	return diags
-}
-
 func resourceSMBServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
-	var dialects []string
-	//dialects := d.Get("supported_dialects")
-	for _, dial := range d.Get("supported_dialects").(*schema.Set).List() {
-		dialects = append(dialects, dial.(string))
+	// convert the []interface{} into []string
+	dials := d.Get("supported_dialects").([]interface{})
+	dialects := make([]string, len(dials))
+	for i, dial := range dials {
+		dialects[i] = dial.(string)
 	}
 
 	SMBServerConfig := SMBServerRequest{
@@ -137,8 +110,21 @@ func resourceSMBServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceSMBServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+	c := m.(*Client)
+
 	var diags diag.Diagnostics
+	SMBSettings, err := DoRequest[SMBServerRequest, SMBServerRequest](c, GET, SMBServerEndpoint, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.Set("session_encryption", SMBSettings.SessionEncryption)
+	d.Set("supported_dialects", SMBSettings.SupportedDialects)
+	d.Set("hide_shares_from_unauthorized_users", SMBSettings.HideSharesUsers)
+	d.Set("hide_shares_from_unauthorized_hosts", SMBSettings.HideSharesHosts)
+	d.Set("snapshot_directory_mode", SMBSettings.SnapshotDirMode)
+	d.Set("bypass_traverse_checking", SMBSettings.BypassTraverseChecking)
+	d.Set("signing_required", SMBSettings.SigningRequired)
 
 	return diags
 }
