@@ -38,9 +38,6 @@ func resourceSSLCA() *schema.Resource {
 func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	SSLCAConfig := SSLCARequest{
 		Certificate: d.Get("ca_certificate").(string),
 	}
@@ -52,12 +49,23 @@ func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interfac
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
-	return diags
+	return resourceSSLCARead(ctx, d, m)
 }
 
 func resourceSSLCARead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// Warning or errors can be collected in a slice type
+	c := m.(*Client)
+
 	var diags diag.Diagnostics
+
+	cert, err := DoRequest[SSLCARequest, SSLCARequest](c, GET, SSLCAEndpoint, nil)
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("ca_certificate", cert.Certificate); err != nil {
+		return diag.FromErr(err)
+	}
 
 	return diags
 }

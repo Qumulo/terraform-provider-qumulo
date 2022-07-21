@@ -17,10 +17,11 @@ const (
 	GET Method = iota + 1
 	PUT
 	POST
+	PATCH
 )
 
 func (m Method) String() string {
-	return [...]string{"GET", "PUT", "POST"}[m-1]
+	return [...]string{"GET", "PUT", "POST", "PATCH"}[m-1]
 }
 
 // Client -

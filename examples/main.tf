@@ -1,3 +1,5 @@
+
+
 terraform {
   required_providers {
     qumulo = {
@@ -22,6 +24,25 @@ resource "qumulo_cluster_name" "update_name" {
   name = var.some_cluster_name
 }
 
+resource "qumulo_ldap_server" "some_ldap_server" {
+  use_ldap = true
+  bind_uri = "ldap://ldap.denvrdata.com"
+  user = ""
+  base_distinguished_names = "dc=cloud,dc=denvrdata,dc=com"
+  ldap_schema = "CUSTOM"
+  ldap_schema_description {
+    group_member_attribute = "memberUid"
+    user_group_identifier_attribute = "uid"
+    login_name_attribute =  "uid"
+    group_name_attribute = "cn"
+    user_object_class = "posixAccount"
+    group_object_class = "posixGroup"
+    uid_number_attribute = "uidNumber"
+    gid_number_attribute = "gidNumber"
+  }
+  encrypt_connection = false
+}
+
 //resource "qumulo_ssl_cert" "update_ssl" {
 //  certificate = var.some_cert
 //  private_key = var.some_key
@@ -36,7 +57,7 @@ resource "qumulo_monitoring" "update_monitoring" {
   mq_host = "missionq.qumulo.com"
   mq_port = 443
   mq_proxy_host = ""
-  mq_proxy_port = 17
+  mq_proxy_port = 32
   s3_proxy_host = "monitor.qumulo.com"
   s3_proxy_port = 443
   s3_proxy_disable_https = false
