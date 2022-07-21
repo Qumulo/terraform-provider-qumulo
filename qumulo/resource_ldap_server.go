@@ -201,7 +201,6 @@ func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
 	return resourceLdapServerRead(ctx, d, m)
 }
