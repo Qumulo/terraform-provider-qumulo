@@ -2,8 +2,10 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -19,7 +21,7 @@ type ActiveDirectorySettings struct {
 
 type ActiveDirectoryJoinRequest struct {
 	Domain               string `json:"domain"`
-	Domain_NetBIOS       string `json:"domain_netbios"`
+	DomainNetBIOS        string `json:"domain_netbios"`
 	User                 string `json:"user"`
 	Password             string `json:"password"`
 	OU                   string `json:"ou"`
@@ -41,14 +43,40 @@ type ActiveDirectoryResponse struct {
 	JoinResponse *ActiveDirectoryJoinResponse
 }
 
+type ADMonitorLastError struct {
+	Module      string `json"module"`
+	ErrorClass  string `json:"error_class"`
+	Description string `json:"description"`
+	Stack       string `json:"stack"`
+	UserVisible bool   `json:"user_visible"`
+}
+
+func (e ADMonitorLastError) Error() string {
+	return fmt.Sprintf("Error %s encountered in Active Directory\nDescription: %s\nStack: %s", e.ErrorClass, e.Description, e.Stack)
+}
+
+type ADMonitorResponse struct {
+	Status               string             `json:"status"`
+	Domain               string             `json:"domain"`
+	OU                   string             `json:"ou"`
+	LastError            ADMonitorLastError `json:"last_error"`
+	LastActionTime       string             `json:"last_action_time"`
+	UseADPosixAttributes bool               `json:"use_ad_posix_attributes"`
+	BaseDN               string             `json:"base_dn"`
+	DomainNetBIOS        string             `json:"domain_netbios"`
+}
+
 const ADSettingsEndpoint = "/v1/ad/settings"
 const ADJoinEndpoint = "/v1/ad/join"
+const ADMonitorEndpoint = "/v1/ad/monitor"
 const ADReconfigureEndpoint = "/v1/ad/reconfigure"
 const ADLeaveEndpoint = "/v1/ad/leave"
 
 var adSigningValues = []string{"NO_SIGNING", "WANT_SIGNING", "REQUIRE_SIGNING"}
 var adSealingValues = []string{"NO_SEALING", "WANT_SEALING", "REQUIRE_SEALING"}
 var adCryptoValues = []string{"NO_AES", "WANT_AES", "REQUIRE_AES"}
+
+const ADJoinWaitTime = 1 * time.Second
 
 func resourceActiveDirectory() *schema.Resource {
 	return &schema.Resource{
@@ -119,7 +147,7 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 
 	joinSettings := ActiveDirectoryJoinRequest{
 		Domain:               d.Get("domain").(string),
-		Domain_NetBIOS:       d.Get("domain_netbios").(string),
+		DomainNetBIOS:        d.Get("domain_netbios").(string),
 		User:                 d.Get("ad_username").(string),
 		Password:             d.Get("ad_password").(string),
 		OU:                   d.Get("ou").(string),
@@ -266,5 +294,32 @@ func (c *Client) UpdateActiveDirectoryStatus(joinRequest *ActiveDirectoryJoinReq
 	if err != nil {
 		return nil, err
 	}
+
+	var finishedJoinStatus *ADMonitorResponse
+
+	joinCompleted := false
+
+	for !joinCompleted {
+		time.Sleep(ADJoinWaitTime)
+
+		joinStatus, err := DoRequest[ADMonitorResponse, ADMonitorResponse](c, GET, ADMonitorEndpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		if !strings.Contains(joinStatus.Status, "IN_PROGRESS") {
+			joinCompleted = true
+			finishedJoinStatus = joinStatus
+		}
+
+		log.Printf("[DEBUG] Waiting another second for AD join to complete")
+	}
+
+	if strings.Contains(finishedJoinStatus.Status, "FAILED") {
+		return nil, finishedJoinStatus.LastError
+	}
+
+	log.Printf("[DEBUG] AD join status: %s", finishedJoinStatus.Status)
+
 	return joinResponse, nil
 }
