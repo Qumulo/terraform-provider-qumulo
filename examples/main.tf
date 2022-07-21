@@ -18,7 +18,7 @@ provider "qumulo" {
 
 variable "some_cluster_name" {
   type    = string
-  default = "InigoMontoya"
+  default = "PrincessBride"
 }
 
 variable "some_cert" {
@@ -48,7 +48,7 @@ resource "qumulo_monitoring" "update_monitoring" {
   mq_host = "missionq.qumulo.com"
   mq_port = 443
   mq_proxy_host = ""
-  mq_proxy_port = 29
+  mq_proxy_port = 32
   s3_proxy_host = "monitor.qumulo.com"
   s3_proxy_port = 443
   s3_proxy_disable_https = false
