@@ -117,14 +117,21 @@ func resourceSMBServerRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	errs := make([]error, 0)
 
-	d.Set("session_encryption", SMBSettings.SessionEncryption)
-	d.Set("supported_dialects", SMBSettings.SupportedDialects)
-	d.Set("hide_shares_from_unauthorized_users", SMBSettings.HideSharesUsers)
-	d.Set("hide_shares_from_unauthorized_hosts", SMBSettings.HideSharesHosts)
-	d.Set("snapshot_directory_mode", SMBSettings.SnapshotDirMode)
-	d.Set("bypass_traverse_checking", SMBSettings.BypassTraverseChecking)
-	d.Set("signing_required", SMBSettings.SigningRequired)
+	errs = append(errs, d.Set("session_encryption", SMBSettings.SessionEncryption))
+	errs = append(errs, d.Set("supported_dialects", SMBSettings.SupportedDialects))
+	errs = append(errs, d.Set("hide_shares_from_unauthorized_users", SMBSettings.HideSharesUsers))
+	errs = append(errs, d.Set("hide_shares_from_unauthorized_hosts", SMBSettings.HideSharesHosts))
+	errs = append(errs, d.Set("snapshot_directory_mode", SMBSettings.SnapshotDirMode))
+	errs = append(errs, d.Set("bypass_traverse_checking", SMBSettings.BypassTraverseChecking))
+	errs = append(errs, d.Set("signing_required", SMBSettings.SigningRequired))
+
+	for _, err := range errs {
+		if err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		}
+	}
 
 	return diags
 }
