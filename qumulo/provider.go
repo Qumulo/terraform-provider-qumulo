@@ -34,6 +34,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"qumulo_cluster_name": resourceClusterSettings(),
+			"qumulo_ldap_server":  ResourceLdapServer(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

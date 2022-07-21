@@ -32,9 +32,6 @@ func resourceClusterSettings() *schema.Resource {
 func resourceClusterSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	name := d.Get("name").(string)
 
 	cs := ClusterSettings{
@@ -48,7 +45,7 @@ func resourceClusterSettingsCreate(ctx context.Context, d *schema.ResourceData, 
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
-	return diags
+	return resourceClusterSettingsRead(ctx, d, m)
 }
 
 func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
