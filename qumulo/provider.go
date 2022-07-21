@@ -39,6 +39,7 @@ func Provider() *schema.Provider {
 			"qumulo_ssl_cert":     resourceSSL(),
 			"qumulo_ssl_ca":       resourceSSLCA(),
 			"qumulo_monitoring":   resourceMonitoring(),
+			"qumulo_vpn_keys":     resourceVPNKeys(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
