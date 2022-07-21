@@ -137,7 +137,7 @@ func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	for _, err := range errs {
 		if err != nil {
-			diags = append(diags, diag.FromErr(err)[0])
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
 
