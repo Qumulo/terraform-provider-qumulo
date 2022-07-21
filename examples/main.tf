@@ -27,6 +27,9 @@ resource "qumulo_ad_settings" "ad_settings" {
   signing = "WANT_SIGNING"
   sealing = "WANT_SEALING"
   crypto = "WANT_AES"
+  domain = "fakewebsite"
+  ad_username = "fake"
+  ad_password = "fake"
 }
 
 output "updated_name" {

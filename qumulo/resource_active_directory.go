@@ -7,9 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-// TODO convert to enum to follow API specification
 type ActiveDirectorySettings struct {
 	Signing string `json:"signing"`
 	Sealing string `json:"sealing"`
@@ -31,17 +31,23 @@ type ActiveDirectoryJoinResponse struct {
 }
 
 type ActiveDirectoryRequest struct {
-	Settings     ActiveDirectorySettings
-	JoinSettings ActiveDirectoryJoinRequest
+	Settings     *ActiveDirectorySettings
+	JoinSettings *ActiveDirectoryJoinRequest
 }
 
 type ActiveDirectoryResponse struct {
-	Settings     ActiveDirectorySettings
-	JoinResponse ActiveDirectoryJoinResponse
+	Settings     *ActiveDirectorySettings
+	JoinResponse *ActiveDirectoryJoinResponse
 }
 
 const ADSettingsEndpoint = "/v1/ad/settings"
 const ADJoinEndpoint = "/v1/ad/join"
+const ADReconfigureEndpoint = "/v1/ad/reconfigure"
+const ADLeaveEndpoint = "/v1/ad/leave"
+
+var adSigningValues = []string{"NO_SIGNING", "WANT_SIGNING", "REQUIRE_SIGNING"}
+var adSealingValues = []string{"NO_SEALING", "WANT_SEALING", "REQUIRE_SEALING"}
+var adCryptoValues = []string{"NO_AES", "WANT_AES", "REQUIRE_AES"}
 
 func resourceActiveDirectory() *schema.Resource {
 	return &schema.Resource{
@@ -50,45 +56,49 @@ func resourceActiveDirectory() *schema.Resource {
 		UpdateContext: resourceActiveDirectoryUpdate,
 		DeleteContext: resourceActiveDirectoryDelete,
 		Schema: map[string]*schema.Schema{
-			// "domain": &schema.Schema{
-			// 	Type:     schema.TypeString,
-			// 	Required: true,
-			// },
-			// "domain_netbios": &schema.Schema{
-			// 	Type:     schema.TypeString,
-			// 	Optional: true,
-			// },
-			// "ad_username": &schema.Schema{
-			// 	Type:     schema.TypeString,
-			// 	Required: true,
-			// },
-			// "ad_password": &schema.Schema{
-			// 	Type:     schema.TypeString,
-			// 	Required: true,
-			// },
-			// "ou": &schema.Schema{
-			// 	Type:     schema.TypeString,
-			// 	Optional: true,
-			// },
-			// "use_ad_posix_attributes": &schema.Schema{
-			// 	Type:     schema.TypeBool,
-			// 	Optional: true,
-			// },
-			// "base_dn": &schema.Schema{
-			// 	Type:     schema.TypeString,
-			// 	Optional: true,
-			// },
-			"signing": &schema.Schema{
+			"domain": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"domain_netbios": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"ad_username": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"ad_password": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"ou": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"use_ad_posix_attributes": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"base_dn": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"signing": &schema.Schema{
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adSigningValues, false)),
 			},
 			"sealing": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adSealingValues, false)),
 			},
 			"crypto": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adCryptoValues, false)),
 			},
 		},
 	}
@@ -100,27 +110,25 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	// TODO verify value is valid for enum
-
 	updatedAdSettings := ActiveDirectorySettings{
 		Signing: d.Get("signing").(string),
 		Sealing: d.Get("sealing").(string),
 		Crypto:  d.Get("crypto").(string),
 	}
 
-	// joinSettings := ActiveDirectoryJoinRequest{
-	// 	Domain:               d.Get("domain").(string),
-	// 	Domain_NetBIOS:       d.Get("domain_netbios").(string),
-	// 	User:                 d.Get("user").(string),
-	// 	Password:             d.Get("password").(string),
-	// 	OU:                   d.Get("ou").(string),
-	// 	UseADPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
-	// 	BaseDN:               d.Get("base_dn").(string),
-	// }
+	joinSettings := ActiveDirectoryJoinRequest{
+		Domain:               d.Get("domain").(string),
+		Domain_NetBIOS:       d.Get("domain_netbios").(string),
+		User:                 d.Get("ad_username").(string),
+		Password:             d.Get("ad_password").(string),
+		OU:                   d.Get("ou").(string),
+		UseADPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
+		BaseDN:               d.Get("base_dn").(string),
+	}
 
 	updatedAdRequest := ActiveDirectoryRequest{
-		Settings: updatedAdSettings,
-		// JoinSettings: joinSettings,
+		Settings:     &updatedAdSettings,
+		JoinSettings: &joinSettings,
 	}
 
 	_, err := client.UpdateActiveDirectory(updatedAdRequest)
@@ -165,8 +173,6 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	// TODO verify value is valid for enum
-
 	updatedAdSettings := ActiveDirectorySettings{
 		Signing: d.Get("signing").(string),
 		Sealing: d.Get("sealing").(string),
@@ -174,7 +180,7 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	updatedAdRequest := ActiveDirectoryRequest{
-		Settings: updatedAdSettings,
+		Settings: &updatedAdSettings,
 	}
 
 	_, err := client.UpdateActiveDirectory(updatedAdRequest)
@@ -196,13 +202,30 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 
 func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
 
-	settingsResponse, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](c, PUT, ADSettingsEndpoint, &clusterReq.Settings)
+	activeDirectorySettings := clusterReq.Settings
+
+	// TODO check if AD settings is empty or not
+
+	settingsResponse, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](c, PUT, ADSettingsEndpoint, activeDirectorySettings)
 	if err != nil {
 		return nil, err
 	}
 
+	var joinResponsePointer *ActiveDirectoryJoinResponse
+
+	if clusterReq.JoinSettings != nil {
+		joinResponse, err := DoRequest[ActiveDirectoryJoinRequest, ActiveDirectoryJoinResponse](c, POST, ADSettingsEndpoint, clusterReq.JoinSettings)
+		if err != nil {
+			return nil, err
+		}
+		joinResponsePointer = joinResponse
+	} else {
+		joinResponsePointer = nil
+	}
+
 	response := ActiveDirectoryResponse{
-		Settings: *settingsResponse,
+		Settings:     settingsResponse,
+		JoinResponse: joinResponsePointer,
 	}
 
 	return &response, nil
