@@ -5,3 +5,6 @@ The Terraform Qumulo provider is a plugin for Terraform that allows for the upda
 ## Supported Features
 - API Authentication
 - Cluster Name
+- Monitoring
+- SSL/SSL CA
+- LDAP

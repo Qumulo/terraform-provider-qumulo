@@ -17,10 +17,11 @@ const (
 	GET Method = iota + 1
 	PUT
 	POST
+	PATCH
 )
 
 func (m Method) String() string {
-	return [...]string{"GET", "PUT", "POST"}[m-1]
+	return [...]string{"GET", "PUT", "POST", "PATCH"}[m-1]
 }
 
 // Client -
@@ -85,7 +86,7 @@ func (c *Client) MakeHTTPRequest(req *http.Request) ([]byte, error) {
 		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
 		return nil, fmt.Errorf("status: %d, body: %s", res.StatusCode, body)
 	}
 
