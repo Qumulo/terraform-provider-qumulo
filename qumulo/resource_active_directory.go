@@ -72,6 +72,12 @@ type ActiveDirectoryUsageSettings struct {
 	BaseDN               string `json:"base_dn"`
 }
 
+type ActiveDirectoryLeaveRequest struct {
+	Domain   string `json:"domain"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+}
+
 const ADSettingsEndpoint = "/v1/ad/settings"
 const ADJoinEndpoint = "/v1/ad/join"
 const ADMonitorEndpoint = "/v1/ad/monitor"
@@ -243,8 +249,26 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	client := m.(*Client)
+
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
+
+	leaveAdSettings := ActiveDirectoryLeaveRequest{
+		Domain:   d.Get("domain").(string),
+		User:     d.Get("ad_username").(string),
+		Password: d.Get("ad_password").(string),
+	}
+
+	_, err := DoRequest[ActiveDirectoryLeaveRequest, ADMonitorResponse](client, POST, ADLeaveEndpoint, &leaveAdSettings)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = client.WaitForADMonitorUpdate()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return diags
 }
@@ -378,10 +402,10 @@ func (c *Client) WaitForADMonitorUpdate() error {
 		if !strings.Contains(joinStatus.Status, "IN_PROGRESS") {
 			joinCompleted = true
 			finishedJoinStatus = joinStatus
+		} else {
+			log.Printf("[DEBUG] Waiting another second for AD operation to complete.")
+			time.Sleep(ADJoinWaitTime)
 		}
-
-		log.Printf("[DEBUG] Waiting another second for AD join to complete.")
-		time.Sleep(ADJoinWaitTime)
 	}
 
 	if strings.Contains(finishedJoinStatus.Status, "FAILED") {
