@@ -74,7 +74,7 @@ type ActiveDirectoryResponse struct {
 	JoinResponse *ActiveDirectoryJoinResponse
 }
 
-type ADMonitorLastError struct {
+type ActiveDirectoryMonitorLastError struct {
 	Module      string `json"module"`
 	ErrorClass  string `json:"error_class"`
 	Description string `json:"description"`
@@ -82,19 +82,19 @@ type ADMonitorLastError struct {
 	UserVisible bool   `json:"user_visible"`
 }
 
-func (e ADMonitorLastError) Error() string {
+func (e ActiveDirectoryMonitorLastError) Error() string {
 	return fmt.Sprintf("Error %s encountered in Active Directory\nDescription: %s\nStack: %s", e.ErrorClass, e.Description, e.Stack)
 }
 
-type ADMonitorResponse struct {
-	Status               string             `json:"status"`
-	Domain               string             `json:"domain"`
-	OU                   string             `json:"ou"`
-	LastError            ADMonitorLastError `json:"last_error"`
-	LastActionTime       string             `json:"last_action_time"`
-	UseADPosixAttributes bool               `json:"use_ad_posix_attributes"`
-	BaseDN               string             `json:"base_dn"`
-	DomainNetBIOS        string             `json:"domain_netbios"`
+type ActiveDirectoryMonitorResponse struct {
+	Status               string                          `json:"status"`
+	Domain               string                          `json:"domain"`
+	OU                   string                          `json:"ou"`
+	LastError            ActiveDirectoryMonitorLastError `json:"last_error"`
+	LastActionTime       string                          `json:"last_action_time"`
+	UseADPosixAttributes bool                            `json:"use_ad_posix_attributes"`
+	BaseDN               string                          `json:"base_dn"`
+	DomainNetBIOS        string                          `json:"domain_netbios"`
 }
 
 type ActiveDirectoryUsageSettings struct {
@@ -309,7 +309,7 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 		Password: d.Get("ad_password").(string),
 	}
 
-	_, err := DoRequest[ActiveDirectoryLeaveRequest, ADMonitorResponse](client, POST, ADLeaveEndpoint, &leaveAdSettings)
+	_, err := DoRequest[ActiveDirectoryLeaveRequest, ActiveDirectoryMonitorResponse](client, POST, ADLeaveEndpoint, &leaveAdSettings)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -438,12 +438,12 @@ func (c *Client) UpdateActiveDirectoryUsage(usageRequest *ActiveDirectoryUsageSe
 
 func (c *Client) WaitForADMonitorUpdate() error {
 
-	var finishedJoinStatus *ADMonitorResponse
+	var finishedJoinStatus *ActiveDirectoryMonitorResponse
 
 	joinCompleted := false
 
 	for !joinCompleted {
-		joinStatus, err := DoRequest[ADMonitorResponse, ADMonitorResponse](c, GET, ADMonitorEndpoint, nil)
+		joinStatus, err := DoRequest[ActiveDirectoryMonitorResponse, ActiveDirectoryMonitorResponse](c, GET, ADMonitorEndpoint, nil)
 		if err != nil {
 			return err
 		}
