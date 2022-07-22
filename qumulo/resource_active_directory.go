@@ -34,8 +34,9 @@ type ActiveDirectoryJoinResponse struct {
 }
 
 type ActiveDirectoryRequest struct {
-	Settings     *ActiveDirectorySettings
-	JoinSettings *ActiveDirectoryJoinRequest
+	Settings      *ActiveDirectorySettings
+	JoinSettings  *ActiveDirectoryJoinRequest
+	UsageSettings *ActiveDirectoryUsageSettings
 }
 
 type ActiveDirectoryResponse struct {
@@ -66,6 +67,11 @@ type ADMonitorResponse struct {
 	DomainNetBIOS        string             `json:"domain_netbios"`
 }
 
+type ActiveDirectoryUsageSettings struct {
+	UseADPosixAttributes bool   `json:"use_ad_posix_attributes"`
+	BaseDN               string `json:"base_dn"`
+}
+
 const ADSettingsEndpoint = "/v1/ad/settings"
 const ADJoinEndpoint = "/v1/ad/join"
 const ADMonitorEndpoint = "/v1/ad/monitor"
@@ -93,18 +99,23 @@ func resourceActiveDirectory() *schema.Resource {
 			"domain_netbios": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"ad_username": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"ad_password": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				ForceNew:  true,
+				Sensitive: true,
 			},
 			"ou": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"use_ad_posix_attributes": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -118,16 +129,19 @@ func resourceActiveDirectory() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adSigningValues, false)),
+				Default:          "WANT_SIGNING",
 			},
 			"sealing": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adSealingValues, false)),
+				Default:          "WANT_SEALING",
 			},
 			"crypto": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adCryptoValues, false)),
+				Default:          "WANT_AES",
 			},
 		},
 	}
@@ -160,7 +174,7 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 		JoinSettings: &joinSettings,
 	}
 
-	_, err := client.UpdateActiveDirectory(updatedAdRequest)
+	_, err := client.CreateActiveDirectory(updatedAdRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -208,8 +222,14 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 		Crypto:  d.Get("crypto").(string),
 	}
 
+	updatedUsageSettings := ActiveDirectoryUsageSettings{
+		UseADPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
+		BaseDN:               d.Get("base_dn").(string),
+	}
+
 	updatedAdRequest := ActiveDirectoryRequest{
-		Settings: &updatedAdSettings,
+		Settings:      &updatedAdSettings,
+		UsageSettings: &updatedUsageSettings,
 	}
 
 	_, err := client.UpdateActiveDirectory(updatedAdRequest)
@@ -229,14 +249,34 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
+func (c *Client) CreateActiveDirectory(clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
+
+	joinResponsePointer, err := c.JoinActiveDirectory(clusterReq.JoinSettings)
+	if err != nil {
+		return nil, err
+	}
 
 	settingsResponsePointer, err := c.UpdateActiveDirectorySettings(clusterReq.Settings)
 	if err != nil {
 		return nil, err
 	}
 
-	joinResponsePointer, err := c.UpdateActiveDirectoryStatus(clusterReq.JoinSettings)
+	response := ActiveDirectoryResponse{
+		Settings:     settingsResponsePointer,
+		JoinResponse: joinResponsePointer,
+	}
+
+	return &response, nil
+}
+
+func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
+
+	joinResponsePointer, err := c.UpdateActiveDirectoryUsage(clusterReq.UsageSettings)
+	if err != nil {
+		return nil, err
+	}
+
+	settingsResponsePointer, err := c.UpdateActiveDirectorySettings(clusterReq.Settings)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +293,7 @@ func (c *Client) UpdateActiveDirectorySettings(activeDirectorySettings *ActiveDi
 	// The AD settings API endpoint expects all of the AD settings set.
 	// If the config has all settings set, use them.
 	// If the config has no settings set, don't hit the endpoint.
-	// If the config has SOME settings set, return an error sicne we can't apply that.
+	// If the config has SOME settings set, return an error since we can't apply that.
 
 	// Get a count of all of the AD settings which are set.
 	// (We have front-end validation on proper types; the field is empty if it was absent in the Terraform file.)
@@ -285,8 +325,9 @@ func (c *Client) UpdateActiveDirectorySettings(activeDirectorySettings *ActiveDi
 	}
 }
 
-func (c *Client) UpdateActiveDirectoryStatus(joinRequest *ActiveDirectoryJoinRequest) (*ActiveDirectoryJoinResponse, error) {
+func (c *Client) JoinActiveDirectory(joinRequest *ActiveDirectoryJoinRequest) (*ActiveDirectoryJoinResponse, error) {
 	if joinRequest == nil {
+		log.Printf("[WARN] No Active Directory join information detected, not joining.")
 		return nil, nil
 	}
 
@@ -295,16 +336,43 @@ func (c *Client) UpdateActiveDirectoryStatus(joinRequest *ActiveDirectoryJoinReq
 		return nil, err
 	}
 
+	err = c.WaitForADMonitorUpdate()
+	if err != nil {
+		return nil, err
+	}
+
+	return joinResponse, nil
+}
+
+func (c *Client) UpdateActiveDirectoryUsage(usageRequest *ActiveDirectoryUsageSettings) (*ActiveDirectoryJoinResponse, error) {
+	if usageRequest == nil {
+		log.Printf("[DEBUG] No updated Active Directory usage settings detected, will not apply changes.")
+		return nil, nil
+	}
+
+	usageUpdateResponse, err := DoRequest[ActiveDirectoryUsageSettings, ActiveDirectoryJoinResponse](c, POST, ADReconfigureEndpoint, usageRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.WaitForADMonitorUpdate()
+	if err != nil {
+		return nil, err
+	}
+
+	return usageUpdateResponse, nil
+}
+
+func (c *Client) WaitForADMonitorUpdate() error {
+
 	var finishedJoinStatus *ADMonitorResponse
 
 	joinCompleted := false
 
 	for !joinCompleted {
-		time.Sleep(ADJoinWaitTime)
-
 		joinStatus, err := DoRequest[ADMonitorResponse, ADMonitorResponse](c, GET, ADMonitorEndpoint, nil)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if !strings.Contains(joinStatus.Status, "IN_PROGRESS") {
@@ -312,14 +380,15 @@ func (c *Client) UpdateActiveDirectoryStatus(joinRequest *ActiveDirectoryJoinReq
 			finishedJoinStatus = joinStatus
 		}
 
-		log.Printf("[DEBUG] Waiting another second for AD join to complete")
+		log.Printf("[DEBUG] Waiting another second for AD join to complete.")
+		time.Sleep(ADJoinWaitTime)
 	}
 
 	if strings.Contains(finishedJoinStatus.Status, "FAILED") {
-		return nil, finishedJoinStatus.LastError
+		return finishedJoinStatus.LastError
 	}
 
 	log.Printf("[DEBUG] AD join status: %s", finishedJoinStatus.Status)
 
-	return joinResponse, nil
+	return nil
 }
