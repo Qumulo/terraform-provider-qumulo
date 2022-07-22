@@ -33,6 +33,36 @@ type ActiveDirectoryJoinResponse struct {
 	MonitorURI string `json:"monitor_uri"`
 }
 
+type ActiveDirectoryStatus struct {
+	Status               string                      `json:"status"`
+	Domain               string                      `json:"domain"`
+	OU                   string                      `json:"ou"`
+	UseADPosixAttributes bool                        `json:"use_ad_posix_attributes"`
+	BaseDN               string                      `json:"base_dn"`
+	DomainNetBIOS        string                      `json:"domain_netbios"`
+	Dcs                  []ActiveDirectoryDcs        `json:"dcs"`
+	LdapConnectionStates []ActiveDirectoryLDAPStates `json:"ldap_connection_states"`
+}
+
+type ActiveDirectoryDcs struct {
+	Name    string `json:"name"`
+	Address string `json:"address"`
+}
+
+type ActiveDirectoryLDAPServers struct {
+	BindURI    string `json:"bind_uri"`
+	KDCAddress string `json:"kdc_address"`
+}
+
+type ActiveDirectoryLDAPStates struct {
+	NodeId      int                          `json:"node_id"`
+	Servers     []ActiveDirectoryLDAPServers `json:"servers"`
+	BindDomain  string                       `json:"bind_domain"`
+	BindAccount string                       `json:"bind_account"`
+	BaseDNVec   []string                     `json:"base_dn_vec"`
+	Health      string                       `json:"health"`
+}
+
 type ActiveDirectoryRequest struct {
 	Settings      *ActiveDirectorySettings
 	JoinSettings  *ActiveDirectoryJoinRequest
@@ -79,6 +109,7 @@ type ActiveDirectoryLeaveRequest struct {
 }
 
 const ADSettingsEndpoint = "/v1/ad/settings"
+const ADStatusEndpoint = "/v1/ad/status"
 const ADJoinEndpoint = "/v1/ad/join"
 const ADMonitorEndpoint = "/v1/ad/monitor"
 const ADReconfigureEndpoint = "/v1/ad/reconfigure"
@@ -156,9 +187,6 @@ func resourceActiveDirectory() *schema.Resource {
 func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	updatedAdSettings := ActiveDirectorySettings{
 		Signing: d.Get("signing").(string),
 		Sealing: d.Get("sealing").(string),
@@ -187,7 +215,7 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
-	return diags
+	return resourceActiveDirectoryRead(ctx, d, m)
 }
 
 func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -196,20 +224,44 @@ func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	cr, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](client, GET, ADSettingsEndpoint, nil)
+	adSettings, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](client, GET, ADSettingsEndpoint, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// TODO make Go-idiomatic
-	if err := d.Set("signing", cr.Signing); err != nil {
+	// TODO refactor
+	if err := d.Set("signing", adSettings.Signing); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("sealing", cr.Sealing); err != nil {
+	if err := d.Set("sealing", adSettings.Sealing); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("crypto", cr.Crypto); err != nil {
+	if err := d.Set("crypto", adSettings.Crypto); err != nil {
+		return diag.FromErr(err)
+	}
+
+	adStatus, err := DoRequest[ActiveDirectoryStatus, ActiveDirectoryStatus](client, GET, ADStatusEndpoint, nil)
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// TODO refactor
+	log.Printf("[DEBUG] AD status: %s", adStatus.Status)
+	if err := d.Set("domain", adStatus.Domain); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("ou", adStatus.OU); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("use_ad_posix_attributes", adStatus.UseADPosixAttributes); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("base_dn", adStatus.BaseDN); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("domain_netbios", adStatus.DomainNetBIOS); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -218,9 +270,6 @@ func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
-
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
 
 	updatedAdSettings := ActiveDirectorySettings{
 		Signing: d.Get("signing").(string),
@@ -245,7 +294,7 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
-	return diags
+	return resourceActiveDirectoryRead(ctx, d, m)
 }
 
 func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
