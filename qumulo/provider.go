@@ -35,6 +35,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"qumulo_cluster_name": resourceClusterSettings(),
+			"qumulo_ad_settings":  resourceActiveDirectory(),
 			"qumulo_ldap_server":  resourceLdapServer(),
 			"qumulo_ssl_cert":     resourceSSL(),
 			"qumulo_ssl_ca":       resourceSSLCA(),
