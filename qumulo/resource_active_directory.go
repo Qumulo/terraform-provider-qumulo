@@ -294,8 +294,6 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
 	return resourceActiveDirectoryRead(ctx, d, m)
 }
 
@@ -365,38 +363,25 @@ func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest) (*Acti
 }
 
 func (c *Client) UpdateActiveDirectorySettings(activeDirectorySettings *ActiveDirectorySettings) (*ActiveDirectorySettings, error) {
-	// The AD settings API endpoint expects all of the AD settings set.
+	// XXX amanning: The AD settings API endpoint expects all of the AD settings set.
 	// If the config has all settings set, use them.
 	// If the config has no settings set, don't hit the endpoint.
 	// If the config has SOME settings set, return an error since we can't apply that.
 
-	// Get a count of all of the AD settings which are set.
 	// (We have front-end validation on proper types; the field is empty if it was absent in the Terraform file.)
-	adSettingsCount := 0
-	if activeDirectorySettings.Signing != "" {
-		adSettingsCount++
-	}
-	if activeDirectorySettings.Sealing != "" {
-		adSettingsCount++
-	}
-	if activeDirectorySettings.Crypto != "" {
-		adSettingsCount++
-	}
-
-	// Perform the appropriate action based on the number of fields set.
-	if adSettingsCount == 3 {
+	if activeDirectorySettings.Signing == "" && activeDirectorySettings.Sealing == "" && activeDirectorySettings.Crypto == "" {
+		log.Printf("[DEBUG] No Active Directory settings detected, will not apply changes.")
+		return nil, nil
+	} else if activeDirectorySettings.Signing == "" || activeDirectorySettings.Sealing == "" || activeDirectorySettings.Crypto == "" {
+		// TODO: decide if this should return an error
+		log.Printf("[WARN] Incomplete Active Directory settings detected, will not apply changes. Specify all or none of Signing, Sealing, and Crypto.")
+		return nil, nil
+	} else {
 		settingsResponse, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](c, PUT, ADSettingsEndpoint, activeDirectorySettings)
 		if err != nil {
 			return nil, err
 		}
 		return settingsResponse, nil
-	} else if adSettingsCount == 1 || adSettingsCount == 2 {
-		// TODO: decide if this should return an error
-		log.Printf("[WARN] Incomplete Active Directory settings detected, will not apply changes. Specify all or none of Signing, Sealing, and Crypto.")
-		return nil, nil
-	} else {
-		log.Printf("[DEBUG] No Active Directory settings detected, will not apply changes.")
-		return nil, nil
 	}
 }
 

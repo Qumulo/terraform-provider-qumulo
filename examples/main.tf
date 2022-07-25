@@ -28,11 +28,11 @@ resource "qumulo_ad_settings" "ad_settings" {
   signing = "WANT_SIGNING"
   sealing = "WANT_SEALING"
   crypto = "WANT_AES"
-   domain = "ad.eng.qumulo.com"
-   ad_username = "Administrator"
-   ad_password = "a"
-   use_ad_posix_attributes = false
-   base_dn = "CN=Users,DC=ad,DC=eng,DC=qumulo,DC=com"
+  domain = "ad.eng.qumulo.com"
+  ad_username = "Administrator"
+  ad_password = "a"
+  use_ad_posix_attributes = false
+  base_dn = "CN=Users,DC=ad,DC=eng,DC=qumulo,DC=com"
 }
 
 resource "qumulo_ldap_server" "some_ldap_server" {
