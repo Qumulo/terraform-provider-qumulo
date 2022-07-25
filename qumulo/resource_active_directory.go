@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -120,6 +121,7 @@ var adSealingValues = []string{"NO_SEALING", "WANT_SEALING", "REQUIRE_SEALING"}
 var adCryptoValues = []string{"NO_AES", "WANT_AES", "REQUIRE_AES"}
 
 const ADJoinWaitTime = 1 * time.Second
+const ADJoinTimeoutIterations = 60
 
 func resourceActiveDirectory() *schema.Resource {
 	return &schema.Resource{
@@ -441,6 +443,7 @@ func (c *Client) WaitForADMonitorUpdate() error {
 	var finishedJoinStatus *ActiveDirectoryMonitorResponse
 
 	joinCompleted := false
+	numIterations := 0
 
 	for !joinCompleted {
 		joinStatus, err := DoRequest[ActiveDirectoryMonitorResponse, ActiveDirectoryMonitorResponse](c, GET, ADMonitorEndpoint, nil)
@@ -453,7 +456,13 @@ func (c *Client) WaitForADMonitorUpdate() error {
 			finishedJoinStatus = joinStatus
 		} else {
 			log.Printf("[DEBUG] Waiting another second for AD operation to complete.")
+			numIterations++
 			time.Sleep(ADJoinWaitTime)
+		}
+
+		if numIterations > ADJoinTimeoutIterations {
+			log.Printf("[ERROR] Active Directory operation timed out, exiting")
+			return errors.New(fmt.Sprintf("ERROR: Active Directory operation timed out after %d seconds, aborting", ADJoinTimeoutIterations))
 		}
 	}
 
