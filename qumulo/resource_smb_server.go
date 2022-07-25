@@ -22,10 +22,6 @@ type SMBServerRequest struct {
 	SigningRequired        bool     `json:"signing_required"`
 }
 
-type SMBServerResponse struct {
-	Placeholder string `json:"placeholder"`
-}
-
 var encryptionSettings = []string{"NONE", "PREFERRED", "REQUIRED"}
 var validDialects = []string{"SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1", "SMB2_DIALECT_3_0", "SMB2_DIALECT_3_11",
 	"API_SMB2_DIALECT_2_002", "API_SMB2_DIALECT_2_1", "API_SMB2_DIALECT_3_0",
@@ -99,7 +95,7 @@ func resourceSMBServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 		SigningRequired:        d.Get("signing_required").(bool),
 	}
 
-	_, err := DoRequest[SMBServerRequest, SMBServerResponse](c, PUT, SMBServerEndpoint, &SMBServerConfig)
+	_, err := DoRequest[SMBServerRequest, SMBServerRequest](c, PUT, SMBServerEndpoint, &SMBServerConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
