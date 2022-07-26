@@ -1,9 +1,10 @@
 package main
 
 import (
+	"terraform-provider-qumulo/qumulo"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"terraform-provider-qumulo/qumulo"
 )
 
 func main() {

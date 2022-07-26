@@ -8,12 +8,12 @@ terraform {
   }
 }
 
-provider "qumulo" {
-  username = "admin"
-  password = "Admin123"
-  host= "10.116.10.215"
-  port= "17728"
-}
+# provider "qumulo" {
+#   username = "admin"
+#   password = "Admin123"
+#   host= "10.116.10.215"
+#   port= "17728"
+# }
 
 variable "some_cluster_name" {
   type    = string

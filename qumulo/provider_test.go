@@ -2,6 +2,8 @@ package qumulo
 
 import (
 	"math/rand"
+	"os"
+	"testing"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -28,11 +30,17 @@ func randSeq(n int) string {
 	return string(b)
 }
 
-var loginConf = `
-  provider "qumulo" {
-	username = "admin"
-	password = "Admin123"
-	host= "10.116.10.215"
-	port= "17728"
-  }
-`
+func testAccPreCheck(t *testing.T) {
+	if v := os.Getenv("QUMULO_HOST"); v == "" {
+		t.Fatal("QUMULO_HOST must be set for acceptance tests")
+	}
+	if v := os.Getenv("QUMULO_PORT"); v == "" {
+		t.Fatal("QUMULO_PORT must be set for acceptance tests")
+	}
+	if v := os.Getenv("QUMULO_USERNAME"); v == "" {
+		t.Fatal("QUMULO_USERNAME must be set for acceptance tests")
+	}
+	if v := os.Getenv("QUMULO_PASSWORD"); v == "" {
+		t.Fatal("QUMULO_PASSWORD must be set for acceptance tests")
+	}
+}
