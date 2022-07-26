@@ -109,7 +109,7 @@ func resourceSMBServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
-	return diags
+	return resourceSMBServerRead(ctx, d, m)
 }
 
 func resourceSMBServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

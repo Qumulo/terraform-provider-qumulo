@@ -65,6 +65,7 @@ func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
+	// There is no read endpoint for SSL, so don't try to read
 	return diags
 }
 
