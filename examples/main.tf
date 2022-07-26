@@ -3,7 +3,6 @@
 terraform {
   required_providers {
     qumulo = {
-      version = "0.2"
       source = "qumulo.com/terraform-intern/qumulo"
     }
   }
@@ -18,20 +17,22 @@ provider "qumulo" {
 
 variable "some_cluster_name" {
   type    = string
-  default = "PrincessBride"
-}
-
-variable "some_cert" {
-  type    = string
-  default = "randomcertauth"
-}
-variable "some_key" {
-  type    = string
-  default = "randomkey"
+  default = "InigoMontoya"
 }
 
 resource "qumulo_cluster_name" "update_name" {
   name = var.some_cluster_name
+}
+
+resource "qumulo_ad_settings" "ad_settings" {
+  signing = "WANT_SIGNING"
+  sealing = "WANT_SEALING"
+  crypto = "WANT_AES"
+  domain = "ad.eng.qumulo.com"
+  ad_username = "Administrator"
+  ad_password = "a"
+  use_ad_posix_attributes = false
+  base_dn = "CN=Users,DC=ad,DC=eng,DC=qumulo,DC=com"
 }
 
 resource "qumulo_ldap_server" "some_ldap_server" {
@@ -104,11 +105,19 @@ resource "qumulo_monitoring" "update_monitoring" {
   period = 60
 }
 
-# resource "qumulo_vpn_keys" "update_vpn_keys" {
-#   mqvpn_client_crt = "some_cert"
-#   mqvpn_client_key = "some_key"
-#   qumulo_ca_crt = "some_qumulo_cert"
-# }
+resource "qumulo_smb_server" "update_smb" {
+  session_encryption = "NONE"
+  supported_dialects =["SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1"]
+  hide_shares_from_unauthorized_users = false
+  hide_shares_from_unauthorized_hosts = true
+  snapshot_directory_mode = "VISIBLE"
+  bypass_traverse_checking = false
+  signing_required = false
+}
+
+output "some_smb_server" {
+  value = qumulo_smb_server.update_smb
+}
 
 output "some_monitoring_config" {
   value = qumulo_monitoring.update_monitoring
