@@ -163,6 +163,13 @@ func resourceActiveDirectory() *schema.Resource {
 		ReadContext:   resourceActiveDirectoryRead,
 		UpdateContext: resourceActiveDirectoryUpdate,
 		DeleteContext: resourceActiveDirectoryDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(2 * time.Minute),
+			Update: schema.DefaultTimeout(2 * time.Minute),
+			Delete: schema.DefaultTimeout(2 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"domain": &schema.Schema{
 				Type:     schema.TypeString,
