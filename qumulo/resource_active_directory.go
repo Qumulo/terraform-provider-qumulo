@@ -2,7 +2,6 @@ package qumulo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -497,7 +496,7 @@ func (c *Client) WaitForADMonitorUpdate() error {
 
 		if numIterations > ADJoinTimeoutIterations {
 			log.Printf("[ERROR] Active Directory operation timed out, exiting")
-			return errors.New(fmt.Sprintf("ERROR: Active Directory operation timed out after %d seconds, aborting", ADJoinTimeoutIterations))
+			return fmt.Errorf("ERROR: Active Directory operation timed out after %d seconds, aborting", ADJoinTimeoutIterations)
 		}
 	}
 
