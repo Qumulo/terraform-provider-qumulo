@@ -122,7 +122,6 @@ func resourceMonitoringCreate(ctx context.Context, d *schema.ResourceData, m int
 func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 	errs := make([]error, 0)
 
@@ -156,7 +155,6 @@ func resourceMonitoringUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceMonitoringDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	return diags

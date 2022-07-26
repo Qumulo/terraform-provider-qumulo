@@ -60,7 +60,6 @@ func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceSSLCARead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	c := m.(*Client)
 
 	var diags diag.Diagnostics
@@ -82,7 +81,6 @@ func resourceSSLCAUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceSSLCADelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	return diags

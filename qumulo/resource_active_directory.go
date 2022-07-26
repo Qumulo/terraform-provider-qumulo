@@ -263,7 +263,6 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	adSettings, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](client, GET, ADSettingsEndpoint, nil)
@@ -340,7 +339,6 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	leaveAdSettings := ActiveDirectoryLeaveRequest{

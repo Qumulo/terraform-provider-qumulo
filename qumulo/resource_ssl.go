@@ -50,7 +50,6 @@ func resourceSSL() *schema.Resource {
 func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	SSLConfig := SSLRequest{
@@ -70,7 +69,6 @@ func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceSSLRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	return diags
@@ -81,7 +79,6 @@ func resourceSSLUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceSSLDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	return diags
