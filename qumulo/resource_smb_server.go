@@ -83,8 +83,6 @@ func resourceSMBServer() *schema.Resource {
 func resourceSMBServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
 	// convert the []interface{} into []string
 	dials := d.Get("supported_dialects").([]interface{})
 	dialects := make([]string, len(dials))

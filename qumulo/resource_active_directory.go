@@ -330,7 +330,7 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 		UsageSettings: &updatedUsageSettings,
 	}
 
-	_, err := client.UpdateActiveDirectory(updatedAdRequest)
+	_, err := client.UpdateActiveDirectory(updatedAdRequest, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -383,16 +383,25 @@ func (c *Client) CreateActiveDirectory(clusterReq ActiveDirectoryRequest) (*Acti
 	return &response, nil
 }
 
-func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
+func (c *Client) UpdateActiveDirectory(clusterReq ActiveDirectoryRequest, d *schema.ResourceData) (*ActiveDirectoryResponse, error) {
 
-	joinResponsePointer, err := c.UpdateActiveDirectoryUsage(clusterReq.UsageSettings)
-	if err != nil {
-		return nil, err
+	var joinResponsePointer *ActiveDirectoryJoinResponse
+	var err error
+
+	if d.HasChanges("use_ad_posix_attributes", "base_dn") {
+		joinResponsePointer, err = c.UpdateActiveDirectoryUsage(clusterReq.UsageSettings)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	settingsResponsePointer, err := c.UpdateActiveDirectorySettings(clusterReq.Settings)
-	if err != nil {
-		return nil, err
+	var settingsResponsePointer *ActiveDirectorySettings
+
+	if d.HasChanges("signing", "sealing", "crypto") {
+		settingsResponsePointer, err = c.UpdateActiveDirectorySettings(clusterReq.Settings)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	response := ActiveDirectoryResponse{
