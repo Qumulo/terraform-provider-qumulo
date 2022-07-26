@@ -3,12 +3,24 @@ package qumulo
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strconv"
-	"time"
 )
+
+type LDAPSchema int
+
+const (
+	RFC2307 LDAPSchema = iota + 1
+	CUSTOM
+)
+
+func (e LDAPSchema) String() string {
+	return ldapSchemaList[e-1]
+}
 
 const LdapServerEndpoint = "/v2/ldap/settings"
 
@@ -34,7 +46,7 @@ type LdapSchemaDescription struct {
 	GidNumberAttribute           string `json:"gid_number_attribute"`
 }
 
-var ldapSchema = []string{"RFC2307", "CUSTOM"}
+var ldapSchemaList = []string{"RFC2307", "CUSTOM"}
 
 func resourceLdapServer() *schema.Resource {
 	return &schema.Resource{
@@ -69,7 +81,7 @@ func resourceLdapServer() *schema.Resource {
 			"ldap_schema": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ldapSchema, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ldapSchemaList, false)),
 				Default:          "RFC2307",
 			},
 			"ldap_schema_description": {
