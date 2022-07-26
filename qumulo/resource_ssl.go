@@ -27,6 +27,13 @@ func resourceSSL() *schema.Resource {
 		ReadContext:   resourceSSLRead,
 		UpdateContext: resourceSSLUpdate,
 		DeleteContext: resourceSSLDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(1 * time.Minute),
+			Update: schema.DefaultTimeout(1 * time.Minute),
+			Delete: schema.DefaultTimeout(1 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"certificate": &schema.Schema{
 				Type:     schema.TypeString,

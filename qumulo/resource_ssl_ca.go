@@ -26,6 +26,13 @@ func resourceSSLCA() *schema.Resource {
 		ReadContext:   resourceSSLCARead,
 		UpdateContext: resourceSSLCAUpdate,
 		DeleteContext: resourceSSLCADelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(1 * time.Minute),
+			Update: schema.DefaultTimeout(1 * time.Minute),
+			Delete: schema.DefaultTimeout(1 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"ca_certificate": &schema.Schema{
 				Type:     schema.TypeString,

@@ -34,6 +34,13 @@ func resourceSMBServer() *schema.Resource {
 		ReadContext:   resourceSMBServerRead,
 		UpdateContext: resourceSMBServerUpdate,
 		DeleteContext: resourceSMBServerDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(1 * time.Minute),
+			Update: schema.DefaultTimeout(1 * time.Minute),
+			Delete: schema.DefaultTimeout(1 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"session_encryption": &schema.Schema{
 				Type:             schema.TypeString,
