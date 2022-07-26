@@ -14,6 +14,44 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+type ADSigning int
+type ADSealing int
+type ADCrypto int
+
+const (
+	NoSigning ADSigning = iota + 1
+	WantSigning
+	RequireSigning
+)
+
+const (
+	NoSealing ADSealing = iota + 1
+	WantSealing
+	RequireSealing
+)
+
+const (
+	NoCrypto ADCrypto = iota + 1
+	WantCrypto
+	RequireCrypto
+)
+
+func (e ADSigning) String() string {
+	return adSigningValues[e-1]
+}
+
+func (e ADSealing) String() string {
+	return adSealingValues[e-1]
+}
+
+func (e ADCrypto) String() string {
+	return adCryptoValues[e-1]
+}
+
+var adSigningValues = []string{"NO_SIGNING", "WANT_SIGNING", "REQUIRE_SIGNING"}
+var adSealingValues = []string{"NO_SEALING", "WANT_SEALING", "REQUIRE_SEALING"}
+var adCryptoValues = []string{"NO_AES", "WANT_AES", "REQUIRE_AES"}
+
 type ActiveDirectorySettings struct {
 	Signing string `json:"signing"`
 	Sealing string `json:"sealing"`
@@ -116,10 +154,6 @@ const ADMonitorEndpoint = "/v1/ad/monitor"
 const ADReconfigureEndpoint = "/v1/ad/reconfigure"
 const ADLeaveEndpoint = "/v1/ad/leave"
 
-var adSigningValues = []string{"NO_SIGNING", "WANT_SIGNING", "REQUIRE_SIGNING"}
-var adSealingValues = []string{"NO_SEALING", "WANT_SEALING", "REQUIRE_SEALING"}
-var adCryptoValues = []string{"NO_AES", "WANT_AES", "REQUIRE_AES"}
-
 const ADJoinWaitTime = 1 * time.Second
 const ADJoinTimeoutIterations = 60
 
@@ -168,19 +202,19 @@ func resourceActiveDirectory() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adSigningValues, false)),
-				Default:          "WANT_SIGNING",
+				Default:          WantSigning,
 			},
 			"sealing": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adSealingValues, false)),
-				Default:          "WANT_SEALING",
+				Default:          WantSealing,
 			},
 			"crypto": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adCryptoValues, false)),
-				Default:          "WANT_AES",
+				Default:          WantCrypto,
 			},
 		},
 	}
