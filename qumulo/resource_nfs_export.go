@@ -57,7 +57,8 @@ func resourceNfsExport() *schema.Resource {
 			},
 			"restrictions": &schema.Schema{
 				Type:     schema.TypeList,
-				Optional: true,
+				Required: true,
+				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"host_restrictions": {
@@ -84,7 +85,6 @@ func resourceNfsExport() *schema.Resource {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
-							//Maybe add regex validation for json?
 							ValidateDiagFunc: validation.ToDiagFunc(validation.All(validation.StringIsJSON)),
 						},
 						"map_to_group": {
@@ -140,11 +140,11 @@ func resourceNfsExportCreate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceNfsExportRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 	nfsExportId := d.Id()
 	getNfsExportByIdUri := NFSExportEndpoint + nfsExportId
 	nfsExport, err := DoRequest[NFSExport, NFSExport](client, GET, getNfsExportByIdUri, nil)
+
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -193,16 +193,14 @@ func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	//client := m.(*Client)
-	// Warning or errors can be collected in a slice type
+	client := m.(*Client)
 	var diags diag.Diagnostics
-	//nfsExportId := d.Id()
-	//_, err := DoRequest[string, NFSExport](client, DELETE, NFSExportEndpoint, &nfsExportId)
-	//if err != nil {
-	//	diags = append(diags, diag.FromErr(err)...)
-	//	return diags
-	//}
-	d.SetId("")
+	nfsExportId := d.Id()
+	_, err := DoRequest[string, NFSExport](client, DELETE, NFSExportEndpoint, &nfsExportId)
+	if err != nil {
+		diags = append(diags, diag.FromErr(err)...)
+		return diags
+	}
 	return diags
 }
 

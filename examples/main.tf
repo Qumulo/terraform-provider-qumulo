@@ -53,6 +53,34 @@ resource "qumulo_ldap_server" "some_ldap_server" {
   encrypt_connection = false
 }
 
+resource "qumulo_nfs_export" "new_nfs_export" {
+  export_path = "/lib"
+  fs_path = "/"
+  description = "testing nfs export via terraform"
+  restrictions {
+    host_restrictions = ["10.100.38.31"]
+    read_only = true
+    require_privileged_port = false
+    user_mapping = "NFS_MAP_NONE"
+  }
+  fields_to_present_as_32_bit = []
+  allow_fs_path_create = true
+}
+
+resource "qumulo_nfs_export" "some_nfs_export" {
+  export_path = "/tmp"
+  fs_path = "/"
+  description = "testing nfs export via terraform"
+  restrictions {
+    host_restrictions = ["10.100.38.31"]
+    read_only = false
+    require_privileged_port = false
+    user_mapping = "NFS_MAP_NONE"
+  }
+  fields_to_present_as_32_bit = ["FILE_IDS"]
+  allow_fs_path_create = true
+}
+
 //resource "qumulo_ssl_cert" "update_ssl" {
 //  certificate = var.some_cert
 //  private_key = var.some_key
