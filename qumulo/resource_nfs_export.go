@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"strconv"
 )
 
 const NFSExportEndpoint = "/v2/nfs/exports/"
@@ -20,7 +21,6 @@ type NFSExport struct {
 	Description            string        `json:"description"`
 	Restrictions           []Restriction `json:"restrictions"`
 	FieldsToPresentAs32Bit []interface{} `json:"fields_to_present_as_32_bit"`
-	AllowFsPathCreate      bool          `json:"allow-fs-path-create"`
 }
 
 type Restriction struct {
@@ -28,8 +28,8 @@ type Restriction struct {
 	ReadOnly              bool                   `json:"read_only"`
 	RequirePrivilegedPort bool                   `json:"require_privileged_port"`
 	UserMapping           string                 `json:"user_mapping"`
-	MapToUser             map[string]interface{} `json:"map_to_user"`
-	MapToGroup            map[string]interface{} `json:"map_to_group"`
+	MapToUser             map[string]interface{} `json:"map_to_user,omitempty"`
+	MapToGroup            map[string]interface{} `json:"map_to_group,omitempty"`
 }
 
 func resourceNfsExport() *schema.Resource {
@@ -85,7 +85,6 @@ func resourceNfsExport() *schema.Resource {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
-							ValidateDiagFunc: validation.ToDiagFunc(validation.All(validation.StringIsJSON)),
 						},
 						"map_to_group": {
 							Type:     schema.TypeMap,
@@ -93,7 +92,6 @@ func resourceNfsExport() *schema.Resource {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
-							ValidateDiagFunc: validation.ToDiagFunc(validation.All(validation.StringIsJSON)),
 						},
 					},
 				},
@@ -109,7 +107,6 @@ func resourceNfsExport() *schema.Resource {
 			"allow_fs_path_create": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  true,
 			},
 		},
 	}
@@ -124,10 +121,12 @@ func resourceNfsExportCreate(ctx context.Context, d *schema.ResourceData, m inte
 		Restrictions:           expandRestrictions(d.Get("restrictions").([]interface{})),
 		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
 	}
-	if v := d.Get("allow_fs_path_create").(bool); v {
-		nfsExport.AllowFsPathCreate = d.Get("allow_fs_path_create").(bool)
+	createNfsExportUri := NFSExportEndpoint
+	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
+		createNfsExportUri = createNfsExportUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
-	res, err := DoRequest[NFSExport, NFSExport](client, POST, NFSExportEndpoint, &nfsExport)
+
+	res, err := DoRequest[NFSExport, NFSExport](client, POST, createNfsExportUri, &nfsExport)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -179,11 +178,13 @@ func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		Restrictions:           expandRestrictions(d.Get("restrictions").([]interface{})),
 		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
 	}
-	if v := d.Get("allow_fs_path_create").(bool); v {
-		nfsExport.AllowFsPathCreate = d.Get("allow_fs_path_create").(bool)
-	}
 	nfsExportId := d.Id()
 	updateNfsExportByIdUri := NFSExportEndpoint + nfsExportId
+
+	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
+		updateNfsExportByIdUri = updateNfsExportByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
+	}
+
 	_, err := DoRequest[NFSExport, NFSExport](client, PATCH, updateNfsExportByIdUri, &nfsExport)
 	if err != nil {
 		return diag.FromErr(err)
