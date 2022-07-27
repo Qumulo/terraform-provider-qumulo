@@ -2,8 +2,6 @@ package qumulo
 
 import (
 	"fmt"
-	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -17,84 +15,55 @@ func TestAccSetSSLCA(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{ // Reset state to default
-				Config: testAccSMBServerConfig(defaultSMBServerConfig),
-				Check:  testAccCheckSMBServerSettings(defaultSMBServerConfig),
+				Config: defaultSSLCAConfig,
 			},
 			{
-				Config: testAccSMBServerConfig(testingSMBServerConfig),
+				Config: testAccSSLCAConfig(testingSSLCACert),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCompareSMBServerSettings(testingSMBServerConfig),
-					testAccCheckSMBServerSettings(testingSMBServerConfig),
+					testAccCheckSSLCACert(),
+					resource.TestCheckResourceAttrSet("qumulo_ssl_ca.cert", "ca_certificate"),
 				),
 			},
 		},
 	})
 }
 
-var defaultSMBServerConfig = SMBServerRequest{
-	SessionEncryption:      "NONE",
-	SupportedDialects:      nil,
-	HideSharesUsers:        false,
-	HideSharesHosts:        false,
-	SnapshotDirMode:        "DISABLED",
-	BypassTraverseChecking: false,
-	SigningRequired:        false,
+var defaultSSLCAConfig = " "
+
+var testingSSLCACert = SSLCARequest{
+	Certificate: `-----BEGIN CERTIFICATE-----
+MIICIDCCAYmgAwIBAgIUZcdqCxZB1O4RD548ygFhGBXxQdQwDQYJKoZIhvcNAQEL
+BQAwIjEPMA0GA1UEAwwGVGVzdENBMQ8wDQYDVQQKDAZRdW11bG8wHhcNMjIwNzIy
+MTcwOTI4WhcNMzIwNzE5MTcwOTI4WjAiMQ8wDQYDVQQDDAZUZXN0Q0ExDzANBgNV
+BAoMBlF1bXVsbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAv9Xupp43GfpI
+0bVkB1BIa0ZBt5hpjxgee5PKwn3pbcg/M0M4qGhtX9/DR4utMqMib+X517hyo18E
+Vd+gZa0plafaPfwzz8YkO2EovYEFIaBxgqYkTQ0YZVt40cWEMMCWuyPndX0bvOrW
+1f5zvOcc0+dDXoiqbhUDKiXBfzK745UCAwEAAaNTMFEwHQYDVR0OBBYEFKYiYrFK
+cZcR+gDTAqxV6u81B9htMB8GA1UdIwQYMBaAFKYiYrFKcZcR+gDTAqxV6u81B9ht
+MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADgYEAjPXNGT38WwyWu4Xe
+Wngxmk0OIKZthsbZVDxSti3mse7KWadb6EkaRM/ZIO9CFPyB67zh3KAwhKiMbPVE
+JH62qN5t5xoqdDzzuOUHw1SSF78lfMAWk84TplzXegdysXjYFVhxvqYV9DIEhsTw
+HjX0jrbwN2tDfjTKNQwi7P7RPDY=
+-----END CERTIFICATE-----`,
 }
 
-var testingSMBServerConfig = SMBServerRequest{
-	SessionEncryption:      "PREFERRED",
-	SupportedDialects:      nil,
-	HideSharesUsers:        true,
-	HideSharesHosts:        true,
-	SnapshotDirMode:        "VISIBLE",
-	BypassTraverseChecking: true,
-	SigningRequired:        true,
-}
-
-func testAccSMBServerConfig(smb SMBServerRequest) string {
+func testAccSSLCAConfig(req SSLCARequest) string {
 	return fmt.Sprintf(`
-resource "qumulo_smb_server" "update_smb" {
-	session_encryption = %q
-	supported_dialects = %v
-	hide_shares_from_unauthorized_users = %v
-	hide_shares_from_unauthorized_hosts = %v
-	snapshot_directory_mode = %q
-	bypass_traverse_checking = %v
-	signing_required = %v
+resource "qumulo_ssl_ca" "cert" {
+	ca_certificate = <<CERTDELIM
+%v
+CERTDELIM
 }
-  `, smb.SessionEncryption, strings.ReplaceAll(fmt.Sprintf("%+q", smb.SupportedDialects), "\" \"", "\", \""),
-		smb.HideSharesUsers, smb.HideSharesHosts, smb.SnapshotDirMode, smb.BypassTraverseChecking,
-		smb.SigningRequired)
+  `, req.Certificate)
 }
 
-func testAccCompareSMBServerSettings(smb SMBServerRequest) resource.TestCheckFunc {
-	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "session_encryption",
-			smb.SessionEncryption),
-		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "supported_dialects.#",
-			fmt.Sprintf("%v", len(smb.SupportedDialects))),
-		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "hide_shares_from_unauthorized_users",
-			fmt.Sprintf("%v", smb.HideSharesUsers)),
-		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "hide_shares_from_unauthorized_hosts",
-			fmt.Sprintf("%v", smb.HideSharesHosts)),
-		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "snapshot_directory_mode",
-			smb.SnapshotDirMode),
-		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "bypass_traverse_checking",
-			fmt.Sprintf("%v", smb.BypassTraverseChecking)),
-		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "signing_required",
-			fmt.Sprintf("%v", smb.SigningRequired)),
-	)
-}
-
-func testAccCheckSMBServerSettings(smb SMBServerRequest) resource.TestCheckFunc {
+func testAccCheckSSLCACert() resource.TestCheckFunc {
+	// Make sure there's a valid certificate through the API
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		settings, err := DoRequest[SMBServerRequest, SMBServerRequest](c, GET, SMBServerEndpoint, nil)
+		_, err := DoRequest[SSLCARequest, SSLCARequest](c, GET, SSLCAEndpoint, nil)
 		if err != nil {
 			return err
-		}
-		if !reflect.DeepEqual(settings.SessionEncryption, smb.SessionEncryption) {
-			return fmt.Errorf("SMB server settings mismatch: Expected %v, got %v", smb, *settings)
 		}
 		return nil
 	}

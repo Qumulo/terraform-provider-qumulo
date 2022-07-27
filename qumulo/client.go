@@ -18,10 +18,11 @@ const (
 	PUT
 	POST
 	PATCH
+	DELETE
 )
 
 func (m Method) String() string {
-	return [...]string{"GET", "PUT", "POST", "PATCH"}[m-1]
+	return [...]string{"GET", "PUT", "POST", "PATCH", "DELETE"}[m-1]
 }
 
 // Client -
@@ -122,6 +123,10 @@ func DoRequest[RQ interface{}, R interface{}](client *Client, method Method, end
 	}
 
 	var cr R
+	if len(body) == 0 {
+		return nil, nil
+	}
+
 	err = json.Unmarshal(body, &cr)
 	if err != nil {
 		return nil, err
