@@ -113,28 +113,21 @@ func resourceSMBServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceSMBServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	var diags diag.Diagnostics
+	var errs ErrorCollection
 	SMBSettings, err := DoRequest[SMBServerRequest, SMBServerRequest](c, GET, SMBServerEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	errs := make([]error, 0)
 
-	errs = append(errs, d.Set("session_encryption", SMBSettings.SessionEncryption))
-	errs = append(errs, d.Set("supported_dialects", SMBSettings.SupportedDialects))
-	errs = append(errs, d.Set("hide_shares_from_unauthorized_users", SMBSettings.HideSharesUsers))
-	errs = append(errs, d.Set("hide_shares_from_unauthorized_hosts", SMBSettings.HideSharesHosts))
-	errs = append(errs, d.Set("snapshot_directory_mode", SMBSettings.SnapshotDirMode))
-	errs = append(errs, d.Set("bypass_traverse_checking", SMBSettings.BypassTraverseChecking))
-	errs = append(errs, d.Set("signing_required", SMBSettings.SigningRequired))
+	errs.addMaybeError(d.Set("session_encryption", SMBSettings.SessionEncryption))
+	errs.addMaybeError(d.Set("supported_dialects", SMBSettings.SupportedDialects))
+	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_users", SMBSettings.HideSharesUsers))
+	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_hosts", SMBSettings.HideSharesHosts))
+	errs.addMaybeError(d.Set("snapshot_directory_mode", SMBSettings.SnapshotDirMode))
+	errs.addMaybeError(d.Set("bypass_traverse_checking", SMBSettings.BypassTraverseChecking))
+	errs.addMaybeError(d.Set("signing_required", SMBSettings.SigningRequired))
 
-	for _, err := range errs {
-		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
-		}
-	}
-
-	return diags
+	return errs.diags
 }
 
 func resourceSMBServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

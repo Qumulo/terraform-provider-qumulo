@@ -18,6 +18,7 @@ const (
 	PUT
 	POST
 	PATCH
+	DELETE
 )
 
 func (m Method) String() string {
