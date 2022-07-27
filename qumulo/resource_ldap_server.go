@@ -175,7 +175,7 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("error setting Ldap schema description: %w", err))
 	}
 	errs.addMaybeError(d.Set("encrypt_connection", ls.EncryptConnection))
-	return errs
+	return errs.diags
 }
 
 func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

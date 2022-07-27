@@ -155,7 +155,7 @@ func resourceNfsExportRead(ctx context.Context, d *schema.ResourceData, m interf
 	errs.addMaybeError(d.Set("restrictions", flattenNfsRestrictions(nfsExport.Restrictions)))
 	errs.addMaybeError(d.Set("fields_to_present_as_32_bit", nfsExport.FieldsToPresentAs32Bit))
 
-	return errs
+	return errs.diags
 }
 
 func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
