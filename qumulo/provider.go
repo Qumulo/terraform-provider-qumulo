@@ -54,17 +54,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
-
-	if (username != "") && (password != "") {
-		c, err := NewClient(&host, &port, &username, &password)
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-
-		return c, diags
-	}
 
 	c, err := NewClient(&host, &port, &username, &password)
 	if err != nil {
