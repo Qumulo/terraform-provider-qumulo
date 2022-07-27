@@ -225,14 +225,14 @@ func expandRestrictions(tfRestrictions []interface{}) []Restriction {
 			}
 			restriction.HostRestrictions = expandedHostRestrictions
 		}
-		if _, ok := tfMap["read_only"].(bool); ok {
-			restriction.ReadOnly = tfMap["read_only"].(bool)
+		if v, ok := tfMap["read_only"].(bool); ok {
+			restriction.ReadOnly = v
 		}
-		if _, ok := tfMap["require_privileged_port"].(bool); ok {
-			restriction.RequirePrivilegedPort = tfMap["require_privileged_port"].(bool)
+		if v, ok := tfMap["require_privileged_port"].(bool); ok {
+			restriction.RequirePrivilegedPort = v
 		}
-		if _, ok := tfMap["user_mapping"].(string); ok {
-			restriction.UserMapping = tfMap["user_mapping"].(string)
+		if v, ok := tfMap["user_mapping"].(string); ok {
+			restriction.UserMapping = v
 		}
 		if v, ok := tfMap["map_to_user"].(map[string]interface{}); ok {
 			restriction.MapToUser = v
