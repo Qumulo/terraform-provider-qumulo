@@ -2,10 +2,11 @@ package qumulo
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strconv"
 )
 
 const NFSExportEndpoint = "/v2/nfs/exports/"
@@ -139,7 +140,7 @@ func resourceNfsExportCreate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceNfsExportRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	var diags diag.Diagnostics
+	var errs ErrorCollection
 	nfsExportId := d.Id()
 	getNfsExportByIdUri := NFSExportEndpoint + nfsExportId
 	nfsExport, err := DoRequest[NFSExport, NFSExport](client, GET, getNfsExportByIdUri, nil)
@@ -147,25 +148,14 @@ func resourceNfsExportRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err = d.Set("id", nfsExportId); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	if err = d.Set("export_path", nfsExport.ExportPath); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	if err = d.Set("fs_path", nfsExport.FsPath); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	if err = d.Set("description", nfsExport.Description); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	if err = d.Set("restrictions", flattenNfsRestrictions(nfsExport.Restrictions)); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	if err = d.Set("fields_to_present_as_32_bit", nfsExport.FieldsToPresentAs32Bit); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-	}
-	return diags
+	errs.addMaybeError(d.Set("id", nfsExportId))
+	errs.addMaybeError(d.Set("export_path", nfsExport.ExportPath))
+	errs.addMaybeError(d.Set("fs_path", nfsExport.FsPath))
+	errs.addMaybeError(d.Set("description", nfsExport.Description))
+	errs.addMaybeError(d.Set("restrictions", flattenNfsRestrictions(nfsExport.Restrictions)))
+	errs.addMaybeError(d.Set("fields_to_present_as_32_bit", nfsExport.FieldsToPresentAs32Bit))
+
+	return errs
 }
 
 func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -199,8 +189,7 @@ func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m inte
 	nfsExportId := d.Id()
 	_, err := DoRequest[string, NFSExport](client, DELETE, NFSExportEndpoint, &nfsExportId)
 	if err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-		return diags
+		return diag.FromErr(err)
 	}
 	return diags
 }
@@ -252,7 +241,7 @@ func flattenNfsRestrictions(restrictions []Restriction) []interface{} {
 		tfMap := map[string]interface{}{}
 
 		if v := restriction.HostRestrictions; len(v) != 0 {
-			tfMap["host_restrictions"] = restriction.HostRestrictions
+			tfMap["host_restrictions"] = v
 		}
 		tfMap["read_only"] = restriction.ReadOnly
 		tfMap["require_privileged_port"] = restriction.RequirePrivilegedPort

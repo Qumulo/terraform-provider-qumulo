@@ -223,24 +223,21 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	adSettings, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](client, GET, ADSettingsEndpoint, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	var errs ErrorCollection
+
 	// TODO refactor
-	if err := d.Set("signing", adSettings.Signing); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("sealing", adSettings.Sealing); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("crypto", adSettings.Crypto); err != nil {
-		return diag.FromErr(err)
+	errs.addMaybeError(d.Set("signing", adSettings.Signing))
+	errs.addMaybeError(d.Set("sealing", adSettings.Sealing))
+	errs.addMaybeError(d.Set("crypto", adSettings.Crypto))
+
+	if errs.diags != nil {
+		return errs.diags
 	}
 
 	adStatus, err := DoRequest[ActiveDirectoryStatus, ActiveDirectoryStatus](client, GET, ADStatusEndpoint, nil)
@@ -251,23 +248,12 @@ func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m 
 
 	// TODO refactor
 	log.Printf("[DEBUG] AD status: %s", adStatus.Status)
-	if err := d.Set("domain", adStatus.Domain); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("ou", adStatus.OU); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("use_ad_posix_attributes", adStatus.UseADPosixAttributes); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("base_dn", adStatus.BaseDN); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("domain_netbios", adStatus.DomainNetBIOS); err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diags
+	errs.addMaybeError(d.Set("domain", adStatus.Domain))
+	errs.addMaybeError(d.Set("ou", adStatus.OU))
+	errs.addMaybeError(d.Set("use_ad_posix_attributes", adStatus.UseADPosixAttributes))
+	errs.addMaybeError(d.Set("base_dn", adStatus.BaseDN))
+	errs.addMaybeError(d.Set("domain_netbios", adStatus.DomainNetBIOS))
+	return errs.diags
 }
 
 func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
