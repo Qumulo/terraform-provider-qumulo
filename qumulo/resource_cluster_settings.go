@@ -29,7 +29,7 @@ func resourceClusterSettings() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"cluster_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -40,10 +40,10 @@ func resourceClusterSettings() *schema.Resource {
 func resourceClusterSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	name := d.Get("name").(string)
+	clusterName := d.Get("cluster_name").(string)
 
 	cs := ClusterSettings{
-		ClusterName: name,
+		ClusterName: clusterName,
 	}
 
 	_, err := DoRequest[ClusterSettings, ClusterSettings](c, PUT, ClusterSettingsEndpoint, &cs)
@@ -65,7 +65,7 @@ func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("name", cs.ClusterName); err != nil {
+	if err := d.Set("cluster_name", cs.ClusterName); err != nil {
 		return diag.FromErr(err)
 	}
 	return diags
@@ -74,10 +74,10 @@ func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m 
 func resourceClusterSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	name := d.Get("name").(string)
+	clusterName := d.Get("cluster_name").(string)
 
 	cs := ClusterSettings{
-		ClusterName: name,
+		ClusterName: clusterName,
 	}
 
 	_, err := DoRequest[ClusterSettings, ClusterSettings](c, PUT, ClusterSettingsEndpoint, &cs)
