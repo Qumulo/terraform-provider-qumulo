@@ -9,23 +9,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const MonitorEndpoint = "/v1/support/settings"
+const MonitoringEndpoint = "/v1/support/settings"
 
-type MonitorSettings struct {
+type MonitoringSettings struct {
 	Enabled             bool   `json:"enabled"`
-	MQHost              string `json:"mq_host"`
-	MQPort              int    `json:"mq_port"`
-	MQProxyHost         string `json:"mq_proxy_host"`
-	MQProxyPort         int    `json:"mq_proxy_port"`
+	MqHost              string `json:"mq_host"`
+	MqPort              int    `json:"mq_port"`
+	MqProxyHost         string `json:"mq_proxy_host"`
+	MqProxyPort         int    `json:"mq_proxy_port"`
 	S3ProxyHost         string `json:"s3_proxy_host"`
 	S3ProxyPort         int    `json:"s3_proxy_port"`
-	S3ProxyDisableHTTPS bool   `json:"s3_proxy_disable_https"`
-	VPNEnabled          bool   `json:"vpn_enabled"`
-	VPNHost             string `json:"vpn_host"`
+	S3ProxyDisableHttps bool   `json:"s3_proxy_disable_https"`
+	VpnEnabled          bool   `json:"vpn_enabled"`
+	VpnHost             string `json:"vpn_host"`
 	Period              int    `json:"period"`
 }
 
-type MonitorResponse struct {
+type MonitoringResponse struct {
 	MonitorUri string `json:"monitor_uri"`
 }
 
@@ -94,21 +94,21 @@ func resourceMonitoring() *schema.Resource {
 func resourceMonitoringCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	MonitoringConfig := MonitorSettings{
+	MonitoringConfig := MonitoringSettings{
 		Enabled:             d.Get("enabled").(bool),
-		MQHost:              d.Get("mq_host").(string),
-		MQPort:              d.Get("mq_port").(int),
-		MQProxyHost:         d.Get("mq_proxy_host").(string),
-		MQProxyPort:         d.Get("mq_proxy_port").(int),
+		MqHost:              d.Get("mq_host").(string),
+		MqPort:              d.Get("mq_port").(int),
+		MqProxyHost:         d.Get("mq_proxy_host").(string),
+		MqProxyPort:         d.Get("mq_proxy_port").(int),
 		S3ProxyHost:         d.Get("s3_proxy_host").(string),
 		S3ProxyPort:         d.Get("s3_proxy_port").(int),
-		S3ProxyDisableHTTPS: d.Get("s3_proxy_disable_https").(bool),
-		VPNEnabled:          d.Get("vpn_enabled").(bool),
-		VPNHost:             d.Get("vpn_host").(string),
+		S3ProxyDisableHttps: d.Get("s3_proxy_disable_https").(bool),
+		VpnEnabled:          d.Get("vpn_enabled").(bool),
+		VpnHost:             d.Get("vpn_host").(string),
 		Period:              d.Get("period").(int),
 	}
 
-	_, err := DoRequest[MonitorSettings, MonitorResponse](c, PUT, MonitorEndpoint, &MonitoringConfig)
+	_, err := DoRequest[MonitoringSettings, MonitoringResponse](c, PUT, MonitoringEndpoint, &MonitoringConfig)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -124,20 +124,20 @@ func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	var errs ErrorCollection
 
-	settings, err := DoRequest[MonitorSettings, MonitorSettings](c, GET, MonitorEndpoint, nil)
+	settings, err := DoRequest[MonitoringSettings, MonitoringSettings](c, GET, MonitoringEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	errs.addMaybeError(d.Set("enabled", settings.Enabled))
-	errs.addMaybeError(d.Set("mq_host", settings.MQHost))
-	errs.addMaybeError(d.Set("mq_port", settings.MQPort))
-	errs.addMaybeError(d.Set("mq_proxy_host", settings.MQProxyHost))
-	errs.addMaybeError(d.Set("mq_proxy_port", settings.MQProxyPort))
+	errs.addMaybeError(d.Set("mq_host", settings.MqHost))
+	errs.addMaybeError(d.Set("mq_port", settings.MqPort))
+	errs.addMaybeError(d.Set("mq_proxy_host", settings.MqProxyHost))
+	errs.addMaybeError(d.Set("mq_proxy_port", settings.MqProxyPort))
 	errs.addMaybeError(d.Set("s3_proxy_host", settings.S3ProxyHost))
 	errs.addMaybeError(d.Set("s3_proxy_port", settings.S3ProxyPort))
-	errs.addMaybeError(d.Set("s3_proxy_disable_https", settings.S3ProxyDisableHTTPS))
-	errs.addMaybeError(d.Set("vpn_enabled", settings.VPNEnabled))
-	errs.addMaybeError(d.Set("vpn_host", settings.VPNHost))
+	errs.addMaybeError(d.Set("s3_proxy_disable_https", settings.S3ProxyDisableHttps))
+	errs.addMaybeError(d.Set("vpn_enabled", settings.VpnEnabled))
+	errs.addMaybeError(d.Set("vpn_host", settings.VpnHost))
 	errs.addMaybeError(d.Set("period", settings.Period))
 
 	return errs.diags
