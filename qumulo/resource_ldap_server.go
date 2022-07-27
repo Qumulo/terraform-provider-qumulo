@@ -169,12 +169,13 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 	errs.addMaybeError(d.Set("password", ls.Password))
 	errs.addMaybeError(d.Set("base_distinguished_names", ls.BaseDistinguishedNames))
 	errs.addMaybeError(d.Set("ldap_schema", ls.LdapSchema))
+	errs.addMaybeError(d.Set("encrypt_connection", ls.EncryptConnection))
+
 	err = d.Set("ldap_schema_description", flattenLdapSchemaDescription(
 		ls.LdapSchemaDescription))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error setting Ldap schema description: %w", err))
 	}
-	errs.addMaybeError(d.Set("encrypt_connection", ls.EncryptConnection))
 	return errs.diags
 }
 
