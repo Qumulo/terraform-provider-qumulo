@@ -11,20 +11,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-type LDAPSchema int
+type LdapSchema int
 
 const (
-	RFC2307 LDAPSchema = iota + 1
+	RFC2307 LdapSchema = iota + 1
 	CUSTOM
 )
 
-func (e LDAPSchema) String() string {
-	return ldapSchemaList[e-1]
+func (e LdapSchema) String() string {
+	return LdapSchemaList[e-1]
 }
 
 const LdapServerEndpoint = "/v2/ldap/settings"
 
-type LdapServerSettings struct {
+type LdapServerSettingsBody struct {
 	UseLdap                bool                  `json:"use_ldap"`
 	BindUri                string                `json:"bind_uri"`
 	User                   string                `json:"user"`
@@ -46,7 +46,7 @@ type LdapSchemaDescription struct {
 	GidNumberAttribute           string `json:"gid_number_attribute"`
 }
 
-var ldapSchemaList = []string{"RFC2307", "CUSTOM"}
+var LdapSchemaList = []string{"RFC2307", "CUSTOM"}
 
 func resourceLdapServer() *schema.Resource {
 	return &schema.Resource{
@@ -88,7 +88,7 @@ func resourceLdapServer() *schema.Resource {
 			"ldap_schema": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ldapSchemaList, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(LdapSchemaList, false)),
 				Default:          RFC2307,
 			},
 			"ldap_schema_description": {
@@ -142,9 +142,9 @@ func resourceLdapServer() *schema.Resource {
 }
 
 func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
+	c := m.(*Client)
 
-	ldapSettings := LdapServerSettings{
+	ldapServerSettings := LdapServerSettingsBody{
 		UseLdap:                d.Get("use_ldap").(bool),
 		BindUri:                d.Get("bind_uri").(string),
 		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
@@ -154,14 +154,14 @@ func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if v := d.Get("user").(string); v != "" {
-		ldapSettings.User = v
+		ldapServerSettings.User = v
 	}
 
 	if v := d.Get("password").(string); v != "" {
-		ldapSettings.Password = v
+		ldapServerSettings.Password = v
 	}
 
-	_, err := DoRequest[LdapServerSettings, LdapServerSettings](client, PUT, LdapServerEndpoint, &ldapSettings)
+	_, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](c, PUT, LdapServerEndpoint, &ldapServerSettings)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -175,14 +175,13 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	var errs ErrorCollection
 
-	ls, err := DoRequest[LdapServerSettings, LdapServerSettings](c, GET, LdapServerEndpoint, nil)
+	ls, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](c, GET, LdapServerEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	errs.addMaybeError(d.Set("use_ldap", ls.UseLdap))
 	errs.addMaybeError(d.Set("bind_uri", ls.BindUri))
 	errs.addMaybeError(d.Set("user", ls.User))
-
 	errs.addMaybeError(d.Set("password", ls.Password))
 	errs.addMaybeError(d.Set("base_distinguished_names", ls.BaseDistinguishedNames))
 	errs.addMaybeError(d.Set("ldap_schema", ls.LdapSchema))
@@ -197,9 +196,9 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
+	c := m.(*Client)
 
-	ldapSettings := LdapServerSettings{
+	ldapServerSettings := LdapServerSettingsBody{
 		UseLdap:                d.Get("use_ldap").(bool),
 		BindUri:                d.Get("bind_uri").(string),
 		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
@@ -209,14 +208,14 @@ func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if v := d.Get("user").(string); v != "" {
-		ldapSettings.User = v
+		ldapServerSettings.User = v
 	}
 
 	if v := d.Get("password").(string); v != "" {
-		ldapSettings.Password = v
+		ldapServerSettings.Password = v
 	}
 
-	_, err := DoRequest[LdapServerSettings, LdapServerSettings](client, PATCH, LdapServerEndpoint, &ldapSettings)
+	_, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](c, PATCH, LdapServerEndpoint, &ldapServerSettings)
 	if err != nil {
 		return diag.FromErr(err)
 	}
