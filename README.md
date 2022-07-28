@@ -8,3 +8,12 @@ The Terraform Qumulo provider is a plugin for Terraform that allows for the upda
 - Monitoring
 - SSL/SSL CA
 - LDAP
+
+## To Run Acceptance Tests
+First, set the TF_ACC environment variable (any value works, but 1 is conventional)
+
+    export TF_ACC=1
+
+Then, run the following command
+
+    make testwip
