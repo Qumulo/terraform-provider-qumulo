@@ -12,7 +12,7 @@ import (
 
 const SmbServerEndpoint = "/v1/smb/settings"
 
-type SmbServerRequest struct {
+type SmbServerBody struct {
 	SessionEncryption               string   `json:"session_encryption"`
 	SupportedDialects               []string `json:"supported_dialects"`
 	HideSharesFromUnauthorizedUsers bool     `json:"hide_shares_from_unauthorized_users"`
@@ -90,7 +90,7 @@ func resourceSmbServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 		dialects[i] = dial.(string)
 	}
 
-	smbServerConfig := SmbServerRequest{
+	smbServerConfig := SmbServerBody{
 		SessionEncryption:               d.Get("session_encryption").(string),
 		SupportedDialects:               dialects,
 		HideSharesFromUnauthorizedUsers: d.Get("hide_shares_from_unauthorized_users").(bool),
@@ -100,7 +100,7 @@ func resourceSmbServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 		SigningRequired:                 d.Get("signing_required").(bool),
 	}
 
-	_, err := DoRequest[SmbServerRequest, SmbServerRequest](c, PUT, SmbServerEndpoint, &smbServerConfig)
+	_, err := DoRequest[SmbServerBody, SmbServerBody](c, PUT, SmbServerEndpoint, &smbServerConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,7 +115,7 @@ func resourceSmbServerRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	var errs ErrorCollection
 
-	smbSettings, err := DoRequest[SmbServerRequest, SmbServerRequest](c, GET, SmbServerEndpoint, nil)
+	smbSettings, err := DoRequest[SmbServerBody, SmbServerBody](c, GET, SmbServerEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}

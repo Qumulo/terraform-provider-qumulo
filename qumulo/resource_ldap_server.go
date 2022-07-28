@@ -19,7 +19,7 @@ const (
 )
 
 func (e LdapSchema) String() string {
-	return LdapSchemaList[e-1]
+	return LdapSchemaValues[e-1]
 }
 
 const LdapServerEndpoint = "/v2/ldap/settings"
@@ -46,7 +46,7 @@ type LdapSchemaDescription struct {
 	GidNumberAttribute           string `json:"gid_number_attribute"`
 }
 
-var LdapSchemaList = []string{"RFC2307", "CUSTOM"}
+var LdapSchemaValues = []string{"RFC2307", "CUSTOM"}
 
 func resourceLdapServer() *schema.Resource {
 	return &schema.Resource{
@@ -88,7 +88,7 @@ func resourceLdapServer() *schema.Resource {
 			"ldap_schema": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(LdapSchemaList, false)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(LdapSchemaValues, false)),
 				Default:          RFC2307,
 			},
 			"ldap_schema_description": {
