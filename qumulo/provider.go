@@ -56,16 +56,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 
 	var diags diag.Diagnostics
 
-	if (username != "") && (password != "") {
-		c, err := NewClient(&host, &port, &username, &password)
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-
-		return c, diags
-	}
-
-	c, err := NewClient(nil, nil, nil, nil)
+	c, err := NewClient(&host, &port, &username, &password)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}

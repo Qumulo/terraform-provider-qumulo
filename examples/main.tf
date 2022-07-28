@@ -8,28 +8,46 @@ terraform {
   }
 }
 
-provider "qumulo" {
-  username = "admin"
-  password = "Admin123"
-  host= "10.116.10.215"
-  port= "17728"
-}
+# provider "qumulo" {
+#   username = "admin"
+#   password = "Admin123"
+#   host= "10.116.10.215"
+#   port= "17728"
+# }
 
 variable "some_cluster_name" {
   type    = string
   default = "InigoMontoya"
 }
-
-resource "qumulo_cluster_name" "update_name" {
-  cluster_name = var.some_cluster_name
+variable "some_cert" {
+  type    = string
+  default = <<CERTDELIM
+-----BEGIN CERTIFICATE-----
+MIICIDCCAYmgAwIBAgIUZcdqCxZB1O4RD548ygFhGBXxQdQwDQYJKoZIhvcNAQEL
+BQAwIjEPMA0GA1UEAwwGVGVzdENBMQ8wDQYDVQQKDAZRdW11bG8wHhcNMjIwNzIy
+MTcwOTI4WhcNMzIwNzE5MTcwOTI4WjAiMQ8wDQYDVQQDDAZUZXN0Q0ExDzANBgNV
+BAoMBlF1bXVsbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAv9Xupp43GfpI
+0bVkB1BIa0ZBt5hpjxgee5PKwn3pbcg/M0M4qGhtX9/DR4utMqMib+X517hyo18E
+Vd+gZa0plafaPfwzz8YkO2EovYEFIaBxgqYkTQ0YZVt40cWEMMCWuyPndX0bvOrW
+1f5zvOcc0+dDXoiqbhUDKiXBfzK745UCAwEAAaNTMFEwHQYDVR0OBBYEFKYiYrFK
+cZcR+gDTAqxV6u81B9htMB8GA1UdIwQYMBaAFKYiYrFKcZcR+gDTAqxV6u81B9ht
+MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADgYEAjPXNGT38WwyWu4Xe
+Wngxmk0OIKZthsbZVDxSti3mse7KWadb6EkaRM/ZIO9CFPyB67zh3KAwhKiMbPVE
+JH62qN5t5xoqdDzzuOUHw1SSF78lfMAWk84TplzXegdysXjYFVhxvqYV9DIEhsTw
+HjX0jrbwN2tDfjTKNQwi7P7RPDY=
+-----END CERTIFICATE-----
+CERTDELIM
 }
+
+# resource "qumulo_cluster_name" "update_name" {
+#   name = var.some_cluster_name
+# }
 
 # resource "qumulo_ad_settings" "ad_settings" {
 #   signing = "WANT_SIGNING"
 #   sealing = "WANT_SEALING"
 #   crypto = "WANT_AES"
 #   domain = "ad.eng.qumulo.com"
-#   domain_netbios = "AD"
 #   ad_username = "Administrator"
 #   ad_password = "a"
 #   use_ad_posix_attributes = false
@@ -95,10 +113,10 @@ resource "qumulo_nfs_export" "new_nfs_export" {
 #   allow_fs_path_create = true
 # }
 
-# resource "qumulo_ssl_cert" "update_ssl" {
-#   certificate = var.some_cert
-#   private_key = var.some_key
-# }
+//resource "qumulo_ssl_cert" "update_ssl" {
+//  certificate = var.some_cert
+//  private_key = var.some_key
+//}
 
 # resource "qumulo_ssl_ca" "update_ssl_ca" {
 #   ca_certificate = var.some_cert
@@ -136,9 +154,9 @@ resource "qumulo_nfs_export" "new_nfs_export" {
 #   value = qumulo_monitoring.update_monitoring
 # }
 
-output "some_name" {
-  value = qumulo_cluster_name.update_name
-}
+# output "some_name" {
+#   value = qumulo_cluster_name.update_name
+# }
 
 # output "some_authority" {
 #   value = qumulo_ssl_ca.update_ssl_ca

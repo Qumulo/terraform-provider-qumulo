@@ -15,11 +15,6 @@ type SslCaRequest struct {
 	CaCertificate string `json:"ca_certificate"`
 }
 
-// TODO: Figure out what the proper response for an SSL CA update is
-type SslCaResponse struct {
-	Placeholder string `json:"placeholder"`
-}
-
 func resourceSslCa() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceSslCaCreate,
@@ -49,7 +44,7 @@ func resourceSslCaCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		CaCertificate: d.Get("ca_certificate").(string),
 	}
 
-	_, err := DoRequest[SslCaRequest, SslCaResponse](c, PUT, SslCaEndpoint, &sslCaConfig)
+	_, err := DoRequest[SslCaRequest, SslCaRequest](c, PUT, SslCaEndpoint, &sslCaConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -81,7 +76,17 @@ func resourceSslCaUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*Client)
+
 	var diags diag.Diagnostics
+
+	_, err := DoRequest[SslCaRequest, SslCaRequest](c, DELETE, SslCaEndpoint, nil)
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId("")
 
 	return diags
 }

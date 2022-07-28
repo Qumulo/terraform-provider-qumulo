@@ -23,9 +23,7 @@ type SmbServerBody struct {
 }
 
 var SmbEncryptionSettings = []string{"NONE", "PREFERRED", "REQUIRED"}
-var SmbValidDialects = []string{"SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1", "SMB2_DIALECT_3_0", "SMB2_DIALECT_3_11",
-	"API_SMB2_DIALECT_2_002", "API_SMB2_DIALECT_2_1", "API_SMB2_DIALECT_3_0",
-	"API_SMB2_DIALECT_3_11"}
+var SmbValidDialects = []string{"SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1", "SMB2_DIALECT_3_0", "SMB2_DIALECT_3_11"}
 var SmbSnapshotDirectoryMode = []string{"DISABLED", "HIDDEN", "VISIBLE"}
 
 func resourceSmbServer() *schema.Resource {
