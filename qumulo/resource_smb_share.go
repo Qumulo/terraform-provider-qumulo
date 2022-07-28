@@ -38,10 +38,10 @@ type Permission struct {
 
 func resourceSmbShare() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceNfsExportCreate,
-		ReadContext:   resourceNfsExportRead,
-		UpdateContext: resourceNfsExportUpdate,
-		DeleteContext: resourceNfsExportDelete,
+		CreateContext: resourceSmbShareCreate,
+		ReadContext:   resourceSmbShareRead,
+		UpdateContext: resourceSmbShareUpdate,
+		DeleteContext: resourceSmbShareDelete,
 		Schema: map[string]*schema.Schema{
 			"id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -163,58 +163,62 @@ func resourceSmbShare() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"allow_fs_path_create": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 		},
 	}
 }
 
-func resourceNfsExportCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSmbShareCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
-	nfsExport := NFSExport{
+	smbShare := SMBShare{
 		ExportPath:             d.Get("export_path").(string),
 		FsPath:                 d.Get("fs_path").(string),
 		Description:            d.Get("description").(string),
 		Restrictions:           expandRestrictions(d.Get("restrictions").([]interface{})),
 		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
 	}
-	createNfsExportUri := NFSExportEndpoint
+	createSmbSharetUri := SMBSharesEndpoint
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
-		createNfsExportUri = createNfsExportUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
+		createSmbSharetUri = SMBSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
 
-	res, err := DoRequest[NFSExport, NFSExport](client, POST, createNfsExportUri, &nfsExport)
+	res, err := DoRequest[SMBShare, SMBShare](client, POST, createSmbSharetUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(res.Id)
 
-	return resourceNfsExportRead(ctx, d, m)
+	return resourceSmbShareRead(ctx, d, m)
 
 }
 
-func resourceNfsExportRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
 	var errs ErrorCollection
-	nfsExportId := d.Id()
-	getNfsExportByIdUri := NFSExportEndpoint + nfsExportId
-	nfsExport, err := DoRequest[NFSExport, NFSExport](client, GET, getNfsExportByIdUri, nil)
+	smbShareId := d.Id()
+	getSmbShareByIdUri := SMBSharesEndpoint + smbShareId
+	smbShare, err := DoRequest[SMBShare, SMBShare](client, GET, getSmbShareByIdUri, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	errs.addMaybeError(d.Set("id", nfsExportId))
-	errs.addMaybeError(d.Set("export_path", nfsExport.ExportPath))
-	errs.addMaybeError(d.Set("fs_path", nfsExport.FsPath))
-	errs.addMaybeError(d.Set("description", nfsExport.Description))
-	errs.addMaybeError(d.Set("restrictions", flattenNfsRestrictions(nfsExport.Restrictions)))
-	errs.addMaybeError(d.Set("fields_to_present_as_32_bit", nfsExport.FieldsToPresentAs32Bit))
+	errs.addMaybeError(d.Set("id", smbShareId))
+	errs.addMaybeError(d.Set("export_path", smbShare.ExportPath))
+	errs.addMaybeError(d.Set("fs_path", smbShare.FsPath))
+	errs.addMaybeError(d.Set("description", smbShare.Description))
+	errs.addMaybeError(d.Set("restrictions", flattenNfsRestrictions(smbShare.Restrictions)))
+	errs.addMaybeError(d.Set("fields_to_present_as_32_bit", smbShare.FieldsToPresentAs32Bit))
 
 	return errs.diags
 }
 
-func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
-	nfsExport := NFSExport{
+	smbShare := SMBShare{
 		Id:                     d.Get("id").(string),
 		ExportPath:             d.Get("export_path").(string),
 		FsPath:                 d.Get("fs_path").(string),
@@ -222,26 +226,26 @@ func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		Restrictions:           expandRestrictions(d.Get("restrictions").([]interface{})),
 		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
 	}
-	nfsExportId := d.Id()
-	updateNfsExportByIdUri := NFSExportEndpoint + nfsExportId
+	smbShareId := d.Id()
+	updateSmbShareByIdUri := SMBSharesEndpoint + smbShareId
 
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
-		updateNfsExportByIdUri = updateNfsExportByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
+		updateSmbShareByIdUri = updateSmbShareByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
 
-	_, err := DoRequest[NFSExport, NFSExport](client, PATCH, updateNfsExportByIdUri, &nfsExport)
+	_, err := DoRequest[SMBShare, SMBShare](client, PATCH, updateSmbShareByIdUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceNfsExportRead(ctx, d, m)
+	return resourceSmbShareRead(ctx, d, m)
 }
 
-func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 	var diags diag.Diagnostics
-	nfsExportId := d.Id()
-	_, err := DoRequest[string, NFSExport](client, DELETE, NFSExportEndpoint, &nfsExportId)
+	smbShareId := d.Id()
+	_, err := DoRequest[string, SMBShare](client, DELETE, SMBSharesEndpoint, &smbShareId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
