@@ -19,21 +19,38 @@ var rights = []string{"READ", "WRITE", "CHANGE_PERMISSIONS"}
 // var fields = []string{"FILE_IDS", "FILE_SIZES", "FS_SIZE", "ALL"}
 
 type SMBShare struct {
-	Id                     string        `json:"id"`
-	ExportPath             string        `json:"export_path"`
-	FsPath                 string        `json:"fs_path"`
-	Description            string        `json:"description"`
-	Restrictions           []Permission  `json:"restrictions"`
-	FieldsToPresentAs32Bit []interface{} `json:"fields_to_present_as_32_bit"`
+	Id                     string              `json:"id"`
+	ShareName              string              `json:"share_name"`
+	FsPath                 string              `json:"fs_path"`
+	Description            string              `json:"description"`
+	Permissions            []Permission        `json:"permissions"`
+	NetworkPermissions     []NetworkPermission `json:"network_permissions"`
+	AccessBasedEnumEnabled bool                `json:"access_based_enumeration_enabled"`
+	DefaultFileCreateMode  string              `json:"default_file_create_mode"`
+	DefaultDirCreateMode   string              `json:"default_directory_create_mode"`
+	BytesPerSector         string              `json:"bytes_per_sector"`
+	RequireEncryption      bool                `json:"require_encryption"`
 }
 
 type Permission struct {
-	HostRestrictions      []string               `json:"host_restrictions"`
-	ReadOnly              bool                   `json:"read_only"`
-	RequirePrivilegedPort bool                   `json:"require_privileged_port"`
-	UserMapping           string                 `json:"user_mapping"`
-	MapToUser             map[string]interface{} `json:"map_to_user,omitempty"`
-	MapToGroup            map[string]interface{} `json:"map_to_group,omitempty"`
+	Type    string   `json:"type"`
+	Trustee Trustee  `json:"trustee"`
+	Rights  []string `json:"rights`
+}
+
+type NetworkPermission struct {
+	Type         string   `json:"type"`
+	AddressRange []string `json:"address_ranges"`
+	Rights       []string `json:"rights"`
+}
+
+type Trustee struct {
+	Domain string `json:"domain"`
+	AuthId string `json:"auth_id"`
+	UID    string `json:"uid"`
+	GID    string `json:"GID"`
+	SID    string `json:"sid"`
+	Name   string `json:"name"`
 }
 
 func resourceSmbShare() *schema.Resource {
@@ -82,15 +99,15 @@ func resourceSmbShare() *schema.Resource {
 										Required: true,
 									},
 									"auth_id": {
-										Type:     schema.TypeInt,
+										Type:     schema.TypeString,
 										Required: true,
 									},
 									"uid": {
-										Type:     schema.TypeInt,
+										Type:     schema.TypeString,
 										Optional: true,
 									},
 									"gid": {
-										Type:     schema.TypeInt,
+										Type:     schema.TypeString,
 										Optional: true,
 									},
 									"sid": {
