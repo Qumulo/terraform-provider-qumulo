@@ -41,7 +41,7 @@ func Provider() *schema.Provider {
 			"qumulo_ssl_ca":       resourceSSLCA(),
 			"qumulo_monitoring":   resourceMonitoring(),
 			"qumulo_nfs_export":   resourceNfsExport(),
-			"qumulo_smb_server":   resourceSMBServer(),
+			"qumulo_smb_server":   resourceSmbServer(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
