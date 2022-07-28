@@ -9,24 +9,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const SSLEndpoint = "/v2/cluster/settings/ssl/certificate"
+const SslEndpoint = "/v2/cluster/settings/ssl/certificate"
 
-type SSLRequest struct {
+type SslRequest struct {
 	Certificate string `json:"certificate"`
 	PrivateKey  string `json:"private_key"`
 }
 
 // TODO: Figure out what the proper response for an SSL update is
-type SSLResponse struct {
+type SslResponse struct {
 	Placeholder string `json:"placeholder"`
 }
 
-func resourceSSL() *schema.Resource {
+func resourceSsl() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceSSLCreate,
-		ReadContext:   resourceSSLRead,
-		UpdateContext: resourceSSLUpdate,
-		DeleteContext: resourceSSLDelete,
+		CreateContext: resourceSslCreate,
+		ReadContext:   resourceSslRead,
+		UpdateContext: resourceSslUpdate,
+		DeleteContext: resourceSslDelete,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(1 * time.Minute),
@@ -47,17 +47,17 @@ func resourceSSL() *schema.Resource {
 	}
 }
 
-func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSslCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
 	var diags diag.Diagnostics
 
-	SSLConfig := SSLRequest{
+	sslConfig := SslRequest{
 		Certificate: d.Get("certificate").(string),
 		PrivateKey:  d.Get("private_key").(string),
 	}
 
-	_, err := DoRequest[SSLRequest, SSLResponse](c, PUT, SSLEndpoint, &SSLConfig)
+	_, err := DoRequest[SslRequest, SslResponse](c, PUT, SslEndpoint, &sslConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -68,17 +68,17 @@ func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	return diags
 }
 
-func resourceSSLRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSslRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	return diags
 }
 
-func resourceSSLUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSSLCreate(ctx, d, m)
+func resourceSslUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return resourceSslCreate(ctx, d, m)
 }
 
-func resourceSSLDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSslDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	return diags

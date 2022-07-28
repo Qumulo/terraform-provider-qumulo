@@ -9,23 +9,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const SSLCAEndpoint = "/v2/cluster/settings/ssl/ca-certificate"
+const SslCaEndpoint = "/v2/cluster/settings/ssl/ca-certificate"
 
-type SSLCARequest struct {
-	Certificate string `json:"ca_certificate"`
+type SslCaRequest struct {
+	CaCertificate string `json:"ca_certificate"`
 }
 
 // TODO: Figure out what the proper response for an SSL CA update is
-type SSLCAResponse struct {
+type SslCaResponse struct {
 	Placeholder string `json:"placeholder"`
 }
 
-func resourceSSLCA() *schema.Resource {
+func resourceSslCa() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceSSLCACreate,
-		ReadContext:   resourceSSLCARead,
-		UpdateContext: resourceSSLCAUpdate,
-		DeleteContext: resourceSSLCADelete,
+		CreateContext: resourceSslCaCreate,
+		ReadContext:   resourceSslCaRead,
+		UpdateContext: resourceSslCaUpdate,
+		DeleteContext: resourceSslCaDelete,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(1 * time.Minute),
@@ -42,45 +42,45 @@ func resourceSSLCA() *schema.Resource {
 	}
 }
 
-func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSslCaCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	SSLCAConfig := SSLCARequest{
-		Certificate: d.Get("ca_certificate").(string),
+	sslCaConfig := SslCaRequest{
+		CaCertificate: d.Get("ca_certificate").(string),
 	}
 
-	_, err := DoRequest[SSLCARequest, SSLCAResponse](c, PUT, SSLCAEndpoint, &SSLCAConfig)
+	_, err := DoRequest[SslCaRequest, SslCaResponse](c, PUT, SslCaEndpoint, &sslCaConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
-	return resourceSSLCARead(ctx, d, m)
+	return resourceSslCaRead(ctx, d, m)
 }
 
-func resourceSSLCARead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSslCaRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
 	var diags diag.Diagnostics
 
-	cert, err := DoRequest[SSLCARequest, SSLCARequest](c, GET, SSLCAEndpoint, nil)
-
+	cert, err := DoRequest[SslCaRequest, SslCaRequest](c, GET, SslCaEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("ca_certificate", cert.Certificate); err != nil {
+
+	if err := d.Set("ca_certificate", cert.CaCertificate); err != nil {
 		return diag.FromErr(err)
 	}
 
 	return diags
 }
 
-func resourceSSLCAUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSSLCACreate(ctx, d, m)
+func resourceSslCaUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return resourceSslCaCreate(ctx, d, m)
 }
 
-func resourceSSLCADelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	return diags
