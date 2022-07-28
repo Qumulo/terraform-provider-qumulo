@@ -11,7 +11,7 @@ import (
 
 const SslCaEndpoint = "/v2/cluster/settings/ssl/ca-certificate"
 
-type SslCaRequest struct {
+type SslCaBody struct {
 	CaCertificate string `json:"ca_certificate"`
 }
 
@@ -40,11 +40,11 @@ func resourceSslCa() *schema.Resource {
 func resourceSslCaCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	sslCaConfig := SslCaRequest{
+	sslCaConfig := SslCaBody{
 		CaCertificate: d.Get("ca_certificate").(string),
 	}
 
-	_, err := DoRequest[SslCaRequest, SslCaRequest](c, PUT, SslCaEndpoint, &sslCaConfig)
+	_, err := DoRequest[SslCaBody, SslCaBody](c, PUT, SslCaEndpoint, &sslCaConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -59,7 +59,7 @@ func resourceSslCaRead(ctx context.Context, d *schema.ResourceData, m interface{
 
 	var diags diag.Diagnostics
 
-	cert, err := DoRequest[SslCaRequest, SslCaRequest](c, GET, SslCaEndpoint, nil)
+	cert, err := DoRequest[SslCaBody, SslCaBody](c, GET, SslCaEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -80,7 +80,7 @@ func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interfac
 
 	var diags diag.Diagnostics
 
-	_, err := DoRequest[SslCaRequest, SslCaRequest](c, DELETE, SslCaEndpoint, nil)
+	_, err := DoRequest[SslCaBody, SslCaBody](c, DELETE, SslCaEndpoint, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
