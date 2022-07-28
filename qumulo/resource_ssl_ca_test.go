@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -28,7 +29,26 @@ func TestAccSetSSLCA(t *testing.T) {
 	})
 }
 
+func TestAccSetSSLCA_ExpectError(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSSLCAConfig(invalidCert),
+				// Invalid certificate should raise an error
+				ExpectError: regexp.MustCompile("ssl_certificate_invalid_error"),
+			},
+		},
+	})
+}
+
 var defaultSSLCAConfig = " "
+
+var invalidCert = SSLCARequest{
+	Certificate: "Not a valid certificate",
+}
 
 var testingSSLCACert = SSLCARequest{
 	Certificate: `-----BEGIN CERTIFICATE-----
