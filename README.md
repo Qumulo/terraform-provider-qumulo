@@ -10,9 +10,12 @@ The Terraform Qumulo provider is a plugin for Terraform that allows for the upda
 - LDAP
 
 ## To Run Acceptance Tests
-First, set the TF_ACC environment variable (any value works, but 1 is conventional)
+First, set the following environment variables, specifying the host and port of the cluster you wish to test on, and the appropriate credentials to log in to that cluster
 
-    export TF_ACC=1
+    export QUMULO_HOST={host}
+    export QUMULO_PORT={port}
+    export QUMULO_USERNAME={username}
+    export QUMULO_PASSWORD={password}
 
 Then, run the following command
 
