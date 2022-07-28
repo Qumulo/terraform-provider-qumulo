@@ -15,11 +15,6 @@ type SSLCARequest struct {
 	Certificate string `json:"ca_certificate"`
 }
 
-// TODO: Figure out what the proper response for an SSL CA update is
-type SSLCAResponse struct {
-	Placeholder string `json:"placeholder"`
-}
-
 func resourceSSLCA() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceSSLCACreate,
@@ -42,7 +37,7 @@ func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interfac
 		Certificate: d.Get("ca_certificate").(string),
 	}
 
-	_, err := DoRequest[SSLCARequest, SSLCAResponse](c, PUT, SSLCAEndpoint, &SSLCAConfig)
+	_, err := DoRequest[SSLCARequest, SSLCARequest](c, PUT, SSLCAEndpoint, &SSLCAConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -53,7 +48,6 @@ func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceSSLCARead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	c := m.(*Client)
 
 	var diags diag.Diagnostics
@@ -75,8 +69,17 @@ func resourceSSLCAUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceSSLCADelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+	c := m.(*Client)
+
 	var diags diag.Diagnostics
+
+	_, err := DoRequest[SSLCARequest, SSLCARequest](c, DELETE, SSLCAEndpoint, nil)
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId("")
 
 	return diags
 }
