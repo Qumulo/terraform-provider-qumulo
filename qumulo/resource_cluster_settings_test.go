@@ -44,7 +44,7 @@ func TestAccChangeClusterName(t *testing.T) {
 func testAccClusterNameConf(name string) string {
 	return fmt.Sprintf(`
 resource "qumulo_cluster_name" "update_name" {
-	name = %[1]q
+	name = %q
 }
 `, name)
 }
