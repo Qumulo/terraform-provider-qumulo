@@ -115,33 +115,25 @@ func resourceMonitoringCreate(ctx context.Context, d *schema.ResourceData, m int
 func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-	errs := make([]error, 0)
+	var errs ErrorCollection
 
 	settings, err := DoRequest[MonitorSettings, MonitorSettings](c, GET, MonitorEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	errs = append(errs, d.Set("enabled", settings.Enabled))
-	errs = append(errs, d.Set("mq_host", settings.MQHost))
-	errs = append(errs, d.Set("mq_port", settings.MQPort))
-	errs = append(errs, d.Set("mq_proxy_host", settings.MQProxyHost))
-	errs = append(errs, d.Set("mq_proxy_port", settings.MQProxyPort))
-	errs = append(errs, d.Set("s3_proxy_host", settings.S3ProxyHost))
-	errs = append(errs, d.Set("s3_proxy_port", settings.S3ProxyPort))
-	errs = append(errs, d.Set("s3_proxy_disable_https", settings.S3ProxyDisableHTTPS))
-	errs = append(errs, d.Set("vpn_enabled", settings.VPNEnabled))
-	errs = append(errs, d.Set("vpn_host", settings.VPNHost))
-	errs = append(errs, d.Set("period", settings.Period))
+	errs.addMaybeError(d.Set("enabled", settings.Enabled))
+	errs.addMaybeError(d.Set("mq_host", settings.MQHost))
+	errs.addMaybeError(d.Set("mq_port", settings.MQPort))
+	errs.addMaybeError(d.Set("mq_proxy_host", settings.MQProxyHost))
+	errs.addMaybeError(d.Set("mq_proxy_port", settings.MQProxyPort))
+	errs.addMaybeError(d.Set("s3_proxy_host", settings.S3ProxyHost))
+	errs.addMaybeError(d.Set("s3_proxy_port", settings.S3ProxyPort))
+	errs.addMaybeError(d.Set("s3_proxy_disable_https", settings.S3ProxyDisableHTTPS))
+	errs.addMaybeError(d.Set("vpn_enabled", settings.VPNEnabled))
+	errs.addMaybeError(d.Set("vpn_host", settings.VPNHost))
+	errs.addMaybeError(d.Set("period", settings.Period))
 
-	for _, err := range errs {
-		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
-		}
-	}
-
-	return diags
+	return errs.diags
 }
 
 func resourceMonitoringUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

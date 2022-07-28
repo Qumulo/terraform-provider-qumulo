@@ -3,11 +3,12 @@ package qumulo
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strconv"
-	"time"
 )
 
 const LdapServerEndpoint = "/v2/ldap/settings"
@@ -134,12 +135,12 @@ func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m int
 		EncryptConnection:      d.Get("encrypt_connection").(bool),
 	}
 
-	if d.Get("user").(string) != "" {
-		ldapSettings.User = d.Get("user").(string)
+	if v := d.Get("user").(string); v != "" {
+		ldapSettings.User = v
 	}
 
-	if d.Get("password").(string) != "" {
-		ldapSettings.Password = d.Get("password").(string)
+	if v := d.Get("password").(string); v != "" {
+		ldapSettings.Password = v
 	}
 
 	_, err := DoRequest[LdapServerSettings, LdapServerSettings](client, PUT, LdapServerEndpoint, &ldapSettings)
@@ -155,26 +156,27 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 	c := m.(*Client)
 
 	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
+	var errs ErrorCollection
 
 	ls, err := DoRequest[LdapServerSettings, LdapServerSettings](c, GET, LdapServerEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.Set("use_ldap", ls.UseLdap)
-	d.Set("bind_uri", ls.BindUri)
-	d.Set("user", ls.User)
+	errs.addMaybeError(d.Set("use_ldap", ls.UseLdap))
+	errs.addMaybeError(d.Set("bind_uri", ls.BindUri))
+	errs.addMaybeError(d.Set("user", ls.User))
 
-	d.Set("password", ls.Password)
-	d.Set("base_distinguished_names", ls.BaseDistinguishedNames)
-	d.Set("ldap_schema", ls.LdapSchema)
+	errs.addMaybeError(d.Set("password", ls.Password))
+	errs.addMaybeError(d.Set("base_distinguished_names", ls.BaseDistinguishedNames))
+	errs.addMaybeError(d.Set("ldap_schema", ls.LdapSchema))
+	errs.addMaybeError(d.Set("encrypt_connection", ls.EncryptConnection))
+
 	err = d.Set("ldap_schema_description", flattenLdapSchemaDescription(
 		ls.LdapSchemaDescription))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error setting Ldap schema description: %w", err))
 	}
-	d.Set("encrypt_connection", ls.EncryptConnection)
-	return diags
+	return errs.diags
 }
 
 func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -189,12 +191,12 @@ func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m int
 		EncryptConnection:      d.Get("encrypt_connection").(bool),
 	}
 
-	if d.Get("user").(string) != "" {
-		ldapSettings.User = d.Get("user").(string)
+	if v := d.Get("user").(string); v != "" {
+		ldapSettings.User = v
 	}
 
-	if d.Get("password").(string) != "" {
-		ldapSettings.Password = d.Get("password").(string)
+	if v := d.Get("password").(string); v != "" {
+		ldapSettings.Password = v
 	}
 
 	_, err := DoRequest[LdapServerSettings, LdapServerSettings](client, PATCH, LdapServerEndpoint, &ldapSettings)
@@ -225,31 +227,31 @@ func expandLdapDescription(tfLdapSchemaDescriptions []interface{}) LdapSchemaDes
 	}
 
 	if v, ok := tfMap["group_member_attribute"].(string); ok && v != "" {
-		apiObject.GroupMemberAttribute = tfMap["group_member_attribute"].(string)
+		apiObject.GroupMemberAttribute = v
 	}
 
 	if v, ok := tfMap["user_group_identifier_attribute"].(string); ok && v != "" {
-		apiObject.UserGroupIdentifierAttribute = tfMap["user_group_identifier_attribute"].(string)
+		apiObject.UserGroupIdentifierAttribute = v
 	}
 
 	if v, ok := tfMap["login_name_attribute"].(string); ok && v != "" {
-		apiObject.LoginNameAttribute = tfMap["login_name_attribute"].(string)
+		apiObject.LoginNameAttribute = v
 	}
 
 	if v, ok := tfMap["group_name_attribute"].(string); ok && v != "" {
-		apiObject.GroupNameAttribute = tfMap["group_name_attribute"].(string)
+		apiObject.GroupNameAttribute = v
 	}
 	if v, ok := tfMap["user_object_class"].(string); ok && v != "" {
-		apiObject.UserObjectClass = tfMap["user_object_class"].(string)
+		apiObject.UserObjectClass = v
 	}
 	if v, ok := tfMap["group_object_class"].(string); ok && v != "" {
-		apiObject.GroupObjectClass = tfMap["group_object_class"].(string)
+		apiObject.GroupObjectClass = v
 	}
 	if v, ok := tfMap["uid_number_attribute"].(string); ok && v != "" {
-		apiObject.UidNumberAttribute = tfMap["uid_number_attribute"].(string)
+		apiObject.UidNumberAttribute = v
 	}
 	if v, ok := tfMap["gid_number_attribute"].(string); ok && v != "" {
-		apiObject.GidNumberAttribute = tfMap["gid_number_attribute"].(string)
+		apiObject.GidNumberAttribute = v
 	}
 	return apiObject
 }
@@ -258,35 +260,35 @@ func flattenLdapSchemaDescription(apiObject LdapSchemaDescription) []interface{}
 	tfMap := map[string]interface{}{}
 
 	if v := apiObject.GroupMemberAttribute; v != "" {
-		tfMap["group_member_attribute"] = apiObject.GroupMemberAttribute
+		tfMap["group_member_attribute"] = v
 	}
 
 	if v := apiObject.UserGroupIdentifierAttribute; v != "" {
-		tfMap["user_group_identifier_attribute"] = apiObject.UserGroupIdentifierAttribute
+		tfMap["user_group_identifier_attribute"] = v
 	}
 
 	if v := apiObject.LoginNameAttribute; v != "" {
-		tfMap["login_name_attribute"] = apiObject.LoginNameAttribute
+		tfMap["login_name_attribute"] = v
 	}
 
 	if v := apiObject.GroupNameAttribute; v != "" {
-		tfMap["group_name_attribute"] = apiObject.GroupNameAttribute
+		tfMap["group_name_attribute"] = v
 	}
 
 	if v := apiObject.UserObjectClass; v != "" {
-		tfMap["user_object_class"] = apiObject.UserObjectClass
+		tfMap["user_object_class"] = v
 	}
 
 	if v := apiObject.GroupObjectClass; v != "" {
-		tfMap["group_object_class"] = apiObject.GroupObjectClass
+		tfMap["group_object_class"] = v
 	}
 
 	if v := apiObject.UidNumberAttribute; v != "" {
-		tfMap["uid_number_attribute"] = apiObject.UidNumberAttribute
+		tfMap["uid_number_attribute"] = v
 	}
 
 	if v := apiObject.GidNumberAttribute; v != "" {
-		tfMap["gid_number_attribute"] = apiObject.GidNumberAttribute
+		tfMap["gid_number_attribute"] = v
 	}
 
 	return []interface{}{tfMap}
