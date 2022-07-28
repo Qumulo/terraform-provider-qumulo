@@ -190,13 +190,7 @@ func resourceSmbShare() *schema.Resource {
 
 func resourceSmbShareCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
-	smbShare := SMBShare{
-		ExportPath:             d.Get("export_path").(string),
-		FsPath:                 d.Get("fs_path").(string),
-		Description:            d.Get("description").(string),
-		Restrictions:           expandRestrictions(d.Get("restrictions").([]interface{})),
-		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
-	}
+	smbShare := initSmbShare(d)
 	createSmbSharetUri := SMBSharesEndpoint
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
 		createSmbSharetUri = SMBSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
@@ -235,14 +229,10 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
-	smbShare := SMBShare{
-		Id:                     d.Get("id").(string),
-		ExportPath:             d.Get("export_path").(string),
-		FsPath:                 d.Get("fs_path").(string),
-		Description:            d.Get("description").(string),
-		Restrictions:           expandRestrictions(d.Get("restrictions").([]interface{})),
-		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
-	}
+
+	smbShare := initSmbShare(d)
+	smbShare.Id = d.Get("id").(string)
+
 	smbShareId := d.Id()
 	updateSmbShareByIdUri := SMBSharesEndpoint + smbShareId
 
@@ -267,6 +257,21 @@ func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 	return diags
+}
+
+func initSmbShare(d *schema.ResourceData) SMBShare {
+	return SMBShare{
+		ShareName:              d.Get("share_name").(string),
+		FsPath:                 d.Get("fs_path").(string),
+		Description:            d.Get("description").(string),
+		Permissions:            expandPermissions(d.Get("permissions").([]interface{})),
+		NetworkPermissions:     expandNetworkPermissions(d.Get("fields_to_present_as_32_bit").([]interface{})),
+		AccessBasedEnumEnabled: d.Get("access_based_enumeration_enabled").(bool),
+		DefaultFileCreateMode:  d.Get("default_file_create_mode").(string),
+		DefaultDirCreateMode:   d.Get("default_directory_create_mode").(string),
+		BytesPerSector:         d.Get("bytes_per_sector").(string),
+		RequireEncryption:      d.Get("require_encryption").(bool),
+	}
 }
 
 func expandRestrictions(tfRestrictions []interface{}) []Restriction {
