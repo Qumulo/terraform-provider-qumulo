@@ -39,16 +39,16 @@ type Permission struct {
 }
 
 type NetworkPermission struct {
-	Type         string   `json:"type"`
-	AddressRange []string `json:"address_ranges"`
-	Rights       []string `json:"rights"`
+	Type          string   `json:"type"`
+	AddressRanges []string `json:"address_ranges"`
+	Rights        []string `json:"rights"`
 }
 
 type Trustee struct {
 	Domain string `json:"domain"`
 	AuthId string `json:"auth_id"`
 	UID    string `json:"uid"`
-	GID    string `json:"GID"`
+	GID    string `json:"gid"`
 	SID    string `json:"sid"`
 	Name   string `json:"name"`
 }
@@ -218,11 +218,16 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 	errs.addMaybeError(d.Set("id", smbShareId))
-	errs.addMaybeError(d.Set("export_path", smbShare.ExportPath))
+	errs.addMaybeError(d.Set("share_name", smbShare.ShareName))
 	errs.addMaybeError(d.Set("fs_path", smbShare.FsPath))
 	errs.addMaybeError(d.Set("description", smbShare.Description))
-	errs.addMaybeError(d.Set("restrictions", flattenNfsRestrictions(smbShare.Restrictions)))
-	errs.addMaybeError(d.Set("fields_to_present_as_32_bit", smbShare.FieldsToPresentAs32Bit))
+	errs.addMaybeError(d.Set("permissions", flattenSmbPermissions(smbShare.Permissions)))
+	errs.addMaybeError(d.Set("network_permissions", flattenSmbNetworkPermissions(smbShare.NetworkPermissions)))
+	errs.addMaybeError(d.Set("access_based_enumeration_enabled", smbShare.AccessBasedEnumEnabled))
+	errs.addMaybeError(d.Set("default_file_create_mode", smbShare.DefaultFileCreateMode))
+	errs.addMaybeError(d.Set("default_directory_create_mode", smbShare.DefaultDirCreateMode))
+	errs.addMaybeError(d.Set("bytes_per_sector", smbShare.BytesPerSector))
+	errs.addMaybeError(d.Set("require_encryption", smbShare.RequireEncryption))
 
 	return errs.diags
 }
@@ -274,44 +279,101 @@ func initSmbShare(d *schema.ResourceData) SMBShare {
 	}
 }
 
-func expandRestrictions(tfRestrictions []interface{}) []Restriction {
-	var restrictions []Restriction
+func expandPermissions(tfPermissions []interface{}) []Permission {
+	var permissions []Permission
 
-	if len(tfRestrictions) == 0 {
-		return restrictions
+	if len(tfPermissions) == 0 {
+		return permissions
 	}
-	for _, tfRestriction := range tfRestrictions {
-		tfMap, ok := tfRestriction.(map[string]interface{})
-		restriction := Restriction{}
+	for _, tfPermission := range tfPermissions {
+		tfMap, ok := tfPermission.(map[string]interface{})
+		permission := Permission{}
 		if !ok {
 			continue
 		}
 
-		if v, ok := tfMap["host_restrictions"].([]interface{}); ok {
-			expandedHostRestrictions := make([]string, len(v))
-			for i, hostRestriction := range v {
-				expandedHostRestrictions[i] = hostRestriction.(string)
+		if v, ok := tfMap["type"].(string); ok {
+			permission.Type = v
+		}
+		if v, ok := tfMap["trustee"].(interface{}); ok {
+			permission.Trustee = expandTrustee(v)
+		}
+		if v, ok := tfMap["rights"].([]interface{}); ok {
+			expandedRights := make([]string, len(v))
+			for i, right := range v {
+				expandedRights[i] = right.(string)
 			}
-			restriction.HostRestrictions = expandedHostRestrictions
+			permission.Rights = expandedRights
 		}
-		if v, ok := tfMap["read_only"].(bool); ok {
-			restriction.ReadOnly = v
-		}
-		if v, ok := tfMap["require_privileged_port"].(bool); ok {
-			restriction.RequirePrivilegedPort = v
-		}
-		if v, ok := tfMap["user_mapping"].(string); ok {
-			restriction.UserMapping = v
-		}
-		if v, ok := tfMap["map_to_user"].(map[string]interface{}); ok {
-			restriction.MapToUser = v
-		}
-		if v, ok := tfMap["map_to_group"].(map[string]interface{}); ok {
-			restriction.MapToGroup = v
-		}
-		restrictions = append(restrictions, restriction)
+
+		permissions = append(permissions, permission)
 	}
-	return restrictions
+	return permissions
+}
+
+func expandNetworkPermissions(tfNetworkPermissions []interface{}) []NetworkPermission {
+	var networkPermissions []NetworkPermission
+
+	if len(tfNetworkPermissions) == 0 {
+		return networkPermissions
+	}
+	for _, tfNetworkPermission := range tfNetworkPermissions {
+		tfMap, ok := tfNetworkPermission.(map[string]interface{})
+		networkPermission := NetworkPermission{}
+		if !ok {
+			continue
+		}
+
+		if v, ok := tfMap["type"].(string); ok {
+			networkPermission.Type = v
+		}
+		if v, ok := tfMap["address_ranges"].([]interface{}); ok {
+			expandedAddressRanges := make([]string, len(v))
+			for i, addressRange := range v {
+				expandedAddressRanges[i] = addressRange.(string)
+			}
+			networkPermission.AddressRanges = expandedAddressRanges
+		}
+		if v, ok := tfMap["rights"].([]interface{}); ok {
+			expandedRights := make([]string, len(v))
+			for i, right := range v {
+				expandedRights[i] = right.(string)
+			}
+			networkPermission.Rights = expandedRights
+		}
+
+		networkPermissions = append(networkPermissions, networkPermission)
+	}
+	return networkPermissions
+}
+
+func expandTrustee(tfTrustee interface{}) Trustee {
+	tfMap, ok := tfTrustee.(map[string]interface{})
+
+	trustee := Trustee{}
+	if !ok {
+		// log some error message here
+	}
+	if v, ok := tfMap["domain"].(string); ok {
+		trustee.Domain = v
+	}
+	if v, ok := tfMap["auth_id"].(string); ok {
+		trustee.AuthId = v
+	}
+	if v, ok := tfMap["uid"].(string); ok {
+		trustee.UID = v
+	}
+	if v, ok := tfMap["gid"].(string); ok {
+		trustee.GID = v
+	}
+	if v, ok := tfMap["sid"].(string); ok {
+		trustee.SID = v
+	}
+	if v, ok := tfMap["name"].(string); ok {
+		trustee.Name = v
+	}
+
+	return trustee
 }
 
 func flattenNfsRestrictions(restrictions []Restriction) []interface{} {
