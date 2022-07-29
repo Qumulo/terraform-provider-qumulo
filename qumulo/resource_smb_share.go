@@ -2,7 +2,6 @@ package qumulo
 
 import (
 	"context"
-	"log"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -186,22 +185,18 @@ func resourceSmbShare() *schema.Resource {
 
 func resourceSmbShareCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
-	log.Print("[DEBUG] Entering Create...")
+
 	smbShare := setSmbShare(d)
-	log.Print("[DEBUG] Succesfully set share")
 	createSmbSharetUri := SmbSharesEndpoint
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
 		createSmbSharetUri = SmbSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
-	log.Print("[DEBUG] Entering DoRequest")
-	log.Printf("Permissions are: %v", smbShare.Permissions)
 
 	res, err := DoRequest[SmbShare, SmbShare](client, POST, createSmbSharetUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(res.Id)
-	log.Print("[DEBUG] SMB Share created, entering read")
 
 	return resourceSmbShareRead(ctx, d, m)
 
@@ -267,30 +262,22 @@ func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m inter
 
 func setSmbShare(d *schema.ResourceData) SmbShare {
 	share := SmbShare{
-		ShareName:              d.Get("share_name").(string),
-		FsPath:                 d.Get("fs_path").(string),
-		Description:            d.Get("description").(string),
-		Permissions:            expandPermissions(d.Get("permissions").([]interface{})),
-		NetworkPermissions:     expandNetworkPermissions(d.Get("network_permissions").([]interface{})),
-		AccessBasedEnumEnabled: d.Get("access_based_enumeration_enabled").(bool),
-		RequireEncryption:      d.Get("require_encryption").(bool),
-		BytesPerSector:         d.Get("bytes_per_sector").(string),
-	}
-	if v, ok := d.Get("default_file_create_mode").(string); ok && len(v) > 0 {
-		share.DefaultFileCreateMode = v
-	}
-	if v, ok := d.Get("default_directory_create_mode").(string); ok && len(v) > 0 {
-		share.DefaultDirectoryCreateMode = v
-	}
-	if v, ok := d.Get("bytes_per_sector").(string); ok && len(v) > 0 {
-		share.DefaultFileCreateMode = v
+		ShareName:                  d.Get("share_name").(string),
+		FsPath:                     d.Get("fs_path").(string),
+		Description:                d.Get("description").(string),
+		Permissions:                expandPermissions(d.Get("permissions").([]interface{})),
+		NetworkPermissions:         expandNetworkPermissions(d.Get("network_permissions").([]interface{})),
+		AccessBasedEnumEnabled:     d.Get("access_based_enumeration_enabled").(bool),
+		DefaultFileCreateMode:      d.Get("default_file_create_mode").(string),
+		DefaultDirectoryCreateMode: d.Get("default_directory_create_mode").(string),
+		BytesPerSector:             d.Get("bytes_per_sector").(string),
+		RequireEncryption:          d.Get("require_encryption").(bool),
 	}
 	return share
 }
 
 func expandPermissions(tfPermissions []interface{}) []SmbPermission {
 	var permissions []SmbPermission
-	log.Print("[DEBUG] Starting to expand permissions")
 
 	if len(tfPermissions) == 0 {
 		return permissions
@@ -302,21 +289,14 @@ func expandPermissions(tfPermissions []interface{}) []SmbPermission {
 			continue
 		}
 
-		log.Print("[DEBUG] Mapping type")
-
 		if v, ok := tfMap["type"].(string); ok {
 			permission.Type = v
 		}
 
-		log.Print("[DEBUG] Mapping trustee")
 		if v, ok := tfMap["trustee"].([]interface{}); ok {
 			permission.Trustee = expandTrustee(v[0])
-			log.Printf("Trustee found, trustee is %v of type %T", tfMap["trustee"], tfMap["trustee"])
-		} else {
-			log.Printf("Trustee not found!")
 		}
 
-		log.Print("[DEBUG] Mapping rights")
 		if v, ok := tfMap["rights"].([]interface{}); ok {
 			expandedRights := make([]string, len(v))
 			for i, right := range v {
@@ -328,14 +308,11 @@ func expandPermissions(tfPermissions []interface{}) []SmbPermission {
 		permissions = append(permissions, permission)
 	}
 
-	log.Print("[DEBUG] Finished expanding permissions")
 	return permissions
 }
 
 func expandNetworkPermissions(tfNetworkPermissions []interface{}) []SmbNetworkPermission {
 	var networkPermissions []SmbNetworkPermission
-
-	log.Print("[DEBUG] Starting to expand network permissions")
 
 	if len(tfNetworkPermissions) == 0 {
 		return networkPermissions
@@ -368,18 +345,14 @@ func expandNetworkPermissions(tfNetworkPermissions []interface{}) []SmbNetworkPe
 		networkPermissions = append(networkPermissions, networkPermission)
 	}
 
-	log.Print("[DEBUG] Finished expanding network permissions")
 	return networkPermissions
 }
 
 func expandTrustee(tfTrustee interface{}) SmbTrustee {
-	tfMap, ok := tfTrustee.(map[string]interface{})
+	tfMap, _ := tfTrustee.(map[string]interface{})
 
 	trustee := SmbTrustee{}
-	if !ok {
-		log.Printf("[DEBUG] Could not convert trustee to a map, error: %v", ok)
-		log.Printf("[DEBUG] Trustee is: ", tfTrustee)
-	}
+
 	if v, ok := tfMap["domain"].(string); ok {
 		trustee.Domain = v
 	}
