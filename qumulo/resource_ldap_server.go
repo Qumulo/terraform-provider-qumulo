@@ -6,14 +6,27 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+type LdapSchema int
+
+const (
+	RFC2307 LdapSchema = iota + 1
+	CUSTOM
+)
+
+func (e LdapSchema) String() string {
+	return LdapSchemaValues[e-1]
+}
+
 const LdapServerEndpoint = "/v2/ldap/settings"
 
-type LdapServerSettings struct {
+type LdapServerSettingsBody struct {
 	UseLdap                bool                  `json:"use_ldap"`
 	BindUri                string                `json:"bind_uri"`
 	User                   string                `json:"user"`
@@ -35,7 +48,7 @@ type LdapSchemaDescription struct {
 	GidNumberAttribute           string `json:"gid_number_attribute"`
 }
 
-var ldapSchema = []string{"RFC2307", "CUSTOM"}
+var LdapSchemaValues = []string{"RFC2307", "CUSTOM"}
 
 func resourceLdapServer() *schema.Resource {
 	return &schema.Resource{
@@ -43,6 +56,13 @@ func resourceLdapServer() *schema.Resource {
 		ReadContext:   resourceLdapServerRead,
 		UpdateContext: resourceLdapServerUpdate,
 		DeleteContext: resourceLdapServerDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(1 * time.Minute),
+			Update: schema.DefaultTimeout(1 * time.Minute),
+			Delete: schema.DefaultTimeout(1 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"use_ldap": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -70,8 +90,8 @@ func resourceLdapServer() *schema.Resource {
 			"ldap_schema": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ldapSchema, false)),
-				Default:          "RFC2307",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(LdapSchemaValues, false)),
+				Default:          RFC2307,
 			},
 			"ldap_schema_description": {
 				Type:     schema.TypeList,
@@ -124,26 +144,7 @@ func resourceLdapServer() *schema.Resource {
 }
 
 func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
-
-	ldapSettings := LdapServerSettings{
-		UseLdap:                d.Get("use_ldap").(bool),
-		BindUri:                d.Get("bind_uri").(string),
-		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
-		LdapSchemaDescription:  expandLdapDescription(d.Get("ldap_schema_description").([]interface{})),
-		LdapSchema:             d.Get("ldap_schema").(string),
-		EncryptConnection:      d.Get("encrypt_connection").(bool),
-	}
-
-	if v := d.Get("user").(string); v != "" {
-		ldapSettings.User = v
-	}
-
-	if v := d.Get("password").(string); v != "" {
-		ldapSettings.Password = v
-	}
-
-	_, err := DoRequest[LdapServerSettings, LdapServerSettings](client, PUT, LdapServerEndpoint, &ldapSettings)
+	err := setLdapSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,17 +156,15 @@ func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m int
 func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
 	var errs ErrorCollection
 
-	ls, err := DoRequest[LdapServerSettings, LdapServerSettings](c, GET, LdapServerEndpoint, nil)
+	ls, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](ctx, c, GET, LdapServerEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	errs.addMaybeError(d.Set("use_ldap", ls.UseLdap))
 	errs.addMaybeError(d.Set("bind_uri", ls.BindUri))
 	errs.addMaybeError(d.Set("user", ls.User))
-
 	errs.addMaybeError(d.Set("password", ls.Password))
 	errs.addMaybeError(d.Set("base_distinguished_names", ls.BaseDistinguishedNames))
 	errs.addMaybeError(d.Set("ldap_schema", ls.LdapSchema))
@@ -180,26 +179,7 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
-
-	ldapSettings := LdapServerSettings{
-		UseLdap:                d.Get("use_ldap").(bool),
-		BindUri:                d.Get("bind_uri").(string),
-		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
-		LdapSchemaDescription:  expandLdapDescription(d.Get("ldap_schema_description").([]interface{})),
-		LdapSchema:             d.Get("ldap_schema").(string),
-		EncryptConnection:      d.Get("encrypt_connection").(bool),
-	}
-
-	if v := d.Get("user").(string); v != "" {
-		ldapSettings.User = v
-	}
-
-	if v := d.Get("password").(string); v != "" {
-		ldapSettings.Password = v
-	}
-
-	_, err := DoRequest[LdapServerSettings, LdapServerSettings](client, PATCH, LdapServerEndpoint, &ldapSettings)
+	err := setLdapSettings(ctx, d, m, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -208,16 +188,42 @@ func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceLdapServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+	tflog.Info(ctx, "Deleting LDAP settings resource")
 	var diags diag.Diagnostics
 
 	return diags
 }
 
-func expandLdapDescription(tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
+func setLdapSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+	c := m.(*Client)
+
+	ldapServerSettings := LdapServerSettingsBody{
+		UseLdap:                d.Get("use_ldap").(bool),
+		BindUri:                d.Get("bind_uri").(string),
+		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
+		LdapSchemaDescription:  expandLdapDescription(ctx, d.Get("ldap_schema_description").([]interface{})),
+		LdapSchema:             d.Get("ldap_schema").(string),
+		EncryptConnection:      d.Get("encrypt_connection").(bool),
+	}
+
+	if v := d.Get("user").(string); v != "" {
+		ldapServerSettings.User = v
+	}
+
+	if v := d.Get("password").(string); v != "" {
+		ldapServerSettings.Password = v
+	}
+
+	tflog.Debug(ctx, "Updating LDAP settings")
+	_, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](ctx, c, method, LdapServerEndpoint, &ldapServerSettings)
+	return err
+}
+
+func expandLdapDescription(ctx context.Context, tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
 	apiObject := LdapSchemaDescription{}
 
 	if len(tfLdapSchemaDescriptions) == 0 {
+		tflog.Warn(ctx, "No LDAP Schema Descriptions")
 		return apiObject
 	}
 	tfLdapSchemaDescription := tfLdapSchemaDescriptions[0]

@@ -5,28 +5,37 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const SSLEndpoint = "/v2/cluster/settings/ssl/certificate"
+const SslEndpoint = "/v2/cluster/settings/ssl/certificate"
 
-type SSLRequest struct {
+type SslRequest struct {
 	Certificate string `json:"certificate"`
 	PrivateKey  string `json:"private_key"`
 }
 
 // TODO: Figure out what the proper response for an SSL update is
-type SSLResponse struct {
+type SslResponse struct {
 	Placeholder string `json:"placeholder"`
 }
 
-func resourceSSL() *schema.Resource {
+func resourceSsl() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceSSLCreate,
-		ReadContext:   resourceSSLRead,
-		UpdateContext: resourceSSLUpdate,
-		DeleteContext: resourceSSLDelete,
+		CreateContext: resourceSslCreate,
+		ReadContext:   resourceSslRead,
+		UpdateContext: resourceSslUpdate,
+		DeleteContext: resourceSslDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(1 * time.Minute),
+			Update: schema.DefaultTimeout(1 * time.Minute),
+			Delete: schema.DefaultTimeout(1 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"certificate": &schema.Schema{
 				Type:     schema.TypeString,
@@ -40,41 +49,47 @@ func resourceSSL() *schema.Resource {
 	}
 }
 
-func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	SSLConfig := SSLRequest{
-		Certificate: d.Get("certificate").(string),
-		PrivateKey:  d.Get("private_key").(string),
-	}
-
-	_, err := DoRequest[SSLRequest, SSLResponse](c, PUT, SSLEndpoint, &SSLConfig)
+func resourceSslCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	err := setSslSettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
-	return diags
+	return resourceSslRead(ctx, d, m)
 }
 
-func resourceSSLRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+func resourceSslRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	return diags
 }
 
-func resourceSSLUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSSLCreate(ctx, d, m)
+func resourceSslUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	err := setSslSettings(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceSslRead(ctx, d, m)
 }
 
-func resourceSSLDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+func resourceSslDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting SSL settings resource")
 	var diags diag.Diagnostics
 
 	return diags
+}
+
+func setSslSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*Client)
+
+	sslConfig := SslRequest{
+		Certificate: d.Get("certificate").(string),
+		PrivateKey:  d.Get("private_key").(string),
+	}
+
+	tflog.Debug(ctx, "Updating SSL settings")
+	_, err := DoRequest[SslRequest, SslResponse](ctx, c, PUT, SslEndpoint, &sslConfig)
+	return err
 }

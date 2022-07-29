@@ -37,8 +37,8 @@ func Provider() *schema.Provider {
 			"qumulo_cluster_name": resourceClusterSettings(),
 			"qumulo_ad_settings":  resourceActiveDirectory(),
 			"qumulo_ldap_server":  resourceLdapServer(),
-			"qumulo_ssl_cert":     resourceSSL(),
-			"qumulo_ssl_ca":       resourceSSLCA(),
+			"qumulo_ssl_cert":     resourceSsl(),
+			"qumulo_ssl_ca":       resourceSslCa(),
 			"qumulo_monitoring":   resourceMonitoring(),
 			"qumulo_nfs_export":   resourceNfsExport(),
 			"qumulo_smb_server":   resourceSMBServer(),
@@ -55,19 +55,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	if (username != "") && (password != "") {
-		c, err := NewClient(&host, &port, &username, &password)
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-
-		return c, diags
-	}
-
-	c, err := NewClient(nil, nil, nil, nil)
+	c, err := NewClient(ctx, &host, &port, &username, &password)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
