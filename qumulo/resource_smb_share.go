@@ -190,7 +190,7 @@ func resourceSmbShare() *schema.Resource {
 
 func resourceSmbShareCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
-	smbShare := initSmbShare(d)
+	smbShare := setSmbShare(d)
 	createSmbSharetUri := SMBSharesEndpoint
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
 		createSmbSharetUri = SMBSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
@@ -235,7 +235,7 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	smbShare := initSmbShare(d)
+	smbShare := setSmbShare(d)
 	smbShare.Id = d.Get("id").(string)
 
 	smbShareId := d.Id()
@@ -264,7 +264,7 @@ func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m inter
 	return diags
 }
 
-func initSmbShare(d *schema.ResourceData) SMBShare {
+func setSmbShare(d *schema.ResourceData) SMBShare {
 	return SMBShare{
 		ShareName:              d.Get("share_name").(string),
 		FsPath:                 d.Get("fs_path").(string),
@@ -376,20 +376,51 @@ func expandTrustee(tfTrustee interface{}) Trustee {
 	return trustee
 }
 
-func flattenNfsRestrictions(restrictions []Restriction) []interface{} {
+func flattenSmbPermissinos(permissions []Permission) []interface{} {
 	var tfList []interface{}
 
-	for _, restriction := range restrictions {
+	for _, permission := range permissions {
 		tfMap := map[string]interface{}{}
 
-		if v := restriction.HostRestrictions; len(v) != 0 {
-			tfMap["host_restrictions"] = v
+		tfMap["type"] = permission.Type
+
+		if v := permission.Rights; len(v) != 0 {
+			tfMap["rights"] = v
 		}
-		tfMap["read_only"] = restriction.ReadOnly
-		tfMap["require_privileged_port"] = restriction.RequirePrivilegedPort
-		tfMap["user_mapping"] = restriction.UserMapping
-		tfMap["map_to_user"] = restriction.MapToUser
-		tfMap["map_to_group"] = restriction.MapToGroup
+
+		trusteeMap := map[string]interface{}{}
+		trustee := permission.Trustee
+
+		trusteeMap["domain"] = trustee.Domain
+		trusteeMap["auth_id"] = trustee.AuthId
+		trusteeMap["uid"] = trustee.UID
+		trusteeMap["gid"] = trustee.GID
+		trusteeMap["sid"] = trustee.SID
+		trusteeMap["name"] = trustee.Name
+
+		tfMap["trustee"] = trusteeMap
+
+		tfList = append(tfList, tfMap)
+	}
+	return tfList
+}
+
+func flattenSmbNetworkPermissinos(permissions []NetworkPermission) []interface{} {
+	var tfList []interface{}
+
+	for _, networkPermission := range permissions {
+		tfMap := map[string]interface{}{}
+
+		tfMap["type"] = networkPermission.Type
+
+		if v := networkPermission.AddressRanges; len(v) != 0 {
+			tfMap["address_ranges"] = v
+		}
+
+		if v := networkPermission.Rights; len(v) != 0 {
+			tfMap["rights"] = v
+		}
+
 		tfList = append(tfList, tfMap)
 	}
 	return tfList
