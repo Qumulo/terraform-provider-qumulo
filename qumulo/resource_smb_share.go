@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -9,48 +10,44 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const SMBSharesEndpoint = "/v2/smb/shares/"
+const SmbSharesEndpoint = "/v2/smb/shares/"
 
-var permissionTypes = []string{"ALLOWED", "DENIED"}
-var rights = []string{"READ", "WRITE", "CHANGE_PERMISSIONS"}
+var SmbPermissionTypes = []string{"ALLOWED", "DENIED"}
+var SmbRights = []string{"READ", "WRITE", "CHANGE_PERMISSIONS"}
 
-// var userMappings = []string{"NFS_MAP_NONE", "NFS_MAP_ALL", "NFS_MAP_ROOT"}
-
-// var fields = []string{"FILE_IDS", "FILE_SIZES", "FS_SIZE", "ALL"}
-
-type SMBShare struct {
-	Id                     string              `json:"id"`
-	ShareName              string              `json:"share_name"`
-	FsPath                 string              `json:"fs_path"`
-	Description            string              `json:"description"`
-	Permissions            []Permission        `json:"permissions"`
-	NetworkPermissions     []NetworkPermission `json:"network_permissions"`
-	AccessBasedEnumEnabled bool                `json:"access_based_enumeration_enabled"`
-	DefaultFileCreateMode  string              `json:"default_file_create_mode"`
-	DefaultDirCreateMode   string              `json:"default_directory_create_mode"`
-	BytesPerSector         string              `json:"bytes_per_sector"`
-	RequireEncryption      bool                `json:"require_encryption"`
+type SmbShare struct {
+	Id                         string                 `json:"id"`
+	ShareName                  string                 `json:"share_name"`
+	FsPath                     string                 `json:"fs_path"`
+	Description                string                 `json:"description"`
+	Permissions                []SmbPermission        `json:"permissions"`
+	NetworkPermissions         []SmbNetworkPermission `json:"network_permissions"`
+	AccessBasedEnumEnabled     bool                   `json:"access_based_enumeration_enabled"`
+	DefaultFileCreateMode      string                 `json:"default_file_create_mode,omitempty"`
+	DefaultDirectoryCreateMode string                 `json:"default_directory_create_mode,omitempty"`
+	BytesPerSector             string                 `json:"bytes_per_sector,omitempty"`
+	RequireEncryption          bool                   `json:"require_encryption"`
 }
 
-type Permission struct {
-	Type    string   `json:"type"`
-	Trustee Trustee  `json:"trustee"`
-	Rights  []string `json:"rights`
+type SmbPermission struct {
+	Type    string     `json:"type"`
+	Trustee SmbTrustee `json:"trustee"`
+	Rights  []string   `json:"rights"`
 }
 
-type NetworkPermission struct {
+type SmbNetworkPermission struct {
 	Type          string   `json:"type"`
 	AddressRanges []string `json:"address_ranges"`
 	Rights        []string `json:"rights"`
 }
 
-type Trustee struct {
+type SmbTrustee struct {
 	Domain string `json:"domain"`
 	AuthId string `json:"auth_id"`
-	UID    string `json:"uid"`
-	GID    string `json:"gid"`
-	SID    string `json:"sid"`
-	Name   string `json:"name"`
+	Uid    string `json:"uid,omitempty"`
+	Gid    string `json:"gid,omitempty"`
+	Sid    string `json:"sid"`
+	Name   string `json:"name,omitempty"`
 }
 
 func resourceSmbShare() *schema.Resource {
@@ -85,7 +82,7 @@ func resourceSmbShare() *schema.Resource {
 						"type": &schema.Schema{
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(permissionTypes, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(SmbPermissionTypes, false)),
 						},
 						"trustee": &schema.Schema{
 							Type:     schema.TypeList,
@@ -126,7 +123,7 @@ func resourceSmbShare() *schema.Resource {
 							Required: true,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(rights, false)),
+								ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(SmbRights, false)),
 							},
 						},
 					},
@@ -141,7 +138,7 @@ func resourceSmbShare() *schema.Resource {
 						"type": &schema.Schema{
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(permissionTypes, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(SmbPermissionTypes, false)),
 						},
 						"address_ranges": &schema.Schema{
 							Type:     schema.TypeList,
@@ -153,7 +150,7 @@ func resourceSmbShare() *schema.Resource {
 							Required: true,
 							Elem: &schema.Schema{
 								Type:             schema.TypeString,
-								ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(rights, false)),
+								ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(SmbRights, false)),
 							},
 						},
 					},
@@ -172,9 +169,8 @@ func resourceSmbShare() *schema.Resource {
 				Optional: true,
 			},
 			"bytes_per_sector": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(512, 512)),
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 			"require_encryption": {
 				Type:     schema.TypeBool,
@@ -190,17 +186,22 @@ func resourceSmbShare() *schema.Resource {
 
 func resourceSmbShareCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
+	log.Print("[DEBUG] Entering Create...")
 	smbShare := setSmbShare(d)
-	createSmbSharetUri := SMBSharesEndpoint
+	log.Print("[DEBUG] Succesfully set share")
+	createSmbSharetUri := SmbSharesEndpoint
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
-		createSmbSharetUri = SMBSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
+		createSmbSharetUri = SmbSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
+	log.Print("[DEBUG] Entering DoRequest")
+	log.Printf("Permissions are: %v", smbShare.Permissions)
 
-	res, err := DoRequest[SMBShare, SMBShare](client, POST, createSmbSharetUri, &smbShare)
+	res, err := DoRequest[SmbShare, SmbShare](client, POST, createSmbSharetUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(res.Id)
+	log.Print("[DEBUG] SMB Share created, entering read")
 
 	return resourceSmbShareRead(ctx, d, m)
 
@@ -211,8 +212,8 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	var errs ErrorCollection
 	smbShareId := d.Id()
-	getSmbShareByIdUri := SMBSharesEndpoint + smbShareId
-	smbShare, err := DoRequest[SMBShare, SMBShare](client, GET, getSmbShareByIdUri, nil)
+	getSmbShareByIdUri := SmbSharesEndpoint + smbShareId
+	smbShare, err := DoRequest[SmbShare, SmbShare](client, GET, getSmbShareByIdUri, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -225,7 +226,7 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 	errs.addMaybeError(d.Set("network_permissions", flattenSmbNetworkPermissions(smbShare.NetworkPermissions)))
 	errs.addMaybeError(d.Set("access_based_enumeration_enabled", smbShare.AccessBasedEnumEnabled))
 	errs.addMaybeError(d.Set("default_file_create_mode", smbShare.DefaultFileCreateMode))
-	errs.addMaybeError(d.Set("default_directory_create_mode", smbShare.DefaultDirCreateMode))
+	errs.addMaybeError(d.Set("default_directory_create_mode", smbShare.DefaultDirectoryCreateMode))
 	errs.addMaybeError(d.Set("bytes_per_sector", smbShare.BytesPerSector))
 	errs.addMaybeError(d.Set("require_encryption", smbShare.RequireEncryption))
 
@@ -239,13 +240,13 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	smbShare.Id = d.Get("id").(string)
 
 	smbShareId := d.Id()
-	updateSmbShareByIdUri := SMBSharesEndpoint + smbShareId
+	updateSmbShareByIdUri := SmbSharesEndpoint + smbShareId
 
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
 		updateSmbShareByIdUri = updateSmbShareByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
 
-	_, err := DoRequest[SMBShare, SMBShare](client, PATCH, updateSmbShareByIdUri, &smbShare)
+	_, err := DoRequest[SmbShare, SmbShare](client, PATCH, updateSmbShareByIdUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -257,47 +258,65 @@ func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m inter
 	client := m.(*Client)
 	var diags diag.Diagnostics
 	smbShareId := d.Id()
-	_, err := DoRequest[string, SMBShare](client, DELETE, SMBSharesEndpoint, &smbShareId)
+	_, err := DoRequest[string, SmbShare](client, DELETE, SmbSharesEndpoint, &smbShareId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	return diags
 }
 
-func setSmbShare(d *schema.ResourceData) SMBShare {
-	return SMBShare{
+func setSmbShare(d *schema.ResourceData) SmbShare {
+	share := SmbShare{
 		ShareName:              d.Get("share_name").(string),
 		FsPath:                 d.Get("fs_path").(string),
 		Description:            d.Get("description").(string),
 		Permissions:            expandPermissions(d.Get("permissions").([]interface{})),
-		NetworkPermissions:     expandNetworkPermissions(d.Get("fields_to_present_as_32_bit").([]interface{})),
+		NetworkPermissions:     expandNetworkPermissions(d.Get("network_permissions").([]interface{})),
 		AccessBasedEnumEnabled: d.Get("access_based_enumeration_enabled").(bool),
-		DefaultFileCreateMode:  d.Get("default_file_create_mode").(string),
-		DefaultDirCreateMode:   d.Get("default_directory_create_mode").(string),
-		BytesPerSector:         d.Get("bytes_per_sector").(string),
 		RequireEncryption:      d.Get("require_encryption").(bool),
+		BytesPerSector:         d.Get("bytes_per_sector").(string),
 	}
+	if v, ok := d.Get("default_file_create_mode").(string); ok && len(v) > 0 {
+		share.DefaultFileCreateMode = v
+	}
+	if v, ok := d.Get("default_directory_create_mode").(string); ok && len(v) > 0 {
+		share.DefaultDirectoryCreateMode = v
+	}
+	if v, ok := d.Get("bytes_per_sector").(string); ok && len(v) > 0 {
+		share.DefaultFileCreateMode = v
+	}
+	return share
 }
 
-func expandPermissions(tfPermissions []interface{}) []Permission {
-	var permissions []Permission
+func expandPermissions(tfPermissions []interface{}) []SmbPermission {
+	var permissions []SmbPermission
+	log.Print("[DEBUG] Starting to expand permissions")
 
 	if len(tfPermissions) == 0 {
 		return permissions
 	}
 	for _, tfPermission := range tfPermissions {
 		tfMap, ok := tfPermission.(map[string]interface{})
-		permission := Permission{}
+		permission := SmbPermission{}
 		if !ok {
 			continue
 		}
 
+		log.Print("[DEBUG] Mapping type")
+
 		if v, ok := tfMap["type"].(string); ok {
 			permission.Type = v
 		}
-		if v, ok := tfMap["trustee"].(interface{}); ok {
-			permission.Trustee = expandTrustee(v)
+
+		log.Print("[DEBUG] Mapping trustee")
+		if v, ok := tfMap["trustee"].([]interface{}); ok {
+			permission.Trustee = expandTrustee(v[0])
+			log.Printf("Trustee found, trustee is %v of type %T", tfMap["trustee"], tfMap["trustee"])
+		} else {
+			log.Printf("Trustee not found!")
 		}
+
+		log.Print("[DEBUG] Mapping rights")
 		if v, ok := tfMap["rights"].([]interface{}); ok {
 			expandedRights := make([]string, len(v))
 			for i, right := range v {
@@ -308,18 +327,22 @@ func expandPermissions(tfPermissions []interface{}) []Permission {
 
 		permissions = append(permissions, permission)
 	}
+
+	log.Print("[DEBUG] Finished expanding permissions")
 	return permissions
 }
 
-func expandNetworkPermissions(tfNetworkPermissions []interface{}) []NetworkPermission {
-	var networkPermissions []NetworkPermission
+func expandNetworkPermissions(tfNetworkPermissions []interface{}) []SmbNetworkPermission {
+	var networkPermissions []SmbNetworkPermission
+
+	log.Print("[DEBUG] Starting to expand network permissions")
 
 	if len(tfNetworkPermissions) == 0 {
 		return networkPermissions
 	}
 	for _, tfNetworkPermission := range tfNetworkPermissions {
 		tfMap, ok := tfNetworkPermission.(map[string]interface{})
-		networkPermission := NetworkPermission{}
+		networkPermission := SmbNetworkPermission{}
 		if !ok {
 			continue
 		}
@@ -344,15 +367,18 @@ func expandNetworkPermissions(tfNetworkPermissions []interface{}) []NetworkPermi
 
 		networkPermissions = append(networkPermissions, networkPermission)
 	}
+
+	log.Print("[DEBUG] Finished expanding network permissions")
 	return networkPermissions
 }
 
-func expandTrustee(tfTrustee interface{}) Trustee {
+func expandTrustee(tfTrustee interface{}) SmbTrustee {
 	tfMap, ok := tfTrustee.(map[string]interface{})
 
-	trustee := Trustee{}
+	trustee := SmbTrustee{}
 	if !ok {
-		// log some error message here
+		log.Printf("[DEBUG] Could not convert trustee to a map, error: %v", ok)
+		log.Printf("[DEBUG] Trustee is: ", tfTrustee)
 	}
 	if v, ok := tfMap["domain"].(string); ok {
 		trustee.Domain = v
@@ -361,13 +387,13 @@ func expandTrustee(tfTrustee interface{}) Trustee {
 		trustee.AuthId = v
 	}
 	if v, ok := tfMap["uid"].(string); ok {
-		trustee.UID = v
+		trustee.Uid = v
 	}
 	if v, ok := tfMap["gid"].(string); ok {
-		trustee.GID = v
+		trustee.Gid = v
 	}
 	if v, ok := tfMap["sid"].(string); ok {
-		trustee.SID = v
+		trustee.Sid = v
 	}
 	if v, ok := tfMap["name"].(string); ok {
 		trustee.Name = v
@@ -376,7 +402,7 @@ func expandTrustee(tfTrustee interface{}) Trustee {
 	return trustee
 }
 
-func flattenSmbPermissinos(permissions []Permission) []interface{} {
+func flattenSmbPermissions(permissions []SmbPermission) []interface{} {
 	var tfList []interface{}
 
 	for _, permission := range permissions {
@@ -388,24 +414,27 @@ func flattenSmbPermissinos(permissions []Permission) []interface{} {
 			tfMap["rights"] = v
 		}
 
+		trusteeMapList := []map[string]interface{}{}
 		trusteeMap := map[string]interface{}{}
 		trustee := permission.Trustee
 
 		trusteeMap["domain"] = trustee.Domain
 		trusteeMap["auth_id"] = trustee.AuthId
-		trusteeMap["uid"] = trustee.UID
-		trusteeMap["gid"] = trustee.GID
-		trusteeMap["sid"] = trustee.SID
+		trusteeMap["uid"] = trustee.Uid
+		trusteeMap["gid"] = trustee.Gid
+		trusteeMap["sid"] = trustee.Sid
 		trusteeMap["name"] = trustee.Name
 
-		tfMap["trustee"] = trusteeMap
+		trusteeMapList = append(trusteeMapList, trusteeMap)
+
+		tfMap["trustee"] = trusteeMapList
 
 		tfList = append(tfList, tfMap)
 	}
 	return tfList
 }
 
-func flattenSmbNetworkPermissinos(permissions []NetworkPermission) []interface{} {
+func flattenSmbNetworkPermissions(permissions []SmbNetworkPermission) []interface{} {
 	var tfList []interface{}
 
 	for _, networkPermission := range permissions {
