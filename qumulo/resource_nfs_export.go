@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -114,20 +115,7 @@ func resourceNfsExport() *schema.Resource {
 }
 
 func resourceNfsExportCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
-	nfsExport := NFSExport{
-		ExportPath:             d.Get("export_path").(string),
-		FsPath:                 d.Get("fs_path").(string),
-		Description:            d.Get("description").(string),
-		Restrictions:           expandRestrictions(d.Get("restrictions").([]interface{})),
-		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
-	}
-	createNfsExportUri := NFSExportEndpoint
-	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
-		createNfsExportUri = createNfsExportUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
-	}
-
-	res, err := DoRequest[NFSExport, NFSExport](client, POST, createNfsExportUri, &nfsExport)
+	res, err := createOrUpdateNFSExport(ctx, d, m, POST, NFSExportEndpoint)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -143,7 +131,7 @@ func resourceNfsExportRead(ctx context.Context, d *schema.ResourceData, m interf
 	var errs ErrorCollection
 	nfsExportId := d.Id()
 	getNfsExportByIdUri := NFSExportEndpoint + nfsExportId
-	nfsExport, err := DoRequest[NFSExport, NFSExport](client, GET, getNfsExportByIdUri, nil)
+	nfsExport, err := DoRequest[NFSExport, NFSExport](ctx, client, GET, getNfsExportByIdUri, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -159,23 +147,10 @@ func resourceNfsExportRead(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
-	nfsExport := NFSExport{
-		Id:                     d.Get("id").(string),
-		ExportPath:             d.Get("export_path").(string),
-		FsPath:                 d.Get("fs_path").(string),
-		Description:            d.Get("description").(string),
-		Restrictions:           expandRestrictions(d.Get("restrictions").([]interface{})),
-		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
-	}
 	nfsExportId := d.Id()
 	updateNfsExportByIdUri := NFSExportEndpoint + nfsExportId
 
-	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
-		updateNfsExportByIdUri = updateNfsExportByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
-	}
-
-	_, err := DoRequest[NFSExport, NFSExport](client, PATCH, updateNfsExportByIdUri, &nfsExport)
+	_, err := createOrUpdateNFSExport(ctx, d, m, PATCH, updateNfsExportByIdUri)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -184,20 +159,43 @@ func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting NFS Export")
 	client := m.(*Client)
 	var diags diag.Diagnostics
+
 	nfsExportId := d.Id()
-	_, err := DoRequest[string, NFSExport](client, DELETE, NFSExportEndpoint, &nfsExportId)
+	_, err := DoRequest[string, NFSExport](ctx, client, DELETE, NFSExportEndpoint, &nfsExportId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	return diags
 }
 
-func expandRestrictions(tfRestrictions []interface{}) []Restriction {
+func createOrUpdateNFSExport(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) (*NFSExport, error) {
+	client := m.(*Client)
+	nfsExport := NFSExport{
+		Id:                     d.Get("id").(string),
+		ExportPath:             d.Get("export_path").(string),
+		FsPath:                 d.Get("fs_path").(string),
+		Description:            d.Get("description").(string),
+		Restrictions:           expandRestrictions(ctx, d.Get("restrictions").([]interface{})),
+		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
+	}
+
+	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
+		url = url + "?allow-fs-path-create=" + strconv.FormatBool(v)
+	}
+
+	tflog.Debug(ctx, "Creating/Updating NFS Export")
+	res, err := DoRequest[NFSExport, NFSExport](ctx, client, method, url, &nfsExport)
+	return res, err
+}
+
+func expandRestrictions(ctx context.Context, tfRestrictions []interface{}) []Restriction {
 	var restrictions []Restriction
 
 	if len(tfRestrictions) == 0 {
+		tflog.Warn(ctx, "No restrictions found for the NFS Export")
 		return restrictions
 	}
 	for _, tfRestriction := range tfRestrictions {

@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 	"time"
 
@@ -85,28 +86,10 @@ func resourceMonitoring() *schema.Resource {
 }
 
 func resourceMonitoringCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	MonitoringConfig := MonitorSettings{
-		Enabled:             d.Get("enabled").(bool),
-		MQHost:              d.Get("mq_host").(string),
-		MQPort:              d.Get("mq_port").(int),
-		MQProxyHost:         d.Get("mq_proxy_host").(string),
-		MQProxyPort:         d.Get("mq_proxy_port").(int),
-		S3ProxyHost:         d.Get("s3_proxy_host").(string),
-		S3ProxyPort:         d.Get("s3_proxy_port").(int),
-		S3ProxyDisableHTTPS: d.Get("s3_proxy_disable_https").(bool),
-		VPNEnabled:          d.Get("vpn_enabled").(bool),
-		VPNHost:             d.Get("vpn_host").(string),
-		Period:              d.Get("period").(int),
-	}
-
-	_, err := DoRequest[MonitorSettings, MonitorResponse](c, PUT, MonitorEndpoint, &MonitoringConfig)
-
+	err := setMonitorSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
 	return resourceMonitoringRead(ctx, d, m)
@@ -117,7 +100,7 @@ func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	var errs ErrorCollection
 
-	settings, err := DoRequest[MonitorSettings, MonitorSettings](c, GET, MonitorEndpoint, nil)
+	settings, err := DoRequest[MonitorSettings, MonitorSettings](ctx, c, GET, MonitorEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -137,12 +120,37 @@ func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceMonitoringUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceMonitoringCreate(ctx, d, m)
+	err := setMonitorSettings(ctx, d, m, PATCH)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceMonitoringRead(ctx, d, m)
 }
 
 func resourceMonitoringDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+	tflog.Info(ctx, "Deleting monitor settings resource")
 	var diags diag.Diagnostics
 
 	return diags
+}
+
+func setMonitorSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+	c := m.(*Client)
+
+	MonitoringConfig := MonitorSettings{
+		Enabled:             d.Get("enabled").(bool),
+		MQHost:              d.Get("mq_host").(string),
+		MQPort:              d.Get("mq_port").(int),
+		MQProxyHost:         d.Get("mq_proxy_host").(string),
+		MQProxyPort:         d.Get("mq_proxy_port").(int),
+		S3ProxyHost:         d.Get("s3_proxy_host").(string),
+		S3ProxyPort:         d.Get("s3_proxy_port").(int),
+		S3ProxyDisableHTTPS: d.Get("s3_proxy_disable_https").(bool),
+		VPNEnabled:          d.Get("vpn_enabled").(bool),
+		VPNHost:             d.Get("vpn_host").(string),
+		Period:              d.Get("period").(int),
+	}
+	tflog.Debug(ctx, "Updating monitor settings")
+	_, err := DoRequest[MonitorSettings, MonitorResponse](ctx, c, method, MonitorEndpoint, &MonitoringConfig)
+	return err
 }

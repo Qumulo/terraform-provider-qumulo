@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 	"time"
 
@@ -72,10 +73,54 @@ func resourceSMBServer() *schema.Resource {
 }
 
 func resourceSMBServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	err := setSMBServerSettings(ctx, d, m, PUT)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
+
+	return resourceSMBServerRead(ctx, d, m)
+}
+
+func resourceSMBServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
+	var errs ErrorCollection
+	SMBSettings, err := DoRequest[SMBServerRequest, SMBServerRequest](ctx, c, GET, SMBServerEndpoint, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	errs.addMaybeError(d.Set("session_encryption", SMBSettings.SessionEncryption))
+	errs.addMaybeError(d.Set("supported_dialects", SMBSettings.SupportedDialects))
+	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_users", SMBSettings.HideSharesUsers))
+	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_hosts", SMBSettings.HideSharesHosts))
+	errs.addMaybeError(d.Set("snapshot_directory_mode", SMBSettings.SnapshotDirMode))
+	errs.addMaybeError(d.Set("bypass_traverse_checking", SMBSettings.BypassTraverseChecking))
+	errs.addMaybeError(d.Set("signing_required", SMBSettings.SigningRequired))
+
+	return errs.diags
+}
+
+func resourceSMBServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	err := setSMBServerSettings(ctx, d, m, PATCH)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceSMBServerRead(ctx, d, m)
+}
+
+func resourceSMBServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting SMB settings resource")
 	var diags diag.Diagnostics
+
+	return diags
+}
+
+func setSMBServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+	c := m.(*Client)
+
 	// convert the []interface{} into []string
 	dials := d.Get("supported_dialects").([]interface{})
 	dialects := make([]string, len(dials))
@@ -93,43 +138,7 @@ func resourceSMBServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 		SigningRequired:        d.Get("signing_required").(bool),
 	}
 
-	_, err := DoRequest[SMBServerRequest, SMBServerRequest](c, PUT, SMBServerEndpoint, &SMBServerConfig)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
-	return diags
-}
-
-func resourceSMBServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	var errs ErrorCollection
-	SMBSettings, err := DoRequest[SMBServerRequest, SMBServerRequest](c, GET, SMBServerEndpoint, nil)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	errs.addMaybeError(d.Set("session_encryption", SMBSettings.SessionEncryption))
-	errs.addMaybeError(d.Set("supported_dialects", SMBSettings.SupportedDialects))
-	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_users", SMBSettings.HideSharesUsers))
-	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_hosts", SMBSettings.HideSharesHosts))
-	errs.addMaybeError(d.Set("snapshot_directory_mode", SMBSettings.SnapshotDirMode))
-	errs.addMaybeError(d.Set("bypass_traverse_checking", SMBSettings.BypassTraverseChecking))
-	errs.addMaybeError(d.Set("signing_required", SMBSettings.SigningRequired))
-
-	return errs.diags
-}
-
-func resourceSMBServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSMBServerCreate(ctx, d, m)
-}
-
-func resourceSMBServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	return diags
+	tflog.Debug(ctx, "Updating SMB settings")
+	_, err := DoRequest[SMBServerRequest, SMBServerRequest](ctx, c, method, SMBServerEndpoint, &SMBServerConfig)
+	return err
 }

@@ -2,7 +2,6 @@ package qumulo
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -56,7 +55,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 
 	var diags diag.Diagnostics
 
-	c, err := NewClient(&host, &port, &username, &password)
+	c, err := NewClient(ctx, &host, &port, &username, &password)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
