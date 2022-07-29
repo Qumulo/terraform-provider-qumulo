@@ -67,7 +67,6 @@ func resourceSSLCAUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	return resourceSSLCARead(ctx, d, m)
 }
 
-//TODO Implement SSLCA Delete
 func resourceSSLCADelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting SSL CA Settings")
 	c := m.(*Client)

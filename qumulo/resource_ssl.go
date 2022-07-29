@@ -51,7 +51,6 @@ func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	return resourceSSLRead(ctx, d, m)
 }
 
-//TODO Implement SSL Read
 func resourceSSLRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
