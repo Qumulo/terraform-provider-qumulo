@@ -25,7 +25,9 @@ This guide is always under development! Please let us know of any suggestions/ch
     - The `Detail` portion of a helper function name should mirror the API endpoint that is hit as much as possible.
 
 ## Structs
-- Structs should be named `ResourceDetail[Request/Response/Body]` where `Detail` mirrors the usage of the struct (exactly as function names should). Append `Request` or `Response` if the struct is used solely for one API call. Append `Body` if the struct is used for both the request and the response.
+- Structs should be named `ResourceDetail[Request/Response/Body]` where `Detail` mirrors the usage of the struct (exactly as function names should).
+    - Append `Request` or `Response` if the struct is used solely for one API call.
+    - Append `Body` if the struct is used for both the request and the response of an API call.
 - Structs which are a part of other structs (i.e. not directly exposed to the REST API) should not have an ending of `Request/Response/Body`.
 - Fields in a struct should be `MixedCaps` spellings of their JSON equivalents *without* punctuation. Do not omit or shorten any parts of the name.
 
