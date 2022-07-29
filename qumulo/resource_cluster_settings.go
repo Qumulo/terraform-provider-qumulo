@@ -5,13 +5,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const ClusterSettingsEndpoint = "/v1/cluster/settings"
 
-type ClusterSettings struct {
+type ClusterSettingsBody struct {
 	ClusterName string `json:"cluster_name"`
 }
 
@@ -38,21 +40,12 @@ func resourceClusterSettings() *schema.Resource {
 }
 
 func resourceClusterSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	clusterName := d.Get("cluster_name").(string)
-
-	cs := ClusterSettings{
-		ClusterName: clusterName,
-	}
-
-	_, err := DoRequest[ClusterSettings, ClusterSettings](c, PUT, ClusterSettingsEndpoint, &cs)
+	err := setClusterSettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
 	return resourceClusterSettingsRead(ctx, d, m)
 }
 
@@ -61,7 +54,7 @@ func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m 
 
 	var diags diag.Diagnostics
 
-	cs, err := DoRequest[ClusterSettings, ClusterSettings](c, GET, ClusterSettingsEndpoint, nil)
+	cs, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, GET, ClusterSettingsEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -72,15 +65,7 @@ func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 func resourceClusterSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	clusterName := d.Get("cluster_name").(string)
-
-	cs := ClusterSettings{
-		ClusterName: clusterName,
-	}
-
-	_, err := DoRequest[ClusterSettings, ClusterSettings](c, PUT, ClusterSettingsEndpoint, &cs)
+	err := setClusterSettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +74,21 @@ func resourceClusterSettingsUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceClusterSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting cluster settings resource")
 	var diags diag.Diagnostics
-
 	return diags
+}
+
+func setClusterSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*Client)
+
+	clusterName := d.Get("cluster_name").(string)
+
+	cs := ClusterSettingsBody{
+		ClusterName: clusterName,
+	}
+
+	tflog.Debug(ctx, "Updating cluster settings")
+	_, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, PUT, ClusterSettingsEndpoint, &cs)
+	return err
 }

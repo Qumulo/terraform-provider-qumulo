@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -92,28 +94,10 @@ func resourceMonitoring() *schema.Resource {
 }
 
 func resourceMonitoringCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	MonitoringConfig := MonitoringSettings{
-		Enabled:             d.Get("enabled").(bool),
-		MqHost:              d.Get("mq_host").(string),
-		MqPort:              d.Get("mq_port").(int),
-		MqProxyHost:         d.Get("mq_proxy_host").(string),
-		MqProxyPort:         d.Get("mq_proxy_port").(int),
-		S3ProxyHost:         d.Get("s3_proxy_host").(string),
-		S3ProxyPort:         d.Get("s3_proxy_port").(int),
-		S3ProxyDisableHttps: d.Get("s3_proxy_disable_https").(bool),
-		VpnEnabled:          d.Get("vpn_enabled").(bool),
-		VpnHost:             d.Get("vpn_host").(string),
-		Period:              d.Get("period").(int),
-	}
-
-	_, err := DoRequest[MonitoringSettings, MonitoringResponse](c, PUT, MonitoringEndpoint, &MonitoringConfig)
-
+	err := setMonitorSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
 	return resourceMonitoringRead(ctx, d, m)
@@ -124,7 +108,7 @@ func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	var errs ErrorCollection
 
-	settings, err := DoRequest[MonitoringSettings, MonitoringSettings](c, GET, MonitoringEndpoint, nil)
+	settings, err := DoRequest[MonitoringSettings, MonitoringSettings](ctx, c, GET, MonitoringEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,11 +128,38 @@ func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceMonitoringUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceMonitoringCreate(ctx, d, m)
+	err := setMonitorSettings(ctx, d, m, PATCH)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceMonitoringRead(ctx, d, m)
 }
 
 func resourceMonitoringDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting monitor settings resource")
 	var diags diag.Diagnostics
 
 	return diags
+}
+
+func setMonitorSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+	c := m.(*Client)
+
+	monitoringConfig := MonitoringSettings{
+		Enabled:             d.Get("enabled").(bool),
+		MqHost:              d.Get("mq_host").(string),
+		MqPort:              d.Get("mq_port").(int),
+		MqProxyHost:         d.Get("mq_proxy_host").(string),
+		MqProxyPort:         d.Get("mq_proxy_port").(int),
+		S3ProxyHost:         d.Get("s3_proxy_host").(string),
+		S3ProxyPort:         d.Get("s3_proxy_port").(int),
+		S3ProxyDisableHttps: d.Get("s3_proxy_disable_https").(bool),
+		VpnEnabled:          d.Get("vpn_enabled").(bool),
+		VpnHost:             d.Get("vpn_host").(string),
+		Period:              d.Get("period").(int),
+	}
+
+	tflog.Debug(ctx, "Updating monitor settings")
+	_, err := DoRequest[MonitoringSettings, MonitoringResponse](ctx, c, method, MonitoringEndpoint, &monitoringConfig)
+	return err
 }

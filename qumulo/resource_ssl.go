@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -48,24 +50,14 @@ func resourceSsl() *schema.Resource {
 }
 
 func resourceSslCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	var diags diag.Diagnostics
-
-	sslConfig := SslRequest{
-		Certificate: d.Get("certificate").(string),
-		PrivateKey:  d.Get("private_key").(string),
-	}
-
-	_, err := DoRequest[SslRequest, SslResponse](c, PUT, SslEndpoint, &sslConfig)
+	err := setSslSettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
-	// There is no read endpoint for SSL, so don't try to read
-	return diags
+	return resourceSslRead(ctx, d, m)
 }
 
 func resourceSslRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -75,11 +67,29 @@ func resourceSslRead(ctx context.Context, d *schema.ResourceData, m interface{})
 }
 
 func resourceSslUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSslCreate(ctx, d, m)
+	err := setSslSettings(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceSslRead(ctx, d, m)
 }
 
 func resourceSslDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting SSL settings resource")
 	var diags diag.Diagnostics
 
 	return diags
+}
+
+func setSslSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*Client)
+
+	sslConfig := SslRequest{
+		Certificate: d.Get("certificate").(string),
+		PrivateKey:  d.Get("private_key").(string),
+	}
+
+	tflog.Debug(ctx, "Updating SSL settings")
+	_, err := DoRequest[SslRequest, SslResponse](ctx, c, PUT, SslEndpoint, &sslConfig)
+	return err
 }

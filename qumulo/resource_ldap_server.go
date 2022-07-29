@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -142,26 +144,7 @@ func resourceLdapServer() *schema.Resource {
 }
 
 func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	ldapServerSettings := LdapServerSettingsBody{
-		UseLdap:                d.Get("use_ldap").(bool),
-		BindUri:                d.Get("bind_uri").(string),
-		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
-		LdapSchemaDescription:  expandLdapDescription(d.Get("ldap_schema_description").([]interface{})),
-		LdapSchema:             d.Get("ldap_schema").(string),
-		EncryptConnection:      d.Get("encrypt_connection").(bool),
-	}
-
-	if v := d.Get("user").(string); v != "" {
-		ldapServerSettings.User = v
-	}
-
-	if v := d.Get("password").(string); v != "" {
-		ldapServerSettings.Password = v
-	}
-
-	_, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](c, PUT, LdapServerEndpoint, &ldapServerSettings)
+	err := setLdapSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -175,7 +158,7 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	var errs ErrorCollection
 
-	ls, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](c, GET, LdapServerEndpoint, nil)
+	ls, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](ctx, c, GET, LdapServerEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -196,13 +179,29 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	err := setLdapSettings(ctx, d, m, PATCH)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return resourceLdapServerRead(ctx, d, m)
+}
+
+func resourceLdapServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting LDAP settings resource")
+	var diags diag.Diagnostics
+
+	return diags
+}
+
+func setLdapSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
 	ldapServerSettings := LdapServerSettingsBody{
 		UseLdap:                d.Get("use_ldap").(bool),
 		BindUri:                d.Get("bind_uri").(string),
 		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
-		LdapSchemaDescription:  expandLdapDescription(d.Get("ldap_schema_description").([]interface{})),
+		LdapSchemaDescription:  expandLdapDescription(ctx, d.Get("ldap_schema_description").([]interface{})),
 		LdapSchema:             d.Get("ldap_schema").(string),
 		EncryptConnection:      d.Get("encrypt_connection").(bool),
 	}
@@ -215,24 +214,16 @@ func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m int
 		ldapServerSettings.Password = v
 	}
 
-	_, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](c, PATCH, LdapServerEndpoint, &ldapServerSettings)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return resourceLdapServerRead(ctx, d, m)
+	tflog.Debug(ctx, "Updating LDAP settings")
+	_, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](ctx, c, method, LdapServerEndpoint, &ldapServerSettings)
+	return err
 }
 
-func resourceLdapServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	return diags
-}
-
-func expandLdapDescription(tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
+func expandLdapDescription(ctx context.Context, tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
 	apiObject := LdapSchemaDescription{}
 
 	if len(tfLdapSchemaDescriptions) == 0 {
+		tflog.Warn(ctx, "No LDAP Schema Descriptions")
 		return apiObject
 	}
 	tfLdapSchemaDescription := tfLdapSchemaDescriptions[0]

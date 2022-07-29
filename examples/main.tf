@@ -1,5 +1,3 @@
-
-
 terraform {
   required_providers {
     qumulo = {
@@ -91,27 +89,27 @@ resource "qumulo_nfs_export" "new_nfs_export" {
   allow_fs_path_create = true
 }
 
-# resource "qumulo_nfs_export" "some_nfs_export" {
-#   export_path = "/tmp"
-#   fs_path = "/home/pthathamanjunatha"
-#   description = "testing nfs export via terraform"
-#   restrictions {
-#     host_restrictions = ["10.100.38.31"]
-#     read_only = false
-#     require_privileged_port = false
-#     user_mapping = "NFS_MAP_ALL"
-#     map_to_user = {
-#       id_type =  "NFS_UID"
-#       id_value = "994"
-#     }
-#     map_to_group = {
-#       id_type =  "NFS_GID"
-#       id_value = "994"
-#     }
-#   }
-#   fields_to_present_as_32_bit = ["FILE_IDS"]
-#   allow_fs_path_create = true
-# }
+ resource "qumulo_nfs_export" "some_nfs_export" {
+   export_path = "/tmp"
+   fs_path = "/home/pthathamanjunatha"
+   description = "testing nfs export via terraform"
+   restrictions {
+     host_restrictions = ["10.100.38.31"]
+     read_only = false
+     require_privileged_port = false
+     user_mapping = "NFS_MAP_ALL"
+     map_to_user = {
+       id_type =  "NFS_UID"
+       id_value = "994"
+     }
+     map_to_group = {
+       id_type =  "NFS_GID"
+       id_value = "994"
+     }
+   }
+   fields_to_present_as_32_bit = ["FILE_IDS"]
+   allow_fs_path_create = true
+ }
 
 //resource "qumulo_ssl_cert" "update_ssl" {
 //  certificate = var.some_cert

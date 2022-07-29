@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -38,13 +40,7 @@ func resourceSslCa() *schema.Resource {
 }
 
 func resourceSslCaCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	sslCaConfig := SslCaBody{
-		CaCertificate: d.Get("ca_certificate").(string),
-	}
-
-	_, err := DoRequest[SslCaBody, SslCaBody](c, PUT, SslCaEndpoint, &sslCaConfig)
+	err := setSslCaSettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -59,7 +55,7 @@ func resourceSslCaRead(ctx context.Context, d *schema.ResourceData, m interface{
 
 	var diags diag.Diagnostics
 
-	cert, err := DoRequest[SslCaBody, SslCaBody](c, GET, SslCaEndpoint, nil)
+	cert, err := DoRequest[SslCaBody, SslCaBody](ctx, c, GET, SslCaEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -72,15 +68,20 @@ func resourceSslCaRead(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceSslCaUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSslCaCreate(ctx, d, m)
+	err := setSslCaSettings(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceSslCaRead(ctx, d, m)
 }
 
 func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting SSL CA Settings")
 	c := m.(*Client)
 
 	var diags diag.Diagnostics
 
-	_, err := DoRequest[SslCaBody, SslCaBody](c, DELETE, SslCaEndpoint, nil)
+	_, err := DoRequest[SslCaBody, SslCaBody](ctx, c, DELETE, SslCaEndpoint, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -89,4 +90,16 @@ func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	d.SetId("")
 
 	return diags
+}
+
+func setSslCaSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*Client)
+
+	sslCaConfig := SslCaBody{
+		CaCertificate: d.Get("ca_certificate").(string),
+	}
+
+	tflog.Debug(ctx, "Updating SSL CA settings")
+	_, err := DoRequest[SslCaBody, SslCaBody](ctx, c, PUT, SslCaEndpoint, &sslCaConfig)
+	return err
 }

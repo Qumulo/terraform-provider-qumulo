@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -79,6 +81,53 @@ func resourceSmbServer() *schema.Resource {
 }
 
 func resourceSmbServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	err := setSMBServerSettings(ctx, d, m, PUT)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
+
+	return resourceSmbServerRead(ctx, d, m)
+}
+
+func resourceSmbServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*Client)
+
+	var errs ErrorCollection
+
+	smbSettings, err := DoRequest[SmbServerBody, SmbServerBody](ctx, c, GET, SmbServerEndpoint, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	errs.addMaybeError(d.Set("session_encryption", smbSettings.SessionEncryption))
+	errs.addMaybeError(d.Set("supported_dialects", smbSettings.SupportedDialects))
+	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_users", smbSettings.HideSharesFromUnauthorizedUsers))
+	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_hosts", smbSettings.HideSharesFromUnauthorizedHosts))
+	errs.addMaybeError(d.Set("snapshot_directory_mode", smbSettings.SnapshotDirectoryMode))
+	errs.addMaybeError(d.Set("bypass_traverse_checking", smbSettings.BypassTraverseChecking))
+	errs.addMaybeError(d.Set("signing_required", smbSettings.SigningRequired))
+
+	return errs.diags
+}
+
+func resourceSmbServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	err := setSMBServerSettings(ctx, d, m, PATCH)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceSmbServerRead(ctx, d, m)
+}
+
+func resourceSmbServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting SMB settings resource")
+	var diags diag.Diagnostics
+
+	return diags
+}
+
+func setSMBServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
 	// convert the []interface{} into []string
@@ -98,43 +147,7 @@ func resourceSmbServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 		SigningRequired:                 d.Get("signing_required").(bool),
 	}
 
-	_, err := DoRequest[SmbServerBody, SmbServerBody](c, PUT, SmbServerEndpoint, &smbServerConfig)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
-	return resourceSmbServerRead(ctx, d, m)
-}
-
-func resourceSmbServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	var errs ErrorCollection
-
-	smbSettings, err := DoRequest[SmbServerBody, SmbServerBody](c, GET, SmbServerEndpoint, nil)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	errs.addMaybeError(d.Set("session_encryption", smbSettings.SessionEncryption))
-	errs.addMaybeError(d.Set("supported_dialects", smbSettings.SupportedDialects))
-	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_users", smbSettings.HideSharesFromUnauthorizedUsers))
-	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_hosts", smbSettings.HideSharesFromUnauthorizedHosts))
-	errs.addMaybeError(d.Set("snapshot_directory_mode", smbSettings.SnapshotDirectoryMode))
-	errs.addMaybeError(d.Set("bypass_traverse_checking", smbSettings.BypassTraverseChecking))
-	errs.addMaybeError(d.Set("signing_required", smbSettings.SigningRequired))
-
-	return errs.diags
-}
-
-func resourceSmbServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSmbServerCreate(ctx, d, m)
-}
-
-func resourceSmbServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	return diags
+	tflog.Debug(ctx, "Updating SMB settings")
+	_, err := DoRequest[SmbServerBody, SmbServerBody](ctx, c, method, SmbServerEndpoint, &smbServerConfig)
+	return err
 }
