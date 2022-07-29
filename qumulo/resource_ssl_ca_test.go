@@ -1,6 +1,7 @@
 package qumulo
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -46,12 +47,12 @@ func TestAccSetSSLCA_ExpectError(t *testing.T) {
 
 var defaultSSLCAConfig = " "
 
-var invalidCert = SSLCARequest{
-	Certificate: "Not a valid certificate",
+var invalidCert = SslCaBody{
+	CaCertificate: "Not a valid certificate",
 }
 
-var testingSSLCACert = SSLCARequest{
-	Certificate: `-----BEGIN CERTIFICATE-----
+var testingSSLCACert = SslCaBody{
+	CaCertificate: `-----BEGIN CERTIFICATE-----
 MIICIDCCAYmgAwIBAgIUZcdqCxZB1O4RD548ygFhGBXxQdQwDQYJKoZIhvcNAQEL
 BQAwIjEPMA0GA1UEAwwGVGVzdENBMQ8wDQYDVQQKDAZRdW11bG8wHhcNMjIwNzIy
 MTcwOTI4WhcNMzIwNzE5MTcwOTI4WjAiMQ8wDQYDVQQDDAZUZXN0Q0ExDzANBgNV
@@ -67,21 +68,21 @@ HjX0jrbwN2tDfjTKNQwi7P7RPDY=
 -----END CERTIFICATE-----`,
 }
 
-func testAccSSLCAConfig(req SSLCARequest) string {
+func testAccSSLCAConfig(req SslCaBody) string {
 	return fmt.Sprintf(`
 resource "qumulo_ssl_ca" "cert" {
 	ca_certificate = <<CERTDELIM
 %v
 CERTDELIM
 }
-  `, req.Certificate)
+  `, req.CaCertificate)
 }
 
 func testAccCheckSSLCACert() resource.TestCheckFunc {
 	// Make sure there's a valid certificate through the API
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		_, err := DoRequest[SSLCARequest, SSLCARequest](c, GET, SSLCAEndpoint, nil)
+		_, err := DoRequest[SslCaBody, SslCaBody](context.Background(), c, GET, SslCaEndpoint, nil)
 		if err != nil {
 			return err
 		}

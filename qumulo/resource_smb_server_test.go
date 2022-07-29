@@ -87,10 +87,10 @@ func testAccCompareSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 	)
 }
 
-func testAccCheckSMBServerSettings(ctx context.Context, smb SmbServerBody) resource.TestCheckFunc {
+func testAccCheckSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		settings, err := DoRequest[SmbServerBody, SmbServerBody](ctx, c, GET, SmbServerEndpoint, nil)
+		settings, err := DoRequest[SmbServerBody, SmbServerBody](context.Background(), c, GET, SmbServerEndpoint, nil)
 		if err != nil {
 			return err
 		}

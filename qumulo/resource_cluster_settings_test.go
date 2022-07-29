@@ -50,10 +50,10 @@ resource "qumulo_cluster_name" "update_name" {
 `, name)
 }
 
-func testAccCheckClusterName(ctx context.Context, name string) resource.TestCheckFunc {
+func testAccCheckClusterName(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		cs, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, GET, ClusterSettingsEndpoint, nil)
+		cs, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](context.Background(), c, GET, ClusterSettingsEndpoint, nil)
 		if err != nil {
 			return err
 		}

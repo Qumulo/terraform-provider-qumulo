@@ -17,13 +17,13 @@ func TestAccChangeMonitoring(t *testing.T) {
 			{ // Reset state to default
 
 				Config: testAccMonitoringConf(defaultMonitoringConfig),
-				Check:  testAccCheckMonitoringSettings(ctx, defaultMonitoringConfig),
+				Check:  testAccCheckMonitoringSettings(defaultMonitoringConfig),
 			},
 			{
 				Config: testAccMonitoringConf(testingMonitoringConfig),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCompareMonitoringSetting(testingMonitoringConfig),
-					testAccCheckMonitoringSettings(ctx, testingMonitoringConfig),
+					testAccCheckMonitoringSettings(testingMonitoringConfig),
 				),
 			},
 		},
@@ -104,10 +104,10 @@ func testAccCompareMonitoringSetting(ms MonitoringSettings) resource.TestCheckFu
 	)
 }
 
-func testAccCheckMonitoringSettings(ctx context.Context, ms MonitoringSettings) resource.TestCheckFunc {
+func testAccCheckMonitoringSettings(ms MonitoringSettings) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		settings, err := DoRequest[MonitoringSettings, MonitoringSettings](ctx, c, GET, MonitoringEndpoint, nil)
+		settings, err := DoRequest[MonitoringSettings, MonitoringSettings](context.Background(), c, GET, MonitoringEndpoint, nil)
 		if err != nil {
 			return err
 		}
