@@ -115,6 +115,10 @@ func DoRequest[RQ interface{}, R interface{}](ctx context.Context, client *Clien
 	}
 
 	var cr R
+	if len(body) == 0 {
+		return nil, nil
+	}
+
 	err = json.Unmarshal(body, &cr)
 	if err != nil {
 		return nil, err

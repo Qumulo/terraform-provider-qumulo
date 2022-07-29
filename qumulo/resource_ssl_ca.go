@@ -16,11 +16,6 @@ type SSLCARequest struct {
 	Certificate string `json:"ca_certificate"`
 }
 
-// TODO: Figure out what the proper response for an SSL CA update is
-type SSLCAResponse struct {
-	Placeholder string `json:"placeholder"`
-}
-
 func resourceSSLCA() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceSSLCACreate,
@@ -75,7 +70,17 @@ func resourceSSLCAUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 //TODO Implement SSLCA Delete
 func resourceSSLCADelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting SSL CA Settings")
+	c := m.(*Client)
+
 	var diags diag.Diagnostics
+
+	_, err := DoRequest[SSLCARequest, SSLCARequest](ctx, c, DELETE, SSLCAEndpoint, nil)
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId("")
 
 	return diags
 }
@@ -88,6 +93,6 @@ func setSSLCASettings(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 
 	tflog.Debug(ctx, "Updating SSL CA settings")
-	_, err := DoRequest[SSLCARequest, SSLCAResponse](ctx, c, PUT, SSLCAEndpoint, &SSLCAConfig)
+	_, err := DoRequest[SSLCARequest, SSLCARequest](ctx, c, PUT, SSLCAEndpoint, &SSLCAConfig)
 	return err
 }
