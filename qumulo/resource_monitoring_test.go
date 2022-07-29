@@ -1,6 +1,7 @@
 package qumulo
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -9,55 +10,55 @@ import (
 )
 
 func TestAccChangeMonitoring(t *testing.T) {
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{ // Reset state to default
+
 				Config: testAccMonitoringConf(defaultMonitoringConfig),
-				Check:  testAccCheckMonitoringSettings(defaultMonitoringConfig),
+				Check:  testAccCheckMonitoringSettings(ctx, defaultMonitoringConfig),
 			},
 			{
 				Config: testAccMonitoringConf(testingMonitoringConfig),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCompareMonitoringSetting(testingMonitoringConfig),
-					testAccCheckMonitoringSettings(testingMonitoringConfig),
+					testAccCheckMonitoringSettings(ctx, testingMonitoringConfig),
 				),
 			},
 		},
 	})
 }
 
-var defaultMonitoringConfig = MonitorSettings{
+var defaultMonitoringConfig = MonitoringSettings{
 	Enabled:             false,
-	MQHost:              "",
-	MQPort:              0,
-	MQProxyHost:         "",
-	MQProxyPort:         0,
+	MqHost:              "",
+	MqPort:              0,
+	MqProxyHost:         "",
+	MqProxyPort:         0,
 	S3ProxyHost:         "",
 	S3ProxyPort:         0,
-	S3ProxyDisableHTTPS: false,
-	VPNEnabled:          false,
-	VPNHost:             "",
+	S3ProxyDisableHttps: false,
+	VpnEnabled:          false,
+	VpnHost:             "",
 	Period:              0,
 }
 
-var testingMonitoringConfig = MonitorSettings{
+var testingMonitoringConfig = MonitoringSettings{
 	Enabled:             true,
-	MQHost:              "missionq.qumulo.com",
-	MQPort:              443,
-	MQProxyHost:         "missionq.qumulo.com",
-	MQProxyPort:         372,
+	MqHost:              "missionq.qumulo.com",
+	MqPort:              443,
+	MqProxyHost:         "missionq.qumulo.com",
+	MqProxyPort:         372,
 	S3ProxyHost:         "monitor.qumulo.com",
 	S3ProxyPort:         444,
-	S3ProxyDisableHTTPS: true,
-	VPNEnabled:          true,
-	VPNHost:             "ep1.qumulo.com",
+	S3ProxyDisableHttps: true,
+	VpnEnabled:          true,
+	VpnHost:             "ep1.qumulo.com",
 	Period:              60,
 }
 
-func testAccMonitoringConf(ms MonitorSettings) string {
+func testAccMonitoringConf(ms MonitoringSettings) string {
 	return fmt.Sprintf(`
 resource "qumulo_monitoring" "update_monitoring" {
 	enabled = %v
@@ -72,41 +73,41 @@ resource "qumulo_monitoring" "update_monitoring" {
 	vpn_host = %q
 	period = %v
   }
-  `, ms.Enabled, ms.MQHost, ms.MQPort, ms.MQProxyHost, ms.MQProxyPort, ms.S3ProxyHost, ms.S3ProxyPort,
-		ms.S3ProxyDisableHTTPS, ms.VPNEnabled, ms.VPNHost, ms.Period)
+  `, ms.Enabled, ms.MqHost, ms.MqPort, ms.MqProxyHost, ms.MqProxyPort, ms.S3ProxyHost, ms.S3ProxyPort,
+		ms.S3ProxyDisableHttps, ms.VpnEnabled, ms.VpnHost, ms.Period)
 }
 
-func testAccCompareMonitoringSetting(ms MonitorSettings) resource.TestCheckFunc {
+func testAccCompareMonitoringSetting(ms MonitoringSettings) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "enabled",
 			fmt.Sprintf("%v", ms.Enabled)),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "mq_host",
-			ms.MQHost),
+			ms.MqHost),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "mq_port",
-			fmt.Sprintf("%v", ms.MQPort)),
+			fmt.Sprintf("%v", ms.MqPort)),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "mq_proxy_host",
-			ms.MQProxyHost),
+			ms.MqProxyHost),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "mq_proxy_port",
-			fmt.Sprintf("%v", ms.MQProxyPort)),
+			fmt.Sprintf("%v", ms.MqProxyPort)),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "s3_proxy_host",
 			ms.S3ProxyHost),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "s3_proxy_port",
 			fmt.Sprintf("%v", ms.S3ProxyPort)),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "s3_proxy_disable_https",
-			fmt.Sprintf("%v", ms.S3ProxyDisableHTTPS)),
+			fmt.Sprintf("%v", ms.S3ProxyDisableHttps)),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "vpn_enabled",
-			fmt.Sprintf("%v", ms.VPNEnabled)),
+			fmt.Sprintf("%v", ms.VpnEnabled)),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "vpn_host",
-			ms.VPNHost),
+			ms.VpnHost),
 		resource.TestCheckResourceAttr("qumulo_monitoring.update_monitoring", "period",
 			fmt.Sprintf("%v", ms.Period)),
 	)
 }
 
-func testAccCheckMonitoringSettings(ms MonitorSettings) resource.TestCheckFunc {
+func testAccCheckMonitoringSettings(ctx context.Context, ms MonitoringSettings) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		settings, err := DoRequest[MonitorSettings, MonitorSettings](c, GET, MonitorEndpoint, nil)
+		settings, err := DoRequest[MonitoringSettings, MonitoringSettings](ctx, c, GET, MonitoringEndpoint, nil)
 		if err != nil {
 			return err
 		}

@@ -144,7 +144,7 @@ func resourceLdapServer() *schema.Resource {
 }
 
 func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setLdapSettings(ctx, d, m, PUT)
+	err := setLdapServerSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -179,7 +179,7 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setLdapSettings(ctx, d, m, PATCH)
+	err := setLdapServerSettings(ctx, d, m, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -194,14 +194,14 @@ func resourceLdapServerDelete(ctx context.Context, d *schema.ResourceData, m int
 	return diags
 }
 
-func setLdapSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+func setLdapServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
 	ldapServerSettings := LdapServerSettingsBody{
 		UseLdap:                d.Get("use_ldap").(bool),
 		BindUri:                d.Get("bind_uri").(string),
 		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
-		LdapSchemaDescription:  expandLdapDescription(ctx, d.Get("ldap_schema_description").([]interface{})),
+		LdapSchemaDescription:  expandLdapSchemaDescription(ctx, d.Get("ldap_schema_description").([]interface{})),
 		LdapSchema:             d.Get("ldap_schema").(string),
 		EncryptConnection:      d.Get("encrypt_connection").(bool),
 	}
@@ -219,7 +219,7 @@ func setLdapSettings(ctx context.Context, d *schema.ResourceData, m interface{},
 	return err
 }
 
-func expandLdapDescription(ctx context.Context, tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
+func expandLdapSchemaDescription(ctx context.Context, tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
 	apiObject := LdapSchemaDescription{}
 
 	if len(tfLdapSchemaDescriptions) == 0 {

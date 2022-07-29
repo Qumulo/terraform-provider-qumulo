@@ -124,7 +124,7 @@ func resourceNfsExport() *schema.Resource {
 }
 
 func resourceNfsExportCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	res, err := createOrUpdateNFSExport(ctx, d, m, POST, NfsExportsEndpoint)
+	res, err := createOrUpdateNfsExport(ctx, d, m, POST, NfsExportsEndpoint)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -161,7 +161,7 @@ func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	nfsExportId := d.Id()
 	updateNfsExportByIdUri := NfsExportsEndpoint + nfsExportId
 
-	_, err := createOrUpdateNFSExport(ctx, d, m, PATCH, updateNfsExportByIdUri)
+	_, err := createOrUpdateNfsExport(ctx, d, m, PATCH, updateNfsExportByIdUri)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -183,7 +183,7 @@ func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m inte
 	return diags
 }
 
-func createOrUpdateNFSExport(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) (*NfsExport, error) {
+func createOrUpdateNfsExport(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) (*NfsExport, error) {
 	c := m.(*Client)
 
 	nfsExport := NfsExport{

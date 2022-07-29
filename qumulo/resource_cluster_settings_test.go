@@ -1,6 +1,7 @@
 package qumulo
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -49,10 +50,10 @@ resource "qumulo_cluster_name" "update_name" {
 `, name)
 }
 
-func testAccCheckClusterName(name string) resource.TestCheckFunc {
+func testAccCheckClusterName(ctx context.Context, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		cs, err := DoRequest[ClusterSettings, ClusterSettings](c, GET, ClusterSettingsEndpoint, nil)
+		cs, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, GET, ClusterSettingsEndpoint, nil)
 		if err != nil {
 			return err
 		}
