@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 	"time"
 
@@ -36,13 +37,7 @@ func resourceSSLCA() *schema.Resource {
 }
 
 func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	SSLCAConfig := SSLCARequest{
-		Certificate: d.Get("ca_certificate").(string),
-	}
-
-	_, err := DoRequest[SSLCARequest, SSLCAResponse](c, PUT, SSLCAEndpoint, &SSLCAConfig)
+	err := setSSLCASettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -53,12 +48,11 @@ func resourceSSLCACreate(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceSSLCARead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	c := m.(*Client)
 
 	var diags diag.Diagnostics
 
-	cert, err := DoRequest[SSLCARequest, SSLCARequest](c, GET, SSLCAEndpoint, nil)
+	cert, err := DoRequest[SSLCARequest, SSLCARequest](ctx, c, GET, SSLCAEndpoint, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -71,12 +65,29 @@ func resourceSSLCARead(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceSSLCAUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSSLCACreate(ctx, d, m)
+	err := setSSLCASettings(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceSSLCARead(ctx, d, m)
 }
 
+//TODO Implement SSLCA Delete
 func resourceSSLCADelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+	tflog.Info(ctx, "Deleting SSL CA Settings")
 	var diags diag.Diagnostics
 
 	return diags
+}
+
+func setSSLCASettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*Client)
+
+	SSLCAConfig := SSLCARequest{
+		Certificate: d.Get("ca_certificate").(string),
+	}
+
+	tflog.Debug(ctx, "Updating SSL CA settings")
+	_, err := DoRequest[SSLCARequest, SSLCAResponse](ctx, c, PUT, SSLCAEndpoint, &SSLCAConfig)
+	return err
 }

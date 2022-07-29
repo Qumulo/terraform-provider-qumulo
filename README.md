@@ -8,3 +8,6 @@ The Terraform Qumulo provider is a plugin for Terraform that allows for the upda
 - Monitoring
 - SSL/SSL CA
 - LDAP
+- AD
+- NFS Exports
+- SMB

@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 	"time"
 
@@ -31,31 +32,21 @@ func resourceClusterSettings() *schema.Resource {
 }
 
 func resourceClusterSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	name := d.Get("name").(string)
-
-	cs := ClusterSettings{
-		ClusterName: name,
-	}
-
-	_, err := DoRequest[ClusterSettings, ClusterSettings](c, PUT, ClusterSettingsEndpoint, &cs)
+	err := setClusterSettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
 	return resourceClusterSettingsRead(ctx, d, m)
 }
 
 func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	cs, err := DoRequest[ClusterSettings, ClusterSettings](c, GET, ClusterSettingsEndpoint, nil)
+	cs, err := DoRequest[ClusterSettings, ClusterSettings](ctx, c, GET, ClusterSettingsEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -66,15 +57,7 @@ func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 func resourceClusterSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	name := d.Get("name").(string)
-
-	cs := ClusterSettings{
-		ClusterName: name,
-	}
-
-	_, err := DoRequest[ClusterSettings, ClusterSettings](c, PUT, ClusterSettingsEndpoint, &cs)
+	err := setClusterSettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -83,8 +66,21 @@ func resourceClusterSettingsUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceClusterSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+	tflog.Info(ctx, "Deleting cluster settings resource")
 	var diags diag.Diagnostics
-
 	return diags
+}
+
+func setClusterSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*Client)
+
+	name := d.Get("name").(string)
+
+	cs := ClusterSettings{
+		ClusterName: name,
+	}
+
+	tflog.Debug(ctx, "Updating cluster settings")
+	_, err := DoRequest[ClusterSettings, ClusterSettings](ctx, c, PUT, ClusterSettingsEndpoint, &cs)
+	return err
 }

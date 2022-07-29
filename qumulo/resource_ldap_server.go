@@ -3,6 +3,7 @@ package qumulo
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 	"time"
 
@@ -124,26 +125,7 @@ func resourceLdapServer() *schema.Resource {
 }
 
 func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
-
-	ldapSettings := LdapServerSettings{
-		UseLdap:                d.Get("use_ldap").(bool),
-		BindUri:                d.Get("bind_uri").(string),
-		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
-		LdapSchemaDescription:  expandLdapDescription(d.Get("ldap_schema_description").([]interface{})),
-		LdapSchema:             d.Get("ldap_schema").(string),
-		EncryptConnection:      d.Get("encrypt_connection").(bool),
-	}
-
-	if v := d.Get("user").(string); v != "" {
-		ldapSettings.User = v
-	}
-
-	if v := d.Get("password").(string); v != "" {
-		ldapSettings.Password = v
-	}
-
-	_, err := DoRequest[LdapServerSettings, LdapServerSettings](client, PUT, LdapServerEndpoint, &ldapSettings)
+	err := setLDAPSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,10 +137,9 @@ func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m int
 func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	// Warning or errors can be collected in a slice type
 	var errs ErrorCollection
 
-	ls, err := DoRequest[LdapServerSettings, LdapServerSettings](c, GET, LdapServerEndpoint, nil)
+	ls, err := DoRequest[LdapServerSettings, LdapServerSettings](ctx, c, GET, LdapServerEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,13 +161,29 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	err := setLDAPSettings(ctx, d, m, PATCH)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return resourceLdapServerRead(ctx, d, m)
+}
+
+func resourceLdapServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting LDAP settings resource")
+	var diags diag.Diagnostics
+
+	return diags
+}
+
+func setLDAPSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	client := m.(*Client)
 
 	ldapSettings := LdapServerSettings{
 		UseLdap:                d.Get("use_ldap").(bool),
 		BindUri:                d.Get("bind_uri").(string),
 		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
-		LdapSchemaDescription:  expandLdapDescription(d.Get("ldap_schema_description").([]interface{})),
+		LdapSchemaDescription:  expandLdapDescription(ctx, d.Get("ldap_schema_description").([]interface{})),
 		LdapSchema:             d.Get("ldap_schema").(string),
 		EncryptConnection:      d.Get("encrypt_connection").(bool),
 	}
@@ -199,25 +196,16 @@ func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m int
 		ldapSettings.Password = v
 	}
 
-	_, err := DoRequest[LdapServerSettings, LdapServerSettings](client, PATCH, LdapServerEndpoint, &ldapSettings)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return resourceLdapServerRead(ctx, d, m)
+	tflog.Debug(ctx, "Updating LDAP settings")
+	_, err := DoRequest[LdapServerSettings, LdapServerSettings](ctx, client, method, LdapServerEndpoint, &ldapSettings)
+	return err
 }
 
-func resourceLdapServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	return diags
-}
-
-func expandLdapDescription(tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
+func expandLdapDescription(ctx context.Context, tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
 	apiObject := LdapSchemaDescription{}
 
 	if len(tfLdapSchemaDescriptions) == 0 {
+		tflog.Warn(ctx, "No LDAP Schema Descriptions")
 		return apiObject
 	}
 	tfLdapSchemaDescription := tfLdapSchemaDescriptions[0]

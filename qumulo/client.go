@@ -1,9 +1,11 @@
 package qumulo
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -22,7 +24,7 @@ const (
 )
 
 func (m Method) String() string {
-	return [...]string{"GET", "PUT", "POST", "PATCH"}[m-1]
+	return [...]string{"GET", "PUT", "POST", "PATCH", "DELETE"}[m-1]
 }
 
 // Client -
@@ -47,7 +49,7 @@ type AuthResponse struct {
 }
 
 // NewClient -
-func NewClient(host, port, username, password *string) (*Client, error) {
+func NewClient(ctx context.Context, host, port, username, password *string) (*Client, error) {
 	HostURL := fmt.Sprintf("https://%s:%s", *host, *port)
 
 	transCfg := &http.Transport{
@@ -63,7 +65,7 @@ func NewClient(host, port, username, password *string) (*Client, error) {
 		},
 	}
 
-	ar, err := c.SignIn()
+	ar, err := c.SignIn(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -71,10 +73,56 @@ func NewClient(host, port, username, password *string) (*Client, error) {
 	c.BearerToken = ar.BearerToken
 	c.HostURL = HostURL
 
+	tflog.Info(ctx, "Qumulo client configured", map[string]interface{}{
+		"host":     host,
+		"port":     port,
+		"username": username,
+	})
 	return &c, nil
 }
 
-func (c *Client) MakeHTTPRequest(req *http.Request) ([]byte, error) {
+func DoRequest[RQ interface{}, R interface{}](ctx context.Context, client *Client, method Method, endpointUri string, reqBody *RQ) (*R, error) {
+	bearerToken := "Bearer " + client.BearerToken
+	HostURL := client.HostURL
+
+	var parsedReqBody io.Reader
+
+	if reqBody != nil {
+		rb, err := json.Marshal(reqBody)
+		if err != nil {
+			return nil, err
+		}
+		parsedReqBody = strings.NewReader(string(rb))
+	} else {
+		parsedReqBody = nil
+	}
+	url := fmt.Sprintf("%s%s", HostURL, endpointUri)
+	req, err := http.NewRequest(method.String(), url, parsedReqBody)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", bearerToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	tflog.Trace(ctx, "Executing API request", map[string]interface{}{
+		"url":    url,
+		"method": method.String(),
+	})
+
+	body, err := client.makeHTTPRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var cr R
+	err = json.Unmarshal(body, &cr)
+	if err != nil {
+		return nil, err
+	}
+	return &cr, nil
+}
+
+func (c *Client) makeHTTPRequest(req *http.Request) ([]byte, error) {
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -92,40 +140,4 @@ func (c *Client) MakeHTTPRequest(req *http.Request) ([]byte, error) {
 	}
 
 	return body, err
-}
-
-func DoRequest[RQ interface{}, R interface{}](client *Client, method Method, endpointUri string, reqBody *RQ) (*R, error) {
-	bearerToken := "Bearer " + client.BearerToken
-	HostURL := client.HostURL
-
-	var parsedReqBody io.Reader
-
-	if reqBody != nil {
-		rb, err := json.Marshal(reqBody)
-		if err != nil {
-			return nil, err
-		}
-		parsedReqBody = strings.NewReader(string(rb))
-	} else {
-		parsedReqBody = nil
-	}
-
-	req, err := http.NewRequest(method.String(), fmt.Sprintf("%s%s", HostURL, endpointUri), parsedReqBody)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", bearerToken)
-	req.Header.Add("Content-Type", "application/json")
-
-	body, err := client.MakeHTTPRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	var cr R
-	err = json.Unmarshal(body, &cr)
-	if err != nil {
-		return nil, err
-	}
-	return &cr, nil
 }

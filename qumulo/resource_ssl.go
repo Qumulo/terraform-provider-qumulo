@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 	"time"
 
@@ -41,40 +42,46 @@ func resourceSSL() *schema.Resource {
 }
 
 func resourceSSLCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
-
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	SSLConfig := SSLRequest{
-		Certificate: d.Get("certificate").(string),
-		PrivateKey:  d.Get("private_key").(string),
-	}
-
-	_, err := DoRequest[SSLRequest, SSLResponse](c, PUT, SSLEndpoint, &SSLConfig)
+	err := setSSLSettings(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
-
-	return diags
+	return resourceSSLRead(ctx, d, m)
 }
 
+//TODO Implement SSL Read
 func resourceSSLRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
 	return diags
 }
 
 func resourceSSLUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceSSLCreate(ctx, d, m)
+	err := setSSLSettings(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceSSLRead(ctx, d, m)
 }
 
 func resourceSSLDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Warning or errors can be collected in a slice type
+	tflog.Info(ctx, "Deleting SSL settings resource")
 	var diags diag.Diagnostics
 
 	return diags
+}
+
+func setSSLSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*Client)
+
+	SSLConfig := SSLRequest{
+		Certificate: d.Get("certificate").(string),
+		PrivateKey:  d.Get("private_key").(string),
+	}
+
+	tflog.Debug(ctx, "Updating SSL settings")
+	_, err := DoRequest[SSLRequest, SSLResponse](ctx, c, PUT, SSLEndpoint, &SSLConfig)
+	return err
 }
