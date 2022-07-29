@@ -3,18 +3,30 @@ package qumulo
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+type LdapSchema int
+
+const (
+	RFC2307 LdapSchema = iota + 1
+	CUSTOM
+)
+
+func (e LdapSchema) String() string {
+	return LdapSchemaValues[e-1]
+}
+
 const LdapServerEndpoint = "/v2/ldap/settings"
 
-type LdapServerSettings struct {
+type LdapServerSettingsBody struct {
 	UseLdap                bool                  `json:"use_ldap"`
 	BindUri                string                `json:"bind_uri"`
 	User                   string                `json:"user"`
@@ -36,7 +48,7 @@ type LdapSchemaDescription struct {
 	GidNumberAttribute           string `json:"gid_number_attribute"`
 }
 
-var ldapSchema = []string{"RFC2307", "CUSTOM"}
+var LdapSchemaValues = []string{"RFC2307", "CUSTOM"}
 
 func resourceLdapServer() *schema.Resource {
 	return &schema.Resource{
@@ -44,6 +56,13 @@ func resourceLdapServer() *schema.Resource {
 		ReadContext:   resourceLdapServerRead,
 		UpdateContext: resourceLdapServerUpdate,
 		DeleteContext: resourceLdapServerDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(1 * time.Minute),
+			Update: schema.DefaultTimeout(1 * time.Minute),
+			Delete: schema.DefaultTimeout(1 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"use_ldap": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -71,8 +90,8 @@ func resourceLdapServer() *schema.Resource {
 			"ldap_schema": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ldapSchema, false)),
-				Default:          "RFC2307",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(LdapSchemaValues, false)),
+				Default:          RFC2307,
 			},
 			"ldap_schema_description": {
 				Type:     schema.TypeList,
@@ -125,7 +144,7 @@ func resourceLdapServer() *schema.Resource {
 }
 
 func resourceLdapServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setLDAPSettings(ctx, d, m, PUT)
+	err := setLdapSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -139,14 +158,13 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	var errs ErrorCollection
 
-	ls, err := DoRequest[LdapServerSettings, LdapServerSettings](ctx, c, GET, LdapServerEndpoint, nil)
+	ls, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](ctx, c, GET, LdapServerEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	errs.addMaybeError(d.Set("use_ldap", ls.UseLdap))
 	errs.addMaybeError(d.Set("bind_uri", ls.BindUri))
 	errs.addMaybeError(d.Set("user", ls.User))
-
 	errs.addMaybeError(d.Set("password", ls.Password))
 	errs.addMaybeError(d.Set("base_distinguished_names", ls.BaseDistinguishedNames))
 	errs.addMaybeError(d.Set("ldap_schema", ls.LdapSchema))
@@ -161,7 +179,7 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setLDAPSettings(ctx, d, m, PATCH)
+	err := setLdapSettings(ctx, d, m, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -176,10 +194,10 @@ func resourceLdapServerDelete(ctx context.Context, d *schema.ResourceData, m int
 	return diags
 }
 
-func setLDAPSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
-	client := m.(*Client)
+func setLdapSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+	c := m.(*Client)
 
-	ldapSettings := LdapServerSettings{
+	ldapServerSettings := LdapServerSettingsBody{
 		UseLdap:                d.Get("use_ldap").(bool),
 		BindUri:                d.Get("bind_uri").(string),
 		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
@@ -189,15 +207,15 @@ func setLDAPSettings(ctx context.Context, d *schema.ResourceData, m interface{},
 	}
 
 	if v := d.Get("user").(string); v != "" {
-		ldapSettings.User = v
+		ldapServerSettings.User = v
 	}
 
 	if v := d.Get("password").(string); v != "" {
-		ldapSettings.Password = v
+		ldapServerSettings.Password = v
 	}
 
 	tflog.Debug(ctx, "Updating LDAP settings")
-	_, err := DoRequest[LdapServerSettings, LdapServerSettings](ctx, client, method, LdapServerEndpoint, &ldapSettings)
+	_, err := DoRequest[LdapServerSettingsBody, LdapServerSettingsBody](ctx, c, method, LdapServerEndpoint, &ldapServerSettings)
 	return err
 }
 

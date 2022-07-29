@@ -4,17 +4,56 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-type ActiveDirectorySettings struct {
+type ActiveDirectorySigning int
+type ActiveDirectorySealing int
+type ActiveDirectoryCrypto int
+
+const (
+	NoSigning ActiveDirectorySigning = iota + 1
+	WantSigning
+	RequireSigning
+)
+
+const (
+	NoSealing ActiveDirectorySealing = iota + 1
+	WantSealing
+	RequireSealing
+)
+
+const (
+	NoCrypto ActiveDirectoryCrypto = iota + 1
+	WantCrypto
+	RequireCrypto
+)
+
+func (e ActiveDirectorySigning) String() string {
+	return ActiveDirectorySigningValues[e-1]
+}
+
+func (e ActiveDirectorySealing) String() string {
+	return ActiveDirectorySealingValues[e-1]
+}
+
+func (e ActiveDirectoryCrypto) String() string {
+	return ActiveDirectoryCryptoValues[e-1]
+}
+
+var ActiveDirectorySigningValues = []string{"NO_SIGNING", "WANT_SIGNING", "REQUIRE_SIGNING"}
+var ActiveDirectorySealingValues = []string{"NO_SEALING", "WANT_SEALING", "REQUIRE_SEALING"}
+var ActiveDirectoryCryptoValues = []string{"NO_AES", "WANT_AES", "REQUIRE_AES"}
+
+type ActiveDirectorySettingsBody struct {
 	Signing string `json:"signing"`
 	Sealing string `json:"sealing"`
 	Crypto  string `json:"crypto"`
@@ -22,27 +61,27 @@ type ActiveDirectorySettings struct {
 
 type ActiveDirectoryJoinRequest struct {
 	Domain               string `json:"domain"`
-	DomainNetBIOS        string `json:"domain_netbios"`
+	DomainNetBios        string `json:"domain_netbios"`
 	User                 string `json:"user"`
 	Password             string `json:"password"`
-	OU                   string `json:"ou"`
-	UseADPosixAttributes bool   `json:"use_ad_posix_attributes"`
-	BaseDN               string `json:"base_dn"`
+	Ou                   string `json:"ou"`
+	UseAdPosixAttributes bool   `json:"use_ad_posix_attributes"`
+	BaseDn               string `json:"base_dn"`
 }
 
 type ActiveDirectoryJoinResponse struct {
-	MonitorURI string `json:"monitor_uri"`
+	MonitorUri string `json:"monitor_uri"`
 }
 
-type ActiveDirectoryStatus struct {
+type ActiveDirectoryStatusBody struct {
 	Status               string                      `json:"status"`
 	Domain               string                      `json:"domain"`
-	OU                   string                      `json:"ou"`
-	UseADPosixAttributes bool                        `json:"use_ad_posix_attributes"`
-	BaseDN               string                      `json:"base_dn"`
-	DomainNetBIOS        string                      `json:"domain_netbios"`
+	Ou                   string                      `json:"ou"`
+	UseAdPosixAttributes bool                        `json:"use_ad_posix_attributes"`
+	BaseDn               string                      `json:"base_dn"`
+	DomainNetBios        string                      `json:"domain_netbios"`
 	Dcs                  []ActiveDirectoryDcs        `json:"dcs"`
-	LdapConnectionStates []ActiveDirectoryLDAPStates `json:"ldap_connection_states"`
+	LdapConnectionStates []ActiveDirectoryLdapStates `json:"ldap_connection_states"`
 }
 
 type ActiveDirectoryDcs struct {
@@ -50,28 +89,28 @@ type ActiveDirectoryDcs struct {
 	Address string `json:"address"`
 }
 
-type ActiveDirectoryLDAPServers struct {
-	BindURI    string `json:"bind_uri"`
-	KDCAddress string `json:"kdc_address"`
+type ActiveDirectoryLdapServers struct {
+	BindUri    string `json:"bind_uri"`
+	KdcAddress string `json:"kdc_address"`
 }
 
-type ActiveDirectoryLDAPStates struct {
+type ActiveDirectoryLdapStates struct {
 	NodeId      int                          `json:"node_id"`
-	Servers     []ActiveDirectoryLDAPServers `json:"servers"`
+	Servers     []ActiveDirectoryLdapServers `json:"servers"`
 	BindDomain  string                       `json:"bind_domain"`
 	BindAccount string                       `json:"bind_account"`
-	BaseDNVec   []string                     `json:"base_dn_vec"`
+	BaseDnVec   []string                     `json:"base_dn_vec"`
 	Health      string                       `json:"health"`
 }
 
 type ActiveDirectoryRequest struct {
-	Settings      *ActiveDirectorySettings
+	Settings      *ActiveDirectorySettingsBody
 	JoinSettings  *ActiveDirectoryJoinRequest
 	UsageSettings *ActiveDirectoryUsageSettings
 }
 
 type ActiveDirectoryResponse struct {
-	Settings     *ActiveDirectorySettings
+	Settings     *ActiveDirectorySettingsBody
 	JoinResponse *ActiveDirectoryJoinResponse
 }
 
@@ -90,17 +129,17 @@ func (e ActiveDirectoryMonitorLastError) Error() string {
 type ActiveDirectoryMonitorResponse struct {
 	Status               string                          `json:"status"`
 	Domain               string                          `json:"domain"`
-	OU                   string                          `json:"ou"`
+	Ou                   string                          `json:"ou"`
 	LastError            ActiveDirectoryMonitorLastError `json:"last_error"`
 	LastActionTime       string                          `json:"last_action_time"`
-	UseADPosixAttributes bool                            `json:"use_ad_posix_attributes"`
-	BaseDN               string                          `json:"base_dn"`
-	DomainNetBIOS        string                          `json:"domain_netbios"`
+	UseAdPosixAttributes bool                            `json:"use_ad_posix_attributes"`
+	BaseDn               string                          `json:"base_dn"`
+	DomainNetBios        string                          `json:"domain_netbios"`
 }
 
 type ActiveDirectoryUsageSettings struct {
-	UseADPosixAttributes bool   `json:"use_ad_posix_attributes"`
-	BaseDN               string `json:"base_dn"`
+	UseAdPosixAttributes bool   `json:"use_ad_posix_attributes"`
+	BaseDn               string `json:"base_dn"`
 }
 
 type ActiveDirectoryLeaveRequest struct {
@@ -109,19 +148,15 @@ type ActiveDirectoryLeaveRequest struct {
 	Password string `json:"password"`
 }
 
-const ADSettingsEndpoint = "/v1/ad/settings"
-const ADStatusEndpoint = "/v1/ad/status"
-const ADJoinEndpoint = "/v1/ad/join"
-const ADMonitorEndpoint = "/v1/ad/monitor"
-const ADReconfigureEndpoint = "/v1/ad/reconfigure"
-const ADLeaveEndpoint = "/v1/ad/leave"
+const AdSettingsEndpoint = "/v1/ad/settings"
+const AdStatusEndpoint = "/v1/ad/status"
+const AdJoinEndpoint = "/v1/ad/join"
+const AdMonitorEndpoint = "/v1/ad/monitor"
+const AdReconfigureEndpoint = "/v1/ad/reconfigure"
+const AdLeaveEndpoint = "/v1/ad/leave"
 
-var adSigningValues = []string{"NO_SIGNING", "WANT_SIGNING", "REQUIRE_SIGNING"}
-var adSealingValues = []string{"NO_SEALING", "WANT_SEALING", "REQUIRE_SEALING"}
-var adCryptoValues = []string{"NO_AES", "WANT_AES", "REQUIRE_AES"}
-
-const ADJoinWaitTime = 1 * time.Second
-const ADJoinTimeoutIterations = 60
+const AdJoinWaitTime = 1 * time.Second
+const AdJoinTimeoutIterations = 60
 
 func resourceActiveDirectory() *schema.Resource {
 	return &schema.Resource{
@@ -129,6 +164,13 @@ func resourceActiveDirectory() *schema.Resource {
 		ReadContext:   resourceActiveDirectoryRead,
 		UpdateContext: resourceActiveDirectoryUpdate,
 		DeleteContext: resourceActiveDirectoryDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(2 * time.Minute),
+			Update: schema.DefaultTimeout(2 * time.Minute),
+			Delete: schema.DefaultTimeout(2 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"domain": &schema.Schema{
 				Type:     schema.TypeString,
@@ -167,51 +209,51 @@ func resourceActiveDirectory() *schema.Resource {
 			"signing": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adSigningValues, false)),
-				Default:          "WANT_SIGNING",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ActiveDirectorySigningValues, false)),
+				Default:          WantSigning,
 			},
 			"sealing": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adSealingValues, false)),
-				Default:          "WANT_SEALING",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ActiveDirectorySealingValues, false)),
+				Default:          WantSealing,
 			},
 			"crypto": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(adCryptoValues, false)),
-				Default:          "WANT_AES",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ActiveDirectoryCryptoValues, false)),
+				Default:          WantCrypto,
 			},
 		},
 	}
 }
 
 func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
+	c := m.(*Client)
 
-	updatedAdSettings := ActiveDirectorySettings{
+	adSettings := ActiveDirectorySettingsBody{
 		Signing: d.Get("signing").(string),
 		Sealing: d.Get("sealing").(string),
 		Crypto:  d.Get("crypto").(string),
 	}
 
-	joinSettings := ActiveDirectoryJoinRequest{
+	joinRequest := ActiveDirectoryJoinRequest{
 		Domain:               d.Get("domain").(string),
-		DomainNetBIOS:        d.Get("domain_netbios").(string),
+		DomainNetBios:        d.Get("domain_netbios").(string),
 		User:                 d.Get("ad_username").(string),
 		Password:             d.Get("ad_password").(string),
-		OU:                   d.Get("ou").(string),
-		UseADPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
-		BaseDN:               d.Get("base_dn").(string),
+		Ou:                   d.Get("ou").(string),
+		UseAdPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
+		BaseDn:               d.Get("base_dn").(string),
 	}
 
-	updatedAdRequest := ActiveDirectoryRequest{
-		Settings:     &updatedAdSettings,
-		JoinSettings: &joinSettings,
+	adRequest := ActiveDirectoryRequest{
+		Settings:     &adSettings,
+		JoinSettings: &joinRequest,
 	}
 
 	tflog.Debug(ctx, "Joining Active Directory")
-	_, err := client.CreateActiveDirectory(ctx, updatedAdRequest)
+	_, err := c.createActiveDirectory(ctx, adRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -222,9 +264,9 @@ func resourceActiveDirectoryCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
+	c := m.(*Client)
 
-	adSettings, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](ctx, client, GET, ADSettingsEndpoint, nil)
+	adSettings, err := DoRequest[ActiveDirectorySettingsBody, ActiveDirectorySettingsBody](ctx, c, GET, AdSettingsEndpoint, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -240,7 +282,7 @@ func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m 
 		return errs.diags
 	}
 
-	adStatus, err := DoRequest[ActiveDirectoryStatus, ActiveDirectoryStatus](ctx, client, GET, ADStatusEndpoint, nil)
+	adStatus, err := DoRequest[ActiveDirectoryStatusBody, ActiveDirectoryStatusBody](ctx, c, GET, AdStatusEndpoint, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -250,25 +292,25 @@ func resourceActiveDirectoryRead(ctx context.Context, d *schema.ResourceData, m 
 		"adStatus": adStatus.Status,
 	})
 	errs.addMaybeError(d.Set("domain", adStatus.Domain))
-	errs.addMaybeError(d.Set("ou", adStatus.OU))
-	errs.addMaybeError(d.Set("use_ad_posix_attributes", adStatus.UseADPosixAttributes))
-	errs.addMaybeError(d.Set("base_dn", adStatus.BaseDN))
-	errs.addMaybeError(d.Set("domain_netbios", adStatus.DomainNetBIOS))
+	errs.addMaybeError(d.Set("ou", adStatus.Ou))
+	errs.addMaybeError(d.Set("use_ad_posix_attributes", adStatus.UseAdPosixAttributes))
+	errs.addMaybeError(d.Set("base_dn", adStatus.BaseDn))
+	errs.addMaybeError(d.Set("domain_netbios", adStatus.DomainNetBios))
 	return errs.diags
 }
 
 func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*Client)
+	c := m.(*Client)
 
-	updatedAdSettings := ActiveDirectorySettings{
+	updatedAdSettings := ActiveDirectorySettingsBody{
 		Signing: d.Get("signing").(string),
 		Sealing: d.Get("sealing").(string),
 		Crypto:  d.Get("crypto").(string),
 	}
 
 	updatedUsageSettings := ActiveDirectoryUsageSettings{
-		UseADPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
-		BaseDN:               d.Get("base_dn").(string),
+		UseAdPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
+		BaseDn:               d.Get("base_dn").(string),
 	}
 
 	updatedAdRequest := ActiveDirectoryRequest{
@@ -277,7 +319,7 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	tflog.Debug(ctx, "Updating Active Directory settings")
-	_, err := client.UpdateActiveDirectory(ctx, updatedAdRequest)
+	_, err := c.updateActiveDirectory(ctx, updatedAdRequest, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -296,13 +338,13 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 		Password: d.Get("ad_password").(string),
 	}
 
-	_, err := DoRequest[ActiveDirectoryLeaveRequest, ActiveDirectoryMonitorResponse](ctx, client, POST, ADLeaveEndpoint, &leaveAdSettings)
+	_, err := DoRequest[ActiveDirectoryLeaveRequest, ActiveDirectoryMonitorResponse](ctx, client, POST, AdLeaveEndpoint, &leaveAdSettings)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	tflog.Info(ctx, "Leaving Active Directory")
-	err = client.WaitForADMonitorUpdate(ctx)
+	err = client.waitForADMonitorUpdate(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -310,34 +352,14 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-func (c *Client) CreateActiveDirectory(ctx context.Context, clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
+func (c *Client) createActiveDirectory(ctx context.Context, clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
 
-	joinResponsePointer, err := c.JoinActiveDirectory(ctx, clusterReq.JoinSettings)
+	joinResponsePointer, err := c.joinActiveDirectory(ctx, clusterReq.JoinSettings)
 	if err != nil {
 		return nil, err
 	}
 
-	settingsResponsePointer, err := c.UpdateActiveDirectorySettings(ctx, clusterReq.Settings)
-	if err != nil {
-		return nil, err
-	}
-
-	response := ActiveDirectoryResponse{
-		Settings:     settingsResponsePointer,
-		JoinResponse: joinResponsePointer,
-	}
-
-	return &response, nil
-}
-
-func (c *Client) UpdateActiveDirectory(ctx context.Context, clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
-
-	joinResponsePointer, err := c.UpdateActiveDirectoryUsage(ctx, clusterReq.UsageSettings)
-	if err != nil {
-		return nil, err
-	}
-
-	settingsResponsePointer, err := c.UpdateActiveDirectorySettings(ctx, clusterReq.Settings)
+	settingsResponsePointer, err := c.updateActiveDirectorySettings(ctx, clusterReq.Settings)
 	if err != nil {
 		return nil, err
 	}
@@ -350,8 +372,37 @@ func (c *Client) UpdateActiveDirectory(ctx context.Context, clusterReq ActiveDir
 	return &response, nil
 }
 
-func (c *Client) UpdateActiveDirectorySettings(ctx context.Context, activeDirectorySettings *ActiveDirectorySettings) (*ActiveDirectorySettings, error) {
-	// XXX amanning: The AD settings API endpoint expects all of the AD settings set.
+func (c *Client) updateActiveDirectory(ctx context.Context, clusterReq ActiveDirectoryRequest, d *schema.ResourceData) (*ActiveDirectoryResponse, error) {
+
+	var joinResponsePointer *ActiveDirectoryJoinResponse
+	var err error
+
+	if d.HasChanges("use_ad_posix_attributes", "base_dn") {
+		joinResponsePointer, err = c.updateActiveDirectoryUsage(ctx, clusterReq.UsageSettings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var settingsResponsePointer *ActiveDirectorySettingsBody
+
+	if d.HasChanges("signing", "sealing", "crypto") {
+		settingsResponsePointer, err = c.updateActiveDirectorySettings(ctx, clusterReq.Settings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	response := ActiveDirectoryResponse{
+		Settings:     settingsResponsePointer,
+		JoinResponse: joinResponsePointer,
+	}
+
+	return &response, nil
+}
+
+func (c *Client) updateActiveDirectorySettings(ctx context.Context, activeDirectorySettings *ActiveDirectorySettingsBody) (*ActiveDirectorySettingsBody, error) {
+	// XXX amanning32: The AD settings API endpoint expects all of the AD settings set.
 	// If the config has all settings set, use them.
 	// If the config has no settings set, don't hit the endpoint.
 	// If the config has SOME settings set, return an error since we can't apply that.
@@ -365,7 +416,7 @@ func (c *Client) UpdateActiveDirectorySettings(ctx context.Context, activeDirect
 		tflog.Warn(ctx, "Incomplete Active Directory settings detected, will not apply changes. Specify all or none of Signing, Sealing, and Crypto.")
 		return nil, nil
 	} else {
-		settingsResponse, err := DoRequest[ActiveDirectorySettings, ActiveDirectorySettings](ctx, c, PUT, ADSettingsEndpoint, activeDirectorySettings)
+		settingsResponse, err := DoRequest[ActiveDirectorySettingsBody, ActiveDirectorySettingsBody](ctx, c, PUT, AdSettingsEndpoint, activeDirectorySettings)
 		if err != nil {
 			return nil, err
 		}
@@ -373,18 +424,18 @@ func (c *Client) UpdateActiveDirectorySettings(ctx context.Context, activeDirect
 	}
 }
 
-func (c *Client) JoinActiveDirectory(ctx context.Context, joinRequest *ActiveDirectoryJoinRequest) (*ActiveDirectoryJoinResponse, error) {
+func (c *Client) joinActiveDirectory(ctx context.Context, joinRequest *ActiveDirectoryJoinRequest) (*ActiveDirectoryJoinResponse, error) {
 	if joinRequest == nil {
 		tflog.Warn(ctx, "No Active Directory join information detected, not joining.")
 		return nil, nil
 	}
 
-	joinResponse, err := DoRequest[ActiveDirectoryJoinRequest, ActiveDirectoryJoinResponse](ctx, c, POST, ADJoinEndpoint, joinRequest)
+	joinResponse, err := DoRequest[ActiveDirectoryJoinRequest, ActiveDirectoryJoinResponse](ctx, c, POST, AdJoinEndpoint, joinRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.WaitForADMonitorUpdate(ctx)
+	err = c.waitForADMonitorUpdate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -392,18 +443,18 @@ func (c *Client) JoinActiveDirectory(ctx context.Context, joinRequest *ActiveDir
 	return joinResponse, nil
 }
 
-func (c *Client) UpdateActiveDirectoryUsage(ctx context.Context, usageRequest *ActiveDirectoryUsageSettings) (*ActiveDirectoryJoinResponse, error) {
+func (c *Client) updateActiveDirectoryUsage(ctx context.Context, usageRequest *ActiveDirectoryUsageSettings) (*ActiveDirectoryJoinResponse, error) {
 	if usageRequest == nil {
 		tflog.Debug(ctx, " No updated Active Directory usage settings detected, will not apply changes.")
 		return nil, nil
 	}
 
-	usageUpdateResponse, err := DoRequest[ActiveDirectoryUsageSettings, ActiveDirectoryJoinResponse](ctx, c, POST, ADReconfigureEndpoint, usageRequest)
+	usageUpdateResponse, err := DoRequest[ActiveDirectoryUsageSettings, ActiveDirectoryJoinResponse](ctx, c, POST, AdReconfigureEndpoint, usageRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	err = c.WaitForADMonitorUpdate(ctx)
+	err = c.waitForADMonitorUpdate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +462,7 @@ func (c *Client) UpdateActiveDirectoryUsage(ctx context.Context, usageRequest *A
 	return usageUpdateResponse, nil
 }
 
-func (c *Client) WaitForADMonitorUpdate(ctx context.Context) error {
+func (c *Client) waitForADMonitorUpdate(ctx context.Context) error {
 
 	var finishedJoinStatus *ActiveDirectoryMonitorResponse
 
@@ -419,7 +470,7 @@ func (c *Client) WaitForADMonitorUpdate(ctx context.Context) error {
 	numIterations := 0
 
 	for !joinCompleted {
-		joinStatus, err := DoRequest[ActiveDirectoryMonitorResponse, ActiveDirectoryMonitorResponse](ctx, c, GET, ADMonitorEndpoint, nil)
+		joinStatus, err := DoRequest[ActiveDirectoryMonitorResponse, ActiveDirectoryMonitorResponse](ctx, c, GET, AdMonitorEndpoint, nil)
 		if err != nil {
 			return err
 		}
@@ -430,12 +481,13 @@ func (c *Client) WaitForADMonitorUpdate(ctx context.Context) error {
 		} else {
 			tflog.Debug(ctx, "Waiting another second for AD operation to complete.")
 			numIterations++
-			time.Sleep(ADJoinWaitTime)
+			time.Sleep(AdJoinWaitTime)
 		}
 
-		if numIterations > ADJoinTimeoutIterations {
+		// XXX amanning32: remove since the resource itself has a timeout?
+		if numIterations > AdJoinTimeoutIterations {
 			tflog.Error(ctx, "Active Directory operation timed out, exiting")
-			return errors.New(fmt.Sprintf("ERROR: Active Directory operation timed out after %d seconds, aborting", ADJoinTimeoutIterations))
+			return errors.New(fmt.Sprintf("ERROR: Active Directory operation timed out after %d seconds, aborting", AdJoinTimeoutIterations))
 		}
 	}
 

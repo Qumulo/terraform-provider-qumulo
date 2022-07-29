@@ -156,10 +156,10 @@ resource "qumulo_nfs_export" "new_nfs_export" {
 #   value = qumulo_cluster_name.update_name
 # }
 
-//output "some_authority" {
-//  value = qumulo_ssl_ca.update_ssl_ca
-//}
+# output "some_authority" {
+#   value = qumulo_ssl_ca.update_ssl_ca
+# }
 
-//output "some_ssl" {
-//  value = qumulo_ssl_cert.update_ssl
-//}
+# output "some_ssl" {
+#   value = qumulo_ssl_cert.update_ssl
+# }

@@ -23,3 +23,9 @@ First, set the following environment variables, specifying the host and port of 
 Then, run the following command
 
     make testwip
+
+## Developing the Qumulo Provider
+
+More information coming soon!
+
+Check out our [style guide](/STYLE.md) before contributing to ensure the code base remains unified.
