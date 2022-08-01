@@ -27,14 +27,14 @@ func TestAccChangeClusterName(t *testing.T) {
 			{
 				Config: testAccClusterNameConf(rName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "name", rName),
+					resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "cluster_name", rName),
 					testAccCheckClusterName(rName),
 				),
 			},
 			{
 				Config: testAccClusterNameConf(rName2),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "name", rName2),
+					resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "cluster_name", rName2),
 					testAccCheckClusterName(rName2),
 				),
 			},

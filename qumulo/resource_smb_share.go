@@ -108,7 +108,7 @@ func resourceSmbShare() *schema.Resource {
 									},
 									"sid": {
 										Type:     schema.TypeString,
-										Required: true,
+										Optional: true,
 									},
 									"name": {
 										Type:     schema.TypeString,

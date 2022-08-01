@@ -145,7 +145,7 @@ resource "qumulo_cluster_name" "update_name" {
 # }
 
 resource "qumulo_smb_share" "share1" {
-  share_name = "TestingShare12"
+  share_name = "TestingShare123"
   fs_path = "/"
   description = "This is a share used for testing purposes"
   permissions {
@@ -153,7 +153,6 @@ resource "qumulo_smb_share" "share1" {
     trustee {
         domain = "LOCAL"
         auth_id = "501"
-        sid = "S-1-5-21-2821601516-3888733394-2762749966-501"
     }
     rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
   }
