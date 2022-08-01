@@ -29,19 +29,19 @@ func TestAccChangeNfsSettings(t *testing.T) {
 	})
 }
 
-var defaultNfsSettings = NfsSettings{
+var defaultNfsSettings = NfsSettingsBody{
 	V4Enabled:      true,
 	Krb5Enabled:    true,
 	AuthSysEnabled: true,
 }
 
-var testingNfsSettings = NfsSettings{
+var testingNfsSettings = NfsSettingsBody{
 	V4Enabled:      false,
 	Krb5Enabled:    true,
 	AuthSysEnabled: false,
 }
 
-func testAccNfsSettings(ns NfsSettings) string {
+func testAccNfsSettings(ns NfsSettingsBody) string {
 	return fmt.Sprintf(`
 resource "qumulo_nfs_settings" "new_nfs_settings" {
 	v4_enabled = %v
@@ -51,18 +51,18 @@ resource "qumulo_nfs_settings" "new_nfs_settings" {
 `, ns.V4Enabled, ns.Krb5Enabled, ns.AuthSysEnabled)
 }
 
-func testAccCompareNfsSettings(ns NfsSettings) resource.TestCheckFunc {
+func testAccCompareNfsSettings(ns NfsSettingsBody) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_nfs_settings.new_nfs_settings", "v4_enabled", fmt.Sprintf("%v", ns.V4Enabled)),
 		resource.TestCheckResourceAttr("qumulo_nfs_settings.new_nfs_settings", "krb5_enabled", fmt.Sprintf("%v", ns.Krb5Enabled)),
 		resource.TestCheckResourceAttr("qumulo_nfs_settings.new_nfs_settings", "auth_sys_enabled", fmt.Sprintf("%v", ns.AuthSysEnabled)))
 }
 
-func testAccCheckNfsSettings(ns NfsSettings) resource.TestCheckFunc {
+func testAccCheckNfsSettings(ns NfsSettingsBody) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
 		ctx := context.Background()
-		settings, err := DoRequest[NfsSettings, NfsSettings](ctx, c, GET, NfsSettingsEndpoint, nil)
+		settings, err := DoRequest[NfsSettingsBody, NfsSettingsBody](ctx, c, GET, NfsSettingsEndpoint, nil)
 		if err != nil {
 			return err
 		}

@@ -11,7 +11,7 @@ import (
 
 const NfsSettingsEndpoint = "/v2/nfs/settings"
 
-type NfsSettings struct {
+type NfsSettingsBody struct {
 	V4Enabled      bool `json:"v4_enabled"`
 	Krb5Enabled    bool `json:"krb5_enabled"`
 	AuthSysEnabled bool `json:"auth_sys_enabled"`
@@ -63,7 +63,7 @@ func resourceNfsSettingsRead(ctx context.Context, d *schema.ResourceData, m inte
 	c := m.(*Client)
 
 	var errs ErrorCollection
-	s, err := DoRequest[NfsSettings, NfsSettings](ctx, c, GET, NfsSettingsEndpoint, nil)
+	s, err := DoRequest[NfsSettingsBody, NfsSettingsBody](ctx, c, GET, NfsSettingsEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -92,13 +92,13 @@ func resourceNfsSettingsDelete(ctx context.Context, d *schema.ResourceData, m in
 func setNfsSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
-	nfsSettings := NfsSettings{
+	nfsSettings := NfsSettingsBody{
 		V4Enabled:      d.Get("v4_enabled").(bool),
 		Krb5Enabled:    d.Get("krb5_enabled").(bool),
 		AuthSysEnabled: d.Get("auth_sys_enabled").(bool),
 	}
 
 	tflog.Debug(ctx, "Updating NFS Settings")
-	_, err := DoRequest[NfsSettings, NfsSettings](ctx, c, method, NfsSettingsEndpoint, &nfsSettings)
+	_, err := DoRequest[NfsSettingsBody, NfsSettingsBody](ctx, c, method, NfsSettingsEndpoint, &nfsSettings)
 	return err
 }
