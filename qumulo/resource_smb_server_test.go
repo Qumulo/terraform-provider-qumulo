@@ -1,6 +1,7 @@
 package qumulo
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -31,27 +32,27 @@ func TestAccChangeSMBServer(t *testing.T) {
 	})
 }
 
-var defaultSMBServerConfig = SMBServerRequest{
-	SessionEncryption:      "NONE",
-	SupportedDialects:      nil,
-	HideSharesUsers:        false,
-	HideSharesHosts:        false,
-	SnapshotDirMode:        "DISABLED",
-	BypassTraverseChecking: false,
-	SigningRequired:        false,
+var defaultSMBServerConfig = SmbServerBody{
+	SessionEncryption:               "NONE",
+	SupportedDialects:               nil,
+	HideSharesFromUnauthorizedUsers: false,
+	HideSharesFromUnauthorizedHosts: false,
+	SnapshotDirectoryMode:           "DISABLED",
+	BypassTraverseChecking:          false,
+	SigningRequired:                 false,
 }
 
-var testingSMBServerConfig = SMBServerRequest{
-	SessionEncryption:      "PREFERRED",
-	SupportedDialects:      nil,
-	HideSharesUsers:        true,
-	HideSharesHosts:        true,
-	SnapshotDirMode:        "VISIBLE",
-	BypassTraverseChecking: true,
-	SigningRequired:        true,
+var testingSMBServerConfig = SmbServerBody{
+	SessionEncryption:               "PREFERRED",
+	SupportedDialects:               nil,
+	HideSharesFromUnauthorizedUsers: true,
+	HideSharesFromUnauthorizedHosts: true,
+	SnapshotDirectoryMode:           "VISIBLE",
+	BypassTraverseChecking:          true,
+	SigningRequired:                 true,
 }
 
-func testAccSMBServerConfig(smb SMBServerRequest) string {
+func testAccSMBServerConfig(smb SmbServerBody) string {
 	return fmt.Sprintf(`
 resource "qumulo_smb_server" "update_smb" {
 	session_encryption = %q
@@ -63,22 +64,22 @@ resource "qumulo_smb_server" "update_smb" {
 	signing_required = %v
 }
   `, smb.SessionEncryption, strings.ReplaceAll(fmt.Sprintf("%+q", smb.SupportedDialects), "\" \"", "\", \""),
-		smb.HideSharesUsers, smb.HideSharesHosts, smb.SnapshotDirMode, smb.BypassTraverseChecking,
-		smb.SigningRequired)
+		smb.HideSharesFromUnauthorizedUsers, smb.HideSharesFromUnauthorizedHosts, smb.SnapshotDirectoryMode,
+		smb.BypassTraverseChecking, smb.SigningRequired)
 }
 
-func testAccCompareSMBServerSettings(smb SMBServerRequest) resource.TestCheckFunc {
+func testAccCompareSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "session_encryption",
 			smb.SessionEncryption),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "supported_dialects.#",
 			fmt.Sprintf("%v", len(smb.SupportedDialects))),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "hide_shares_from_unauthorized_users",
-			fmt.Sprintf("%v", smb.HideSharesUsers)),
+			fmt.Sprintf("%v", smb.HideSharesFromUnauthorizedUsers)),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "hide_shares_from_unauthorized_hosts",
-			fmt.Sprintf("%v", smb.HideSharesHosts)),
+			fmt.Sprintf("%v", smb.HideSharesFromUnauthorizedUsers)),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "snapshot_directory_mode",
-			smb.SnapshotDirMode),
+			smb.SnapshotDirectoryMode),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "bypass_traverse_checking",
 			fmt.Sprintf("%v", smb.BypassTraverseChecking)),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "signing_required",
@@ -86,10 +87,11 @@ func testAccCompareSMBServerSettings(smb SMBServerRequest) resource.TestCheckFun
 	)
 }
 
-func testAccCheckSMBServerSettings(smb SMBServerRequest) resource.TestCheckFunc {
+func testAccCheckSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		settings, err := DoRequest[SMBServerRequest, SMBServerRequest](c, GET, SMBServerEndpoint, nil)
+		ctx := context.Background()
+		settings, err := DoRequest[SmbServerBody, SmbServerBody](ctx, c, GET, SmbServerEndpoint, nil)
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,7 @@
 package qumulo
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -26,14 +27,14 @@ func TestAccChangeClusterName(t *testing.T) {
 			{
 				Config: testAccClusterNameConf(rName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "name", rName),
+					resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "cluster_name", rName),
 					testAccCheckClusterName(rName),
 				),
 			},
 			{
 				Config: testAccClusterNameConf(rName2),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "name", rName2),
+					resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "cluster_name", rName2),
 					testAccCheckClusterName(rName2),
 				),
 			},
@@ -44,7 +45,7 @@ func TestAccChangeClusterName(t *testing.T) {
 func testAccClusterNameConf(name string) string {
 	return fmt.Sprintf(`
 resource "qumulo_cluster_name" "update_name" {
-	name = %q
+	cluster_name = %q
 }
 `, name)
 }
@@ -52,7 +53,8 @@ resource "qumulo_cluster_name" "update_name" {
 func testAccCheckClusterName(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		cs, err := DoRequest[ClusterSettings, ClusterSettings](c, GET, ClusterSettingsEndpoint, nil)
+		ctx := context.Background()
+		cs, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, GET, ClusterSettingsEndpoint, nil)
 		if err != nil {
 			return err
 		}
