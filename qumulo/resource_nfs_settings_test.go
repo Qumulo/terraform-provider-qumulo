@@ -53,9 +53,9 @@ resource "qumulo_nfs_settings" "new_nfs_settings" {
 
 func testAccCompareNfsSettings(ns NfsSettings) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr("qumulo_nfs_settings.my_new_settings", "v4_enabled", fmt.Sprintf("%v", ns.V4Enabled)),
-		resource.TestCheckResourceAttr("qumulo_nfs_settings.my_new_settings", "krb5_enabled", fmt.Sprintf("%v", ns.Krb5Enabled)),
-		resource.TestCheckResourceAttr("qumulo_nfs_settings.my_new_settings", "auth_sys_enabled", fmt.Sprintf("%v", ns.AuthSysEnabled)))
+		resource.TestCheckResourceAttr("qumulo_nfs_settings.new_nfs_settings", "v4_enabled", fmt.Sprintf("%v", ns.V4Enabled)),
+		resource.TestCheckResourceAttr("qumulo_nfs_settings.new_nfs_settings", "krb5_enabled", fmt.Sprintf("%v", ns.Krb5Enabled)),
+		resource.TestCheckResourceAttr("qumulo_nfs_settings.new_nfs_settings", "auth_sys_enabled", fmt.Sprintf("%v", ns.AuthSysEnabled)))
 }
 
 func testAccCheckNfsSettings(ns NfsSettings) resource.TestCheckFunc {

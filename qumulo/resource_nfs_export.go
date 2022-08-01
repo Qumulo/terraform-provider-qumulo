@@ -176,7 +176,9 @@ func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m inte
 	var diags diag.Diagnostics
 
 	nfsExportId := d.Id()
-	_, err := DoRequest[string, NfsExport](ctx, c, DELETE, NfsExportsEndpoint, &nfsExportId)
+	deleteNfsExportByIdUri := NfsExportsEndpoint + nfsExportId
+
+	_, err := DoRequest[string, NfsExport](ctx, c, DELETE, deleteNfsExportByIdUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
