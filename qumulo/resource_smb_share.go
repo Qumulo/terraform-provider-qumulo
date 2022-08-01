@@ -192,7 +192,7 @@ func resourceSmbShareCreate(ctx context.Context, d *schema.ResourceData, m inter
 		createSmbSharetUri = SmbSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
 
-	res, err := DoRequest[SmbShare, SmbShare](client, POST, createSmbSharetUri, &smbShare)
+	res, err := DoRequest[SmbShare, SmbShare](ctx, client, POST, createSmbSharetUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -208,7 +208,7 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 	var errs ErrorCollection
 	smbShareId := d.Id()
 	getSmbShareByIdUri := SmbSharesEndpoint + smbShareId
-	smbShare, err := DoRequest[SmbShare, SmbShare](client, GET, getSmbShareByIdUri, nil)
+	smbShare, err := DoRequest[SmbShare, SmbShare](ctx, client, GET, getSmbShareByIdUri, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -241,7 +241,7 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		updateSmbShareByIdUri = updateSmbShareByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
 
-	_, err := DoRequest[SmbShare, SmbShare](client, PATCH, updateSmbShareByIdUri, &smbShare)
+	_, err := DoRequest[SmbShare, SmbShare](ctx, client, PATCH, updateSmbShareByIdUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -253,7 +253,7 @@ func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m inter
 	client := m.(*Client)
 	var diags diag.Diagnostics
 	smbShareId := d.Id()
-	_, err := DoRequest[string, SmbShare](client, DELETE, SmbSharesEndpoint, &smbShareId)
+	_, err := DoRequest[string, SmbShare](ctx, client, DELETE, SmbSharesEndpoint, &smbShareId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
