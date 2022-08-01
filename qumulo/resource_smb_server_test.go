@@ -64,8 +64,8 @@ resource "qumulo_smb_server" "update_smb" {
 	signing_required = %v
 }
   `, smb.SessionEncryption, strings.ReplaceAll(fmt.Sprintf("%+q", smb.SupportedDialects), "\" \"", "\", \""),
-		smb.HideSharesFromUnauthorizedUsers, smb.HideSharesFromUnauthorizedHosts, smb.SnapshotDirectoryMode, smb.BypassTraverseChecking,
-		smb.SigningRequired)
+		smb.HideSharesFromUnauthorizedUsers, smb.HideSharesFromUnauthorizedHosts, smb.SnapshotDirectoryMode,
+		smb.BypassTraverseChecking, smb.SigningRequired)
 }
 
 func testAccCompareSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
@@ -77,7 +77,7 @@ func testAccCompareSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "hide_shares_from_unauthorized_users",
 			fmt.Sprintf("%v", smb.HideSharesFromUnauthorizedUsers)),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "hide_shares_from_unauthorized_hosts",
-			fmt.Sprintf("%v", smb.HideSharesFromUnauthorizedHosts)),
+			fmt.Sprintf("%v", smb.HideSharesFromUnauthorizedUsers)),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "snapshot_directory_mode",
 			smb.SnapshotDirectoryMode),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "bypass_traverse_checking",
@@ -90,7 +90,8 @@ func testAccCompareSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 func testAccCheckSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		settings, err := DoRequest[SmbServerBody, SmbServerBody](context.Background(), c, GET, SmbServerEndpoint, nil)
+		ctx := context.Background()
+		settings, err := DoRequest[SmbServerBody, SmbServerBody](ctx, c, GET, SmbServerEndpoint, nil)
 		if err != nil {
 			return err
 		}

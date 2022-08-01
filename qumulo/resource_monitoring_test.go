@@ -107,7 +107,8 @@ func testAccCompareMonitoringSetting(ms MonitoringSettings) resource.TestCheckFu
 func testAccCheckMonitoringSettings(ms MonitoringSettings) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		settings, err := DoRequest[MonitoringSettings, MonitoringSettings](context.Background(), c, GET, MonitoringEndpoint, nil)
+		ctx := context.Background()
+		settings, err := DoRequest[MonitoringSettings, MonitoringSettings](ctx, c, GET, MonitoringEndpoint, nil)
 		if err != nil {
 			return err
 		}

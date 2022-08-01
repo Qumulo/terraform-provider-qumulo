@@ -10,19 +10,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccSetSSLCA(t *testing.T) {
+func TestAccSetSslCa(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{ // Reset state to default
-				Config: defaultSSLCAConfig,
+				Config: defaultSslCaConfig,
 			},
 			{
-				Config: testAccSSLCAConfig(testingSSLCACert),
+				Config: testAccSslCaConfig(testingSslCaCert),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSSLCACert(),
+					testAccCheckSslCaCert(),
 					resource.TestCheckResourceAttrSet("qumulo_ssl_ca.cert", "ca_certificate"),
 				),
 			},
@@ -30,14 +30,14 @@ func TestAccSetSSLCA(t *testing.T) {
 	})
 }
 
-func TestAccSetSSLCA_ExpectError(t *testing.T) {
+func TestAccSetSslCa_ExpectError(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSSLCAConfig(invalidCert),
+				Config: testAccSslCaConfig(invalidCert),
 				// Invalid certificate should raise an error
 				ExpectError: regexp.MustCompile("ssl_certificate_invalid_error"),
 			},
@@ -45,13 +45,13 @@ func TestAccSetSSLCA_ExpectError(t *testing.T) {
 	})
 }
 
-var defaultSSLCAConfig = " "
+var defaultSslCaConfig = " "
 
 var invalidCert = SslCaBody{
 	CaCertificate: "Not a valid certificate",
 }
 
-var testingSSLCACert = SslCaBody{
+var testingSslCaCert = SslCaBody{
 	CaCertificate: `-----BEGIN CERTIFICATE-----
 MIICIDCCAYmgAwIBAgIUZcdqCxZB1O4RD548ygFhGBXxQdQwDQYJKoZIhvcNAQEL
 BQAwIjEPMA0GA1UEAwwGVGVzdENBMQ8wDQYDVQQKDAZRdW11bG8wHhcNMjIwNzIy
@@ -68,7 +68,7 @@ HjX0jrbwN2tDfjTKNQwi7P7RPDY=
 -----END CERTIFICATE-----`,
 }
 
-func testAccSSLCAConfig(req SslCaBody) string {
+func testAccSslCaConfig(req SslCaBody) string {
 	return fmt.Sprintf(`
 resource "qumulo_ssl_ca" "cert" {
 	ca_certificate = <<CERTDELIM
@@ -78,11 +78,12 @@ CERTDELIM
   `, req.CaCertificate)
 }
 
-func testAccCheckSSLCACert() resource.TestCheckFunc {
+func testAccCheckSslCaCert() resource.TestCheckFunc {
 	// Make sure there's a valid certificate through the API
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
-		_, err := DoRequest[SslCaBody, SslCaBody](context.Background(), c, GET, SslCaEndpoint, nil)
+		ctx := context.Background()
+		_, err := DoRequest[SslCaBody, SslCaBody](ctx, c, GET, SslCaEndpoint, nil)
 		if err != nil {
 			return err
 		}

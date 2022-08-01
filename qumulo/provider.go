@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -42,6 +43,7 @@ func Provider() *schema.Provider {
 			"qumulo_nfs_export":   resourceNfsExport(),
 			"qumulo_nfs_settings": resourceNfsSettings(),
 			"qumulo_smb_server":   resourceSmbServer(),
+			"qumulo_smb_share":    resourceSmbShare(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
