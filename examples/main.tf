@@ -111,10 +111,16 @@ resource "qumulo_nfs_export" "new_nfs_export" {
    allow_fs_path_create = true
  }
 
-//resource "qumulo_ssl_cert" "update_ssl" {
-//  certificate = var.some_cert
-//  private_key = var.some_key
-//}
+resource "qumulo_nfs_settings" "my_new_settings" {
+  v4_enabled = false
+  krb5_enabled = true
+  auth_sys_enabled = true
+}
+
+#resource "qumulo_ssl_cert" "update_ssl" {
+#  certificate = var.some_cert
+#  private_key = var.some_key
+#}
 
 resource "qumulo_ssl_ca" "update_ssl_ca" {
   ca_certificate = var.some_cert

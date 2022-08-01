@@ -94,7 +94,7 @@ func resourceMonitoring() *schema.Resource {
 }
 
 func resourceMonitoringCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setMonitorSettings(ctx, d, m, PUT)
+	err := setMonitoringSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -128,7 +128,7 @@ func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceMonitoringUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setMonitorSettings(ctx, d, m, PATCH)
+	err := setMonitoringSettings(ctx, d, m, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -142,7 +142,7 @@ func resourceMonitoringDelete(ctx context.Context, d *schema.ResourceData, m int
 	return diags
 }
 
-func setMonitorSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+func setMonitoringSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
 	monitoringConfig := MonitoringSettings{

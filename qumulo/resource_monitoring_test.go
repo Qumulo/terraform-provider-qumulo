@@ -10,12 +10,12 @@ import (
 )
 
 func TestAccChangeMonitoring(t *testing.T) {
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{ // Reset state to default
+
 				Config: testAccMonitoringConf(defaultMonitoringConfig),
 				Check:  testAccCheckMonitoringSettings(defaultMonitoringConfig),
 			},

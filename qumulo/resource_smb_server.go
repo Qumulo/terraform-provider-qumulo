@@ -81,7 +81,7 @@ func resourceSmbServer() *schema.Resource {
 }
 
 func resourceSmbServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setSMBServerSettings(ctx, d, m, PUT)
+	err := setSmbServerSettings(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -113,7 +113,7 @@ func resourceSmbServerRead(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceSmbServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setSMBServerSettings(ctx, d, m, PATCH)
+	err := setSmbServerSettings(ctx, d, m, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -127,7 +127,7 @@ func resourceSmbServerDelete(ctx context.Context, d *schema.ResourceData, m inte
 	return diags
 }
 
-func setSMBServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+func setSmbServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
 	// convert the []interface{} into []string
