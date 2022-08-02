@@ -24,7 +24,7 @@ type NfsExport struct {
 	FsPath                 string           `json:"fs_path"`
 	Description            string           `json:"description"`
 	Restrictions           []NfsRestriction `json:"restrictions"`
-	FieldsToPresentAs32Bit []interface{}    `json:"fields_to_present_as_32_bit"`
+	FieldsToPresentAs32Bit []string         `json:"fields_to_present_as_32_bit"`
 }
 
 type NfsRestriction struct {
@@ -120,6 +120,10 @@ func resourceNfsExport() *schema.Resource {
 				Optional: true,
 			},
 		},
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 	}
 }
 
@@ -194,7 +198,7 @@ func createOrUpdateNfsExport(ctx context.Context, d *schema.ResourceData, m inte
 		FsPath:                 d.Get("fs_path").(string),
 		Description:            d.Get("description").(string),
 		Restrictions:           expandRestrictions(ctx, d.Get("restrictions").([]interface{})),
-		FieldsToPresentAs32Bit: d.Get("fields_to_present_as_32_bit").([]interface{}),
+		FieldsToPresentAs32Bit: expandFieldsToPresentAs32Bit(ctx, d.Get("fields_to_present_as_32_bit").([]interface{})),
 	}
 
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
@@ -264,4 +268,12 @@ func flattenNfsRestrictions(restrictions []NfsRestriction) []interface{} {
 		tfList = append(tfList, tfMap)
 	}
 	return tfList
+}
+
+func expandFieldsToPresentAs32Bit(ctx context.Context, tfFieldsToPresentAs32Bit []interface{}) []string {
+	expandedFieldsToPresentAs32Bit := make([]string, len(tfFieldsToPresentAs32Bit))
+	for i, field := range tfFieldsToPresentAs32Bit {
+		expandedFieldsToPresentAs32Bit[i] = field.(string)
+	}
+	return expandedFieldsToPresentAs32Bit
 }
