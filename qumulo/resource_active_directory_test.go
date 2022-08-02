@@ -11,50 +11,67 @@ import (
 
 // TODO write test steps
 
-func TestAccChangeAdSettings(t *testing.T) {
+func TestAccJoinActiveDirectory(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			// { // Reset state to default
-			// 	Config: testAccActiveDirectoryConfigFull(emptyActiveDirectoryConfig),
-			// 	// Check: resource.ComposeTestCheckFunc(
-			// 	// 	testAccCheckClusterName(defaultName),
-			// 	// ),
-			// },
 			{
 				Config: testAccActiveDirectoryConfigFull(defaultActiveDirectoryConfig),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCompareActiveDirectorySettings(defaultActiveDirectoryConfig),
 					testAccCheckActiveDirectorySettings(*defaultActiveDirectoryConfig.Settings),
+					testAccCheckActiveDirectoryStatus(*defaultActiveDirectoryConfig.JoinSettings),
 				),
 			},
-			// {
-			// 	Config: testAccClusterNameConf(rName2),
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("qumulo_cluster_name.update_name", "name", rName2),
-			// 		testAccCheckClusterName(rName2),
-			// 	),
-			// },
 		},
 	})
 }
+
+func TestAccChangeActiveDirectorySettings(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActiveDirectoryConfigFull(defaultActiveDirectoryConfig),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCompareActiveDirectorySettings(defaultActiveDirectoryConfig),
+					testAccCheckActiveDirectorySettings(*defaultActiveDirectoryConfig.Settings),
+					testAccCheckActiveDirectoryStatus(*defaultActiveDirectoryConfig.JoinSettings),
+				),
+			},
+			{
+				Config: testAccActiveDirectoryConfigFull(testingActiveDirectoryConfigSettings),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCompareActiveDirectorySettings(testingActiveDirectoryConfigSettings),
+					testAccCheckActiveDirectorySettings(*testingActiveDirectoryConfigSettings.Settings),
+					testAccCheckActiveDirectoryStatus(*testingActiveDirectoryConfigSettings.JoinSettings),
+				),
+			},
+		},
+	})
+}
+
+// test update join settings (force new)
+// test update usage settings (reconfigure)
+// test empty settings
+// test partially empty settings does nothing
 
 // Active Directory configurations
 
 // TODO create all relevant combinations for test
 
-// var emptyActiveDirectoryConfig = ActiveDirectoryRequest{
-// 	Settings:      &defaultActiveDirectorySettingsConfig,
-// 	JoinSettings:  &ActiveDirectoryJoinRequest{},
-// 	UsageSettings: &ActiveDirectoryUsageSettingsRequest{},
-// }
-
 var defaultActiveDirectoryConfig = ActiveDirectoryRequest{
-	Settings:      &defaultActiveDirectorySettingsConfig,
-	JoinSettings:  &testingActiveDirectoryJoinSettingsConfigFull,
-	UsageSettings: &ActiveDirectoryUsageSettingsRequest{},
+	Settings:     &defaultActiveDirectorySettingsConfig,
+	JoinSettings: &testingActiveDirectoryJoinSettingsConfigFull,
+}
+
+var testingActiveDirectoryConfigSettings = ActiveDirectoryRequest{
+	Settings:     &testingActiveDirectorySettingsConfigFull,
+	JoinSettings: &testingActiveDirectoryJoinSettingsConfigFull,
 }
 
 // Active Directory Settings configurations
@@ -66,14 +83,14 @@ var defaultActiveDirectorySettingsConfig = ActiveDirectorySettingsBody{
 }
 
 var testingActiveDirectorySettingsConfigFull = ActiveDirectorySettingsBody{
-	Signing: "NEED_SIGNING",
+	Signing: "REQUIRE_SIGNING",
 	Sealing: "WANT_SEALING",
-	Crypto:  "NEED_AES",
+	Crypto:  "REQUIRE_AES",
 }
 
 var testingActiveDirectorySettingsConfigPartial = ActiveDirectorySettingsBody{
-	Signing: "NEED_SIGNING",
-	Crypto:  "NEED_AES",
+	Signing: "REQUIRE_SIGNING",
+	Crypto:  "REQUIRE_AES",
 }
 
 // Active Directory Join Settings configurations
@@ -158,8 +175,26 @@ func testAccCheckActiveDirectorySettings(adSettingsRequest ActiveDirectorySettin
 			return err
 		}
 
-		if adSettings.Sealing != adSettingsRequest.Sealing {
+		if adSettings.Sealing != adSettingsRequest.Sealing || adSettings.Signing != adSettingsRequest.Signing || adSettings.Crypto != adSettingsRequest.Crypto {
 			return fmt.Errorf("Active Directory settings mismatch: Expected %v, got %v", adSettingsRequest, adSettings)
+		}
+		return nil
+	}
+}
+
+func testAccCheckActiveDirectoryStatus(adJoinSettingsRequest ActiveDirectoryJoinRequest) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		c := testAccProvider.Meta().(*Client)
+		ctx := context.Background()
+		adStatus, err := DoRequest[ActiveDirectoryStatusBody, ActiveDirectoryStatusBody](ctx, c, GET, AdStatusEndpoint, nil)
+		if err != nil {
+			return err
+		}
+
+		if adStatus.Domain != adJoinSettingsRequest.Domain || adStatus.DomainNetBios != adJoinSettingsRequest.DomainNetBios || adStatus.Ou != adJoinSettingsRequest.Ou ||
+			adStatus.UseAdPosixAttributes != adJoinSettingsRequest.UseAdPosixAttributes || adStatus.BaseDn != adJoinSettingsRequest.BaseDn {
+
+			return fmt.Errorf("Active Directory status mismatch: Expected %v, got %v", adJoinSettingsRequest, adStatus)
 		}
 		return nil
 	}
