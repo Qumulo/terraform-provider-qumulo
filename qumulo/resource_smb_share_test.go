@@ -9,6 +9,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// Note - this test assumes that a couple users exist. These should be created by default. These users are:
+// User 1:
+// name = admin
+// User 2:
+// uid = 65534
+
 func TestAccAddSmbShare(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
@@ -19,6 +25,12 @@ func TestAccAddSmbShare(t *testing.T) {
 				// Doesn't delete all existing shares, but makes sure any shares set through terraform
 				// are gone
 				Config: defaultSmbShareConfig,
+			},
+			{
+				Config: smbShare1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSmbShareExists(),
+				),
 			},
 			{
 				Config: smbShare2,
@@ -32,21 +44,13 @@ func TestAccAddSmbShare(t *testing.T) {
 
 var defaultSmbShareConfig = " "
 
-// var testingSmbShare = SmbShare{
-// 	ShareName:              "Testing Share",
-// 	FsPath:                 "/",
-// 	Description:            "Sure",
-// 	Permissions:            1,
-// 	NetworkPermissions:     1,
-// 	AccessBasedEnumEnabled: true,
-// 	RequireEncryption:      false,
-// }
+var share1Name = "ShareForTesting"
+var share2Name = "ShareInfinity"
 
-func testAccSmbShare() string {
-	return `resource "qumulo_smb_share" "share1" {
-		share_name = "ShareForTesting"
+var smbShare1 = fmt.Sprintf(`resource "qumulo_smb_share" "share" {
+		share_name = "%v"
 		fs_path = "/"
-		description = "Sure, sure"
+		description = "Surely"
 		permissions {
 		  type = "ALLOWED"
 		  trustee {
@@ -58,7 +62,7 @@ func testAccSmbShare() string {
 		permissions {
 			type = "DENIED"
 			trustee {
-				domain = "LOCAL"
+				domain = "POSIX_USER"
 				uid = 65534
 			}
 			rights = ["WRITE"]
@@ -70,13 +74,12 @@ func testAccSmbShare() string {
 		}
 		access_based_enumeration_enabled = false
 		require_encryption = false
-	  }`
-}
+	  }`, share1Name)
 
-var smbShare2 = `resource "qumulo_smb_share" "share1" {
-	share_name = "ShareForTestingInfinityPlusOne234557"
+var smbShare2 = fmt.Sprintf(`resource "qumulo_smb_share" "share" {
+	share_name = "%v"
 	fs_path = "/"
-	description = "Sure, sure"
+	description = "Sharing is caring"
 	permissions {
 	  type = "ALLOWED"
 	  trustee {
@@ -87,6 +90,7 @@ var smbShare2 = `resource "qumulo_smb_share" "share1" {
 	permissions {
 	  type = "DENIED"
 	  trustee {
+		domain = "POSIX_USER"
 		uid = 65534
 	  }
 	  rights = ["WRITE"]
@@ -98,26 +102,31 @@ var smbShare2 = `resource "qumulo_smb_share" "share1" {
 	}
 	access_based_enumeration_enabled = false
 	require_encryption = false
-	}`
+	}`, share2Name)
 
 func testAccCheckSmbShareExists() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources["qumulo_smb_share.share1"]
+		rs, ok := s.RootModule().Resources["qumulo_smb_share.share"]
 		if !ok {
-			return fmt.Errorf("Not found: ")
+			return fmt.Errorf("Share not found, %v", rs)
 		}
 
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("Share ID is not set")
 		}
-		// fmt.Printf("Share id is %v", rs.Primary.ID)
+
 		readSmbShareByIdUri := SmbSharesEndpoint + rs.Primary.ID
 
 		c := testAccProvider.Meta().(*Client)
 		ctx := context.Background()
-		_, err := DoRequest[SmbShare, SmbShare](ctx, c, GET, readSmbShareByIdUri, nil)
+		sh, err := DoRequest[SmbShare, SmbShare](ctx, c, GET, readSmbShareByIdUri, nil)
 		if err != nil {
 			return err
+		}
+		localShareName := rs.Primary.Attributes["share_name"]
+
+		if sh.ShareName != localShareName {
+			return fmt.Errorf("Share names do not match - Local: %v, Cluster: %v", localShareName, sh.ShareName)
 		}
 		return nil
 	}
