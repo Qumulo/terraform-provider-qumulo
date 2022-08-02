@@ -86,9 +86,39 @@ func TestAccChangeActiveDirectoryStatusForceNew(t *testing.T) {
 	})
 }
 
-// test update usage settings (reconfigure)
+func TestAccChangeActiveDirectoryStatusReconfigure(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActiveDirectoryConfigFull(defaultActiveDirectoryConfig),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCompareActiveDirectorySettings(defaultActiveDirectoryConfig),
+					testAccCheckActiveDirectorySettings(*defaultActiveDirectoryConfig.Settings),
+					testAccCheckActiveDirectoryStatus(*defaultActiveDirectoryConfig.JoinSettings),
+				),
+			},
+			{
+				Config: testAccActiveDirectoryConfigFull(testingActiveDirectoryConfigSettingsReconfigure),
+				Check: resource.ComposeTestCheckFunc(
+					// XXX amanning32: Qumulo's AD server sets the BaseDn on join, so verify against those settings
+					// even though we changed the BaseDn to force the reconfiguration of the resource.
+					testAccCompareActiveDirectorySettings(testingActiveDirectoryConfigSettings),
+					testAccCheckActiveDirectorySettings(*testingActiveDirectoryConfigSettings.Settings),
+					testAccCheckActiveDirectoryStatus(*testingActiveDirectoryConfigSettings.JoinSettings),
+				),
+				// Update creates a non-empty plan, which is expected
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 // test empty settings
 // test partially empty settings does nothing
+// test invalid AD settings causes validation error
 
 // Active Directory configurations
 
@@ -107,6 +137,11 @@ var testingActiveDirectoryConfigSettings = ActiveDirectoryRequest{
 var testingActiveDirectoryConfigSettingsForceNew = ActiveDirectoryRequest{
 	Settings:     &testingActiveDirectorySettingsConfigFull,
 	JoinSettings: &testingActiveDirectoryJoinSettingsConfigFullForceNew,
+}
+
+var testingActiveDirectoryConfigSettingsReconfigure = ActiveDirectoryRequest{
+	Settings:     &testingActiveDirectorySettingsConfigFull,
+	JoinSettings: &testingActiveDirectoryJoinSettingsConfigFullReconfigure,
 }
 
 // Active Directory Settings configurations
@@ -156,7 +191,7 @@ var testingActiveDirectoryJoinSettingsConfigFullReconfigure = ActiveDirectoryJoi
 	User:                 "Administrator",
 	Password:             "a",
 	Ou:                   "",
-	UseAdPosixAttributes: true,
+	UseAdPosixAttributes: false,
 	BaseDn:               "",
 }
 
