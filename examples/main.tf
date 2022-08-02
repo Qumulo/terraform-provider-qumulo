@@ -17,25 +17,25 @@ variable "some_cluster_name" {
   type    = string
   default = "InigoMontoya"
 }
-variable "some_cert" {
-  type    = string
-  default = <<CERTDELIM
------BEGIN CERTIFICATE-----
-MIICIDCCAYmgAwIBAgIUZcdqCxZB1O4RD548ygFhGBXxQdQwDQYJKoZIhvcNAQEL
-BQAwIjEPMA0GA1UEAwwGVGVzdENBMQ8wDQYDVQQKDAZRdW11bG8wHhcNMjIwNzIy
-MTcwOTI4WhcNMzIwNzE5MTcwOTI4WjAiMQ8wDQYDVQQDDAZUZXN0Q0ExDzANBgNV
-BAoMBlF1bXVsbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAv9Xupp43GfpI
-0bVkB1BIa0ZBt5hpjxgee5PKwn3pbcg/M0M4qGhtX9/DR4utMqMib+X517hyo18E
-Vd+gZa0plafaPfwzz8YkO2EovYEFIaBxgqYkTQ0YZVt40cWEMMCWuyPndX0bvOrW
-1f5zvOcc0+dDXoiqbhUDKiXBfzK745UCAwEAAaNTMFEwHQYDVR0OBBYEFKYiYrFK
-cZcR+gDTAqxV6u81B9htMB8GA1UdIwQYMBaAFKYiYrFKcZcR+gDTAqxV6u81B9ht
-MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADgYEAjPXNGT38WwyWu4Xe
-Wngxmk0OIKZthsbZVDxSti3mse7KWadb6EkaRM/ZIO9CFPyB67zh3KAwhKiMbPVE
-JH62qN5t5xoqdDzzuOUHw1SSF78lfMAWk84TplzXegdysXjYFVhxvqYV9DIEhsTw
-HjX0jrbwN2tDfjTKNQwi7P7RPDY=
------END CERTIFICATE-----
-CERTDELIM
-}
+# variable "some_cert" {
+#   type    = string
+#   default = <<CERTDELIM
+# -----BEGIN CERTIFICATE-----
+# MIICIDCCAYmgAwIBAgIUZcdqCxZB1O4RD548ygFhGBXxQdQwDQYJKoZIhvcNAQEL
+# BQAwIjEPMA0GA1UEAwwGVGVzdENBMQ8wDQYDVQQKDAZRdW11bG8wHhcNMjIwNzIy
+# MTcwOTI4WhcNMzIwNzE5MTcwOTI4WjAiMQ8wDQYDVQQDDAZUZXN0Q0ExDzANBgNV
+# BAoMBlF1bXVsbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAv9Xupp43GfpI
+# 0bVkB1BIa0ZBt5hpjxgee5PKwn3pbcg/M0M4qGhtX9/DR4utMqMib+X517hyo18E
+# Vd+gZa0plafaPfwzz8YkO2EovYEFIaBxgqYkTQ0YZVt40cWEMMCWuyPndX0bvOrW
+# 1f5zvOcc0+dDXoiqbhUDKiXBfzK745UCAwEAAaNTMFEwHQYDVR0OBBYEFKYiYrFK
+# cZcR+gDTAqxV6u81B9htMB8GA1UdIwQYMBaAFKYiYrFKcZcR+gDTAqxV6u81B9ht
+# MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADgYEAjPXNGT38WwyWu4Xe
+# Wngxmk0OIKZthsbZVDxSti3mse7KWadb6EkaRM/ZIO9CFPyB67zh3KAwhKiMbPVE
+# JH62qN5t5xoqdDzzuOUHw1SSF78lfMAWk84TplzXegdysXjYFVhxvqYV9DIEhsTw
+# HjX0jrbwN2tDfjTKNQwi7P7RPDY=
+# -----END CERTIFICATE-----
+# CERTDELIM
+# }
 
 resource "qumulo_cluster_name" "update_name" {
   cluster_name = var.some_cluster_name
@@ -122,33 +122,30 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #  private_key = var.some_key
 #}
 
-resource "qumulo_ssl_ca" "update_ssl_ca" {
-  ca_certificate = var.some_cert
-}
+# resource "qumulo_ssl_ca" "update_ssl_ca" {
+#   ca_certificate = var.some_cert
+# }
 
 resource "qumulo_monitoring" "update_monitoring" {
-  enabled = false
   mq_host = "missionq.qumulo.com"
   mq_port = 443
   mq_proxy_host = ""
   mq_proxy_port = 32
   s3_proxy_host = "monitor.qumulo.com"
   s3_proxy_port = 443
-  s3_proxy_disable_https = false
-  vpn_enabled = false
   vpn_host = "ep1.qumulo.com"
   period = 60
 }
 
-resource "qumulo_smb_server" "update_smb" {
-  session_encryption = "NONE"
-  supported_dialects =["SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1"]
-  hide_shares_from_unauthorized_users = false
-  hide_shares_from_unauthorized_hosts = true
-  snapshot_directory_mode = "VISIBLE"
-  bypass_traverse_checking = false
-  signing_required = false
-}
+# resource "qumulo_smb_server" "update_smb" {
+#   session_encryption = "NONE"
+#   supported_dialects =["SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1"]
+#   hide_shares_from_unauthorized_users = false
+#   hide_shares_from_unauthorized_hosts = true
+#   snapshot_directory_mode = "VISIBLE"
+#   bypass_traverse_checking = false
+#   signing_required = false
+# }
 
 # resource "qumulo_ldap_server" "some_ldap_server" {
 #   use_ldap = true
@@ -169,34 +166,34 @@ resource "qumulo_smb_server" "update_smb" {
 #   encrypt_connection = false
 # }
 
-resource "qumulo_smb_share" "share1" {
-  share_name = "TestingShareHi344"
-  fs_path = "/"
-  description = "This is a share used for testing purposes"
-  permissions {
-    type = "ALLOWED"
-    trustee {
-      domain = "LOCAL"
-      name = "admin"
-    }
-    rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
-  }
-  permissions {
-    type = "DENIED"
-    trustee {
-      domain = "LOCAL"
-      uid = 65534
-    }
-    rights = ["WRITE"]
-  }
-  network_permissions {
-    type = "ALLOWED"
-    address_ranges = []
-    rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
-  }
-  access_based_enumeration_enabled = false
-  require_encryption = false
-}
+# resource "qumulo_smb_share" "share1" {
+#   share_name = "TestingShareHi344"
+#   fs_path = "/"
+#   description = "This is a share used for testing purposes"
+#   permissions {
+#     type = "ALLOWED"
+#     trustee {
+#       domain = "LOCAL"
+#       name = "admin"
+#     }
+#     rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
+#   }
+#   permissions {
+#     type = "DENIED"
+#     trustee {
+#       domain = "LOCAL"
+#       uid = 65534
+#     }
+#     rights = ["WRITE"]
+#   }
+#   network_permissions {
+#     type = "ALLOWED"
+#     address_ranges = []
+#     rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
+#   }
+#   access_based_enumeration_enabled = false
+#   require_encryption = false
+# }
 
 # output "some_smb_server" {
 #   value = qumulo_smb_server.update_smb

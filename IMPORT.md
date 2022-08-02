@@ -1,12 +1,13 @@
 # **How to Import Resources**
 There are a few steps necessary for importing resources into Terraform.
 
-1. Initialize the workspace
-2. Identify resources to be imported
-3. Import resources
-4. Update configuration
-5. Apply changes
+1. [Initialize the workspace](#initialize-workspace)
+2. [Identify resources to be imported](#identify-resources)
+3. [Import resources](#import-resources)
+4. [Update configuration](#update-configuration)
+5. [Apply changes](#apply-changes)
 
+<a id="initialize-workspace"></a>
 ## Initialize the Workspace
 First, create a .tf file with the qumulo provider configured. For example, create `main.tf` that includes
 
@@ -24,6 +25,7 @@ Then, run
 
     $ terraform init
 
+<a id="identify-resources"></a>
 ## Identify resources to be imported
 Identify any resources you want to be imported into Terraform. For this tutorial, let's say we want to import the cluster name and the SMB share with ID 2. 
 
@@ -35,6 +37,8 @@ resource "qumulo_cluster_name" "name" {}
 resource "qumulo_smb_share" "share2" {}
 ```
 
+
+<a id="import-resources"></a>
 ## Import resources
 Now, import each resource using `terraform import`, making sure to include the ID. For resources where the ID does not matter, include the ID that you want terraform to associate with the resource. 
 ```
@@ -44,6 +48,7 @@ $ terraform import qumulo_smb_share.share2 2
 ```
 The resources are now imported into the Terraform state. However, you still need to update the configuration file.
 
+<a id="update-configuration"></a>
 ## Update configuration
 To view the current Terraform state, run
     
@@ -203,6 +208,7 @@ Once you have a valid configuration, `terraform plan` should not display any err
 
 This is also the time to adjust your configuration with any changes you wish to make.
 
+<a id="apply-changes"></a>
 ## Apply changes
 To apply the changes and sync with your cluster settings, run
 
