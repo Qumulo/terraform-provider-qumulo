@@ -2,7 +2,6 @@ package qumulo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -106,7 +105,7 @@ type ActiveDirectoryLdapStates struct {
 type ActiveDirectoryRequest struct {
 	Settings      *ActiveDirectorySettingsBody
 	JoinSettings  *ActiveDirectoryJoinRequest
-	UsageSettings *ActiveDirectoryUsageSettings
+	UsageSettings *ActiveDirectoryUsageSettingsRequest
 }
 
 type ActiveDirectoryResponse struct {
@@ -137,7 +136,7 @@ type ActiveDirectoryMonitorResponse struct {
 	DomainNetBios        string                          `json:"domain_netbios"`
 }
 
-type ActiveDirectoryUsageSettings struct {
+type ActiveDirectoryUsageSettingsRequest struct {
 	UseAdPosixAttributes bool   `json:"use_ad_posix_attributes"`
 	BaseDn               string `json:"base_dn"`
 }
@@ -308,7 +307,7 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 		Crypto:  d.Get("crypto").(string),
 	}
 
-	updatedUsageSettings := ActiveDirectoryUsageSettings{
+	updatedUsageSettings := ActiveDirectoryUsageSettingsRequest{
 		UseAdPosixAttributes: d.Get("use_ad_posix_attributes").(bool),
 		BaseDn:               d.Get("base_dn").(string),
 	}
@@ -443,13 +442,13 @@ func (c *Client) joinActiveDirectory(ctx context.Context, joinRequest *ActiveDir
 	return joinResponse, nil
 }
 
-func (c *Client) updateActiveDirectoryUsage(ctx context.Context, usageRequest *ActiveDirectoryUsageSettings) (*ActiveDirectoryJoinResponse, error) {
+func (c *Client) updateActiveDirectoryUsage(ctx context.Context, usageRequest *ActiveDirectoryUsageSettingsRequest) (*ActiveDirectoryJoinResponse, error) {
 	if usageRequest == nil {
 		tflog.Debug(ctx, " No updated Active Directory usage settings detected, will not apply changes.")
 		return nil, nil
 	}
 
-	usageUpdateResponse, err := DoRequest[ActiveDirectoryUsageSettings, ActiveDirectoryJoinResponse](ctx, c, POST, AdReconfigureEndpoint, usageRequest)
+	usageUpdateResponse, err := DoRequest[ActiveDirectoryUsageSettingsRequest, ActiveDirectoryJoinResponse](ctx, c, POST, AdReconfigureEndpoint, usageRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +486,7 @@ func (c *Client) waitForADMonitorUpdate(ctx context.Context) error {
 		// XXX amanning32: remove since the resource itself has a timeout?
 		if numIterations > AdJoinTimeoutIterations {
 			tflog.Error(ctx, "Active Directory operation timed out, exiting")
-			return errors.New(fmt.Sprintf("ERROR: Active Directory operation timed out after %d seconds, aborting", AdJoinTimeoutIterations))
+			return fmt.Errorf("ERROR: Active Directory operation timed out after %d seconds, aborting", AdJoinTimeoutIterations)
 		}
 	}
 
