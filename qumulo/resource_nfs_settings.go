@@ -2,11 +2,12 @@ package qumulo
 
 import (
 	"context"
+	"strconv"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strconv"
-	"time"
 )
 
 const NfsSettingsEndpoint = "/v2/nfs/settings"
@@ -46,6 +47,10 @@ func resourceNfsSettings() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
+		},
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 	}
 }

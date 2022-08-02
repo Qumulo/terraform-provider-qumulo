@@ -38,6 +38,11 @@ func TestAccChangeClusterName(t *testing.T) {
 					testAccCheckClusterName(rName2),
 				),
 			},
+			{
+				ResourceName:      "qumulo_cluster_name.update_name",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

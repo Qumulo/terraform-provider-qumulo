@@ -225,6 +225,9 @@ func resourceActiveDirectory() *schema.Resource {
 				Default:          WantCrypto,
 			},
 		},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 	}
 }
 

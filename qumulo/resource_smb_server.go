@@ -77,6 +77,9 @@ func resourceSmbServer() *schema.Resource {
 				Required: true,
 			},
 		},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 	}
 }
 
