@@ -11,30 +11,31 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccChangeSMBServer(t *testing.T) {
+func TestAccChangeSmbServer(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{ // Reset state to default
-				Config: testAccSMBServerConfig(defaultSMBServerConfig),
-				Check:  testAccCheckSMBServerSettings(defaultSMBServerConfig),
+				Config: testAccSmbServerConfig(defaultSmbServerConfig),
+
+				Check: testAccCheckSmbServerSettings(defaultSmbServerConfig),
 			},
 			{
-				Config: testAccSMBServerConfig(testingSMBServerConfig),
+				Config: testAccSmbServerConfig(testingSmbServerConfig),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCompareSMBServerSettings(testingSMBServerConfig),
-					testAccCheckSMBServerSettings(testingSMBServerConfig),
+					testAccCompareSmbServerSettings(testingSmbServerConfig),
+					testAccCheckSmbServerSettings(testingSmbServerConfig),
 				),
 			},
 		},
 	})
 }
 
-var defaultSMBServerConfig = SmbServerBody{
+var defaultSmbServerConfig = SmbServerBody{
 	SessionEncryption:               "NONE",
-	SupportedDialects:               nil,
+	SupportedDialects:               []string{},
 	HideSharesFromUnauthorizedUsers: false,
 	HideSharesFromUnauthorizedHosts: false,
 	SnapshotDirectoryMode:           "DISABLED",
@@ -42,9 +43,9 @@ var defaultSMBServerConfig = SmbServerBody{
 	SigningRequired:                 false,
 }
 
-var testingSMBServerConfig = SmbServerBody{
+var testingSmbServerConfig = SmbServerBody{
 	SessionEncryption:               "PREFERRED",
-	SupportedDialects:               nil,
+	SupportedDialects:               []string{},
 	HideSharesFromUnauthorizedUsers: true,
 	HideSharesFromUnauthorizedHosts: true,
 	SnapshotDirectoryMode:           "VISIBLE",
@@ -52,7 +53,7 @@ var testingSMBServerConfig = SmbServerBody{
 	SigningRequired:                 true,
 }
 
-func testAccSMBServerConfig(smb SmbServerBody) string {
+func testAccSmbServerConfig(smb SmbServerBody) string {
 	return fmt.Sprintf(`
 resource "qumulo_smb_server" "update_smb" {
 	session_encryption = %q
@@ -68,7 +69,7 @@ resource "qumulo_smb_server" "update_smb" {
 		smb.BypassTraverseChecking, smb.SigningRequired)
 }
 
-func testAccCompareSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
+func testAccCompareSmbServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "session_encryption",
 			smb.SessionEncryption),
@@ -87,7 +88,7 @@ func testAccCompareSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 	)
 }
 
-func testAccCheckSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
+func testAccCheckSmbServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
 		ctx := context.Background()
@@ -95,7 +96,7 @@ func testAccCheckSMBServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 		if err != nil {
 			return err
 		}
-		if !reflect.DeepEqual(settings.SessionEncryption, smb.SessionEncryption) {
+		if !reflect.DeepEqual(*settings, smb) {
 			return fmt.Errorf("SMB server settings mismatch: Expected %v, got %v", smb, *settings)
 		}
 		return nil
