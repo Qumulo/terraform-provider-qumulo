@@ -58,7 +58,6 @@ var defaultLdapServerConfigApplied = LdapServerSettingsBody{
 var testingLdapServerConfig = LdapServerSettingsBody{
 	UseLdap:                true,
 	BindUri:                "ldap://ldap.denvrdata.com",
-	User:                   "",
 	BaseDistinguishedNames: "dc=cloud,dc=denvrdata,dc=com",
 	LdapSchema:             "CUSTOM",
 	LdapSchemaDescription: LdapSchemaDescription{
