@@ -32,9 +32,8 @@ func TestAccTestNfsExport(t *testing.T) {
 }
 
 var defaultNfsExport = NfsExport{
-	ExportPath:  "/my_very_own_export",
-	FsPath:      "/home/testing/my_very_own_export",
-	Description: "",
+	ExportPath: "/my_very_own_export",
+	FsPath:     "/home/testing/my_very_own_export",
 	Restrictions: []NfsRestriction{{
 		HostRestrictions:      []string{},
 		ReadOnly:              false,
@@ -45,9 +44,8 @@ var defaultNfsExport = NfsExport{
 }
 
 var testNfsExport = NfsExport{
-	ExportPath:  "/my_very_own_export",
-	FsPath:      "/home/testing/my_very_own_export",
-	Description: "",
+	ExportPath: "/my_very_own_export",
+	FsPath:     "/home/testing/my_very_own_export",
 	Restrictions: []NfsRestriction{{
 		HostRestrictions:      []string{"10.100.38.31"},
 		ReadOnly:              false,

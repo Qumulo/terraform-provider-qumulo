@@ -33,20 +33,14 @@ func TestAccChangeLdapServer(t *testing.T) {
 }
 
 var defaultLdapServerConfig = LdapServerSettingsBody{
-	UseLdap:                false,
-	BindUri:                "",
-	User:                   "",
-	BaseDistinguishedNames: "",
-	LdapSchema:             "RFC2307",
-	EncryptConnection:      true,
+	UseLdap:           false,
+	LdapSchema:        "RFC2307",
+	EncryptConnection: true,
 }
 
 var defaultLdapServerConfigApplied = LdapServerSettingsBody{
-	UseLdap:                false,
-	BindUri:                "",
-	User:                   "",
-	BaseDistinguishedNames: "",
-	LdapSchema:             "RFC2307",
+	UseLdap:    false,
+	LdapSchema: "RFC2307",
 	//Default schema description that's applied by the API
 	LdapSchemaDescription: LdapSchemaDescription{
 		GroupMemberAttribute:         "memberUid",
