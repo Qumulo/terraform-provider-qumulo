@@ -140,6 +140,10 @@ func resourceLdapServer() *schema.Resource {
 				Default:  true,
 			},
 		},
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 	}
 }
 
