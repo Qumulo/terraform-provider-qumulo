@@ -42,10 +42,10 @@ type SmbNetworkPermission struct {
 
 type SmbTrustee struct {
 	Domain string `json:"domain"`
-	AuthId string `json:"auth_id"`
-	Uid    string `json:"uid,omitempty"`
-	Gid    string `json:"gid,omitempty"`
-	Sid    string `json:"sid"`
+	AuthId string `json:"auth_id,omitempty"`
+	Uid    int    `json:"uid,omitempty"`
+	Gid    int    `json:"gid,omitempty"`
+	Sid    string `json:"sid,omitempty"`
 	Name   string `json:"name,omitempty"`
 }
 
@@ -92,27 +92,33 @@ func resourceSmbShare() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"domain": {
 										Type:     schema.TypeString,
-										Required: true,
+										Optional: true,
+										Computed: true,
 									},
 									"auth_id": {
 										Type:     schema.TypeString,
-										Required: true,
+										Optional: true,
+										Computed: true,
 									},
 									"uid": {
-										Type:     schema.TypeString,
+										Type:     schema.TypeInt,
 										Optional: true,
+										Computed: true,
 									},
 									"gid": {
-										Type:     schema.TypeString,
+										Type:     schema.TypeInt,
 										Optional: true,
+										Computed: true,
 									},
 									"sid": {
 										Type:     schema.TypeString,
 										Optional: true,
+										Computed: true,
 									},
 									"name": {
 										Type:     schema.TypeString,
 										Optional: true,
+										Computed: true,
 									},
 								},
 							},
@@ -162,14 +168,17 @@ func resourceSmbShare() *schema.Resource {
 			"default_file_create_mode": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"default_directory_create_mode": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"bytes_per_sector": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"require_encryption": {
 				Type:     schema.TypeBool,
@@ -252,8 +261,8 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 	var diags diag.Diagnostics
-	smbShareId := d.Id()
-	_, err := DoRequest[string, SmbShare](ctx, c, DELETE, SmbSharesEndpoint, &smbShareId)
+	deleteSmbShareByIdUri := SmbSharesEndpoint + d.Id()
+	_, err := DoRequest[string, SmbShare](ctx, c, DELETE, deleteSmbShareByIdUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -359,10 +368,10 @@ func expandTrustee(tfTrustee interface{}) SmbTrustee {
 	if v, ok := tfMap["auth_id"].(string); ok {
 		trustee.AuthId = v
 	}
-	if v, ok := tfMap["uid"].(string); ok {
+	if v, ok := tfMap["uid"].(int); ok {
 		trustee.Uid = v
 	}
-	if v, ok := tfMap["gid"].(string); ok {
+	if v, ok := tfMap["gid"].(int); ok {
 		trustee.Gid = v
 	}
 	if v, ok := tfMap["sid"].(string); ok {
