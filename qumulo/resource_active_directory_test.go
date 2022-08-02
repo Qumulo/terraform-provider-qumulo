@@ -116,8 +116,51 @@ func TestAccChangeActiveDirectoryStatusReconfigure(t *testing.T) {
 	})
 }
 
-// test empty settings
-// test partially empty settings does nothing
+func TestAccChangeActiveDirectorySettingsEmpty(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActiveDirectoryConfigNoSettings(defaultActiveDirectoryConfig),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCompareActiveDirectorySettings(defaultActiveDirectoryConfig),
+					testAccCheckActiveDirectorySettings(*defaultActiveDirectoryConfig.Settings),
+					testAccCheckActiveDirectoryStatus(*defaultActiveDirectoryConfig.JoinSettings),
+				),
+			},
+		},
+	})
+}
+
+func TestAccChangeActiveDirectorySettingsPartial(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActiveDirectoryConfigFull(defaultActiveDirectoryConfig),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCompareActiveDirectorySettings(defaultActiveDirectoryConfig),
+					testAccCheckActiveDirectorySettings(*defaultActiveDirectoryConfig.Settings),
+					testAccCheckActiveDirectoryStatus(*defaultActiveDirectoryConfig.JoinSettings),
+				),
+			},
+			{
+				Config: testAccActiveDirectoryConfigPartialSettings(testingActiveDirectoryConfigSettings),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCompareActiveDirectorySettings(testingActiveDirectoryConfigSettings),
+					testAccCheckActiveDirectorySettings(*testingActiveDirectoryConfigSettings.Settings),
+					testAccCheckActiveDirectoryStatus(*testingActiveDirectoryConfigSettings.JoinSettings),
+				),
+			},
+		},
+	})
+}
+
+// test partial join settings
 // test invalid AD settings causes validation error
 
 // Active Directory configurations
@@ -155,11 +198,6 @@ var defaultActiveDirectorySettingsConfig = ActiveDirectorySettingsBody{
 var testingActiveDirectorySettingsConfigFull = ActiveDirectorySettingsBody{
 	Signing: "REQUIRE_SIGNING",
 	Sealing: "WANT_SEALING",
-	Crypto:  "REQUIRE_AES",
-}
-
-var testingActiveDirectorySettingsConfigPartial = ActiveDirectorySettingsBody{
-	Signing: "REQUIRE_SIGNING",
 	Crypto:  "REQUIRE_AES",
 }
 
@@ -216,6 +254,38 @@ func testAccActiveDirectoryConfigFull(req ActiveDirectoryRequest) string {
 		base_dn = %q
 	}
 	`, req.Settings.Signing, req.Settings.Sealing, req.Settings.Crypto, req.JoinSettings.Domain, req.JoinSettings.DomainNetBios, req.JoinSettings.User,
+		req.JoinSettings.Password, req.JoinSettings.Ou, req.JoinSettings.UseAdPosixAttributes, req.JoinSettings.BaseDn)
+}
+
+func testAccActiveDirectoryConfigPartialSettings(req ActiveDirectoryRequest) string {
+	return fmt.Sprintf(`
+	resource "qumulo_ad_settings" "ad_settings" {
+		signing = %q
+		crypto = %q
+		domain = %q
+		domain_netbios = %q
+		ad_username = %q
+		ad_password = %q
+		ou = %q
+		use_ad_posix_attributes = %v
+		base_dn = %q
+	}
+	`, req.Settings.Signing, req.Settings.Crypto, req.JoinSettings.Domain, req.JoinSettings.DomainNetBios, req.JoinSettings.User,
+		req.JoinSettings.Password, req.JoinSettings.Ou, req.JoinSettings.UseAdPosixAttributes, req.JoinSettings.BaseDn)
+}
+
+func testAccActiveDirectoryConfigNoSettings(req ActiveDirectoryRequest) string {
+	return fmt.Sprintf(`
+	resource "qumulo_ad_settings" "ad_settings" {
+		domain = %q
+		domain_netbios = %q
+		ad_username = %q
+		ad_password = %q
+		ou = %q
+		use_ad_posix_attributes = %v
+		base_dn = %q
+	}
+	`, req.JoinSettings.Domain, req.JoinSettings.DomainNetBios, req.JoinSettings.User,
 		req.JoinSettings.Password, req.JoinSettings.Ou, req.JoinSettings.UseAdPosixAttributes, req.JoinSettings.BaseDn)
 }
 
