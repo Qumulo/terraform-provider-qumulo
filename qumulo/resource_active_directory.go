@@ -209,19 +209,19 @@ func resourceActiveDirectory() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ActiveDirectorySigningValues, false)),
-				Default:          WantSigning,
+				Default:          WantSigning.String(),
 			},
 			"sealing": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ActiveDirectorySealingValues, false)),
-				Default:          WantSealing,
+				Default:          WantSealing.String(),
 			},
 			"crypto": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(ActiveDirectoryCryptoValues, false)),
-				Default:          WantCrypto,
+				Default:          WantCrypto.String(),
 			},
 		},
 		Importer: &schema.ResourceImporter{
