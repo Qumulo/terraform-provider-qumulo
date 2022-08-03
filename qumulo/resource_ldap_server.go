@@ -91,7 +91,7 @@ func resourceLdapServer() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(LdapSchemaValues, false)),
-				Default:          RFC2307,
+				Default:          RFC2307.String(),
 			},
 			"ldap_schema_description": {
 				Type:     schema.TypeList,
