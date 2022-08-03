@@ -11,7 +11,7 @@ import (
 
 // TODO write test steps
 
-func TestAccJoinActiveDirectory(t *testing.T) {
+func TestAccJoinActiveDirectoryFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -24,6 +24,26 @@ func TestAccJoinActiveDirectory(t *testing.T) {
 					testAccCheckActiveDirectorySettings(*defaultActiveDirectoryConfig.Settings),
 					testAccCheckActiveDirectoryStatus(*defaultActiveDirectoryConfig.JoinSettings),
 				),
+			},
+		},
+	})
+}
+
+func TestAccJoinActiveDirectoryPartial(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActiveDirectoryConfigFull(testingActiveDirectoryConfigSettingsPartialJoin),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCompareActiveDirectorySettings(defaultActiveDirectoryConfig),
+					testAccCheckActiveDirectorySettings(*defaultActiveDirectoryConfig.Settings),
+					testAccCheckActiveDirectoryStatus(*defaultActiveDirectoryConfig.JoinSettings),
+				),
+				// This is treated as an update, which has a force-new update on the Ou field
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -160,7 +180,6 @@ func TestAccChangeActiveDirectorySettingsPartial(t *testing.T) {
 	})
 }
 
-// test partial join settings
 // test invalid AD settings causes validation error
 
 // Active Directory configurations
@@ -185,6 +204,11 @@ var testingActiveDirectoryConfigSettingsForceNew = ActiveDirectoryRequest{
 var testingActiveDirectoryConfigSettingsReconfigure = ActiveDirectoryRequest{
 	Settings:     &testingActiveDirectorySettingsConfigFull,
 	JoinSettings: &testingActiveDirectoryJoinSettingsConfigFullReconfigure,
+}
+
+var testingActiveDirectoryConfigSettingsPartialJoin = ActiveDirectoryRequest{
+	Settings:     &defaultActiveDirectorySettingsConfig,
+	JoinSettings: &testingActiveDirectoryJoinSettingsConfigPartial,
 }
 
 // Active Directory Settings configurations
