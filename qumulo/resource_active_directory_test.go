@@ -252,29 +252,26 @@ var testingActiveDirectoryJoinSettingsConfigFull = ActiveDirectoryJoinRequest{
 	DomainNetBios:        "AD",
 	User:                 "Administrator",
 	Password:             "a",
-	Ou:                   "",
 	UseAdPosixAttributes: false,
 	BaseDn:               "CN=Users,DC=ad,DC=eng,DC=qumulo,DC=com",
 }
 
+// changes DomainNetBios
 var testingActiveDirectoryJoinSettingsConfigFullForceNew = ActiveDirectoryJoinRequest{
 	Domain:               "ad.eng.qumulo.com",
-	DomainNetBios:        "",
 	User:                 "Administrator",
 	Password:             "a",
-	Ou:                   "",
 	UseAdPosixAttributes: false,
 	BaseDn:               "CN=Users,DC=ad,DC=eng,DC=qumulo,DC=com",
 }
 
+// changes BaseDn
 var testingActiveDirectoryJoinSettingsConfigFullReconfigure = ActiveDirectoryJoinRequest{
 	Domain:               "ad.eng.qumulo.com",
 	DomainNetBios:        "AD",
 	User:                 "Administrator",
 	Password:             "a",
-	Ou:                   "",
 	UseAdPosixAttributes: false,
-	BaseDn:               "",
 }
 
 var testingActiveDirectoryJoinSettingsConfigPartial = ActiveDirectoryJoinRequest{
