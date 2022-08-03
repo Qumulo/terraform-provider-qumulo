@@ -17,25 +17,25 @@ variable "some_cluster_name" {
   type    = string
   default = "InigoMontoya"
 }
-variable "some_cert" {
-  type    = string
-  default = <<CERTDELIM
------BEGIN CERTIFICATE-----
-MIICIDCCAYmgAwIBAgIUZcdqCxZB1O4RD548ygFhGBXxQdQwDQYJKoZIhvcNAQEL
-BQAwIjEPMA0GA1UEAwwGVGVzdENBMQ8wDQYDVQQKDAZRdW11bG8wHhcNMjIwNzIy
-MTcwOTI4WhcNMzIwNzE5MTcwOTI4WjAiMQ8wDQYDVQQDDAZUZXN0Q0ExDzANBgNV
-BAoMBlF1bXVsbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAv9Xupp43GfpI
-0bVkB1BIa0ZBt5hpjxgee5PKwn3pbcg/M0M4qGhtX9/DR4utMqMib+X517hyo18E
-Vd+gZa0plafaPfwzz8YkO2EovYEFIaBxgqYkTQ0YZVt40cWEMMCWuyPndX0bvOrW
-1f5zvOcc0+dDXoiqbhUDKiXBfzK745UCAwEAAaNTMFEwHQYDVR0OBBYEFKYiYrFK
-cZcR+gDTAqxV6u81B9htMB8GA1UdIwQYMBaAFKYiYrFKcZcR+gDTAqxV6u81B9ht
-MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADgYEAjPXNGT38WwyWu4Xe
-Wngxmk0OIKZthsbZVDxSti3mse7KWadb6EkaRM/ZIO9CFPyB67zh3KAwhKiMbPVE
-JH62qN5t5xoqdDzzuOUHw1SSF78lfMAWk84TplzXegdysXjYFVhxvqYV9DIEhsTw
-HjX0jrbwN2tDfjTKNQwi7P7RPDY=
------END CERTIFICATE-----
-CERTDELIM
-}
+# variable "some_cert" {
+#   type    = string
+#   default = <<CERTDELIM
+# -----BEGIN CERTIFICATE-----
+# MIICIDCCAYmgAwIBAgIUZcdqCxZB1O4RD548ygFhGBXxQdQwDQYJKoZIhvcNAQEL
+# BQAwIjEPMA0GA1UEAwwGVGVzdENBMQ8wDQYDVQQKDAZRdW11bG8wHhcNMjIwNzIy
+# MTcwOTI4WhcNMzIwNzE5MTcwOTI4WjAiMQ8wDQYDVQQDDAZUZXN0Q0ExDzANBgNV
+# BAoMBlF1bXVsbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAv9Xupp43GfpI
+# 0bVkB1BIa0ZBt5hpjxgee5PKwn3pbcg/M0M4qGhtX9/DR4utMqMib+X517hyo18E
+# Vd+gZa0plafaPfwzz8YkO2EovYEFIaBxgqYkTQ0YZVt40cWEMMCWuyPndX0bvOrW
+# 1f5zvOcc0+dDXoiqbhUDKiXBfzK745UCAwEAAaNTMFEwHQYDVR0OBBYEFKYiYrFK
+# cZcR+gDTAqxV6u81B9htMB8GA1UdIwQYMBaAFKYiYrFKcZcR+gDTAqxV6u81B9ht
+# MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADgYEAjPXNGT38WwyWu4Xe
+# Wngxmk0OIKZthsbZVDxSti3mse7KWadb6EkaRM/ZIO9CFPyB67zh3KAwhKiMbPVE
+# JH62qN5t5xoqdDzzuOUHw1SSF78lfMAWk84TplzXegdysXjYFVhxvqYV9DIEhsTw
+# HjX0jrbwN2tDfjTKNQwi7P7RPDY=
+# -----END CERTIFICATE-----
+# CERTDELIM
+# }
 
 resource "qumulo_cluster_name" "update_name" {
   cluster_name = var.some_cluster_name
@@ -122,23 +122,32 @@ resource "qumulo_cluster_name" "update_name" {
 #  private_key = var.some_key
 #}
 
+resource "qumulo_role" "actors" {
+    description = "Testing testing 123"
+    name        = "Actors"
+    privileges  = [
+        "PRIVILEGE_AD_READ",
+        "PRIVILEGE_AD_USE",
+        "PRIVILEGE_AD_WRITE",
+    ]
+
+    timeouts {}
+}
+
 # resource "qumulo_ssl_ca" "update_ssl_ca" {
 #   ca_certificate = var.some_cert
 # }
 
-# resource "qumulo_monitoring" "update_monitoring" {
-#   enabled = false
-#   mq_host = "missionq.qumulo.com"
-#   mq_port = 443
-#   mq_proxy_host = ""
-#   mq_proxy_port = 32
-#   s3_proxy_host = "monitor.qumulo.com"
-#   s3_proxy_port = 443
-#   s3_proxy_disable_https = false
-#   vpn_enabled = false
-#   vpn_host = "ep1.qumulo.com"
-#   period = 60
-# }
+resource "qumulo_monitoring" "update_monitoring" {
+  mq_host = "missionq.qumulo.com"
+  mq_port = 443
+  mq_proxy_host = ""
+  mq_proxy_port = 32
+  s3_proxy_host = "monitor.qumulo.com"
+  s3_proxy_port = 443
+  vpn_host = "ep1.qumulo.com"
+  period = 60
+}
 
 # resource "qumulo_smb_server" "update_smb" {
 #   session_encryption = "NONE"
@@ -223,36 +232,3 @@ resource "qumulo_time_configuration" "time_config" {
 //  value = qumulo_ssl_cert.update_ssl
 //}
 
-
-
-  # permissions {
-  #   type = "ALLOWED"
-  #   trustee = {
-  #       domain = "LOCAL"
-  #       auth_id = "500"
-  #       uid = null
-  #       gid = null
-  #       sid = "S-1-5-21-2821601516-3888733394-2762749966-500"
-  #       name = null
-  #   }
-  #   rights = [
-  #       "READ",
-  #       "WRITE",
-  #       "CHANGE_PERMISSIONS"
-  #   ]
-  # }
-  # permissions = 
-  #     {
-  #         type = "ALLOWED"
-  #         trustee = {
-  #             domain = "WORLD"
-  #             auth_id = "8589934592"
-  #             sid = "S-1-1-0"
-  #             name = null
-  #         }
-  #         rights = [
-  #             "READ",
-  #             "WRITE",
-  #             "CHANGE_PERMISSIONS"
-  #         ]
-  #     }

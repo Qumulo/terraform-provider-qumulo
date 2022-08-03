@@ -44,6 +44,7 @@ func Provider() *schema.Provider {
 			"qumulo_nfs_settings":       resourceNfsSettings(),
 			"qumulo_smb_server":         resourceSmbServer(),
 			"qumulo_smb_share":          resourceSmbShare(),
+			"qumulo_role":               resourceRole(),
 			"qumulo_time_configuration": resourceTimeConfiguration(),
 		},
 		ConfigureContextFunc: providerConfigure,
