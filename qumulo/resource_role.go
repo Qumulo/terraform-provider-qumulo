@@ -128,15 +128,17 @@ func setRoleSettings(ctx context.Context, d *schema.ResourceData, m interface{})
 		}
 	}
 
-	RoleConfig := Role{
+	roleConfig := Role{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		Privileges:  privileges,
 	}
 
-	tflog.Debug(ctx, "Updating or creating Role")
+	tflog.Debug(ctx, "Updating or creating Role: %v", map[string]interface{}{
+		"Name": roleConfig.Name,
+	})
 
-	return RoleConfig
+	return roleConfig
 }
 
 var validPrivileges = []string{
