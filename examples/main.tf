@@ -122,6 +122,18 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #  private_key = var.some_key
 #}
 
+resource "qumulo_role" "actors" {
+    description = "Testing testing 123"
+    name        = "Actors"
+    privileges  = [
+        "PRIVILEGE_AD_READ",
+        "PRIVILEGE_AD_USE",
+        "PRIVILEGE_AD_WRITE",
+    ]
+
+    timeouts {}
+}
+
 # resource "qumulo_ssl_ca" "update_ssl_ca" {
 #   ca_certificate = var.some_cert
 # }
@@ -215,36 +227,3 @@ resource "qumulo_monitoring" "update_monitoring" {
 //  value = qumulo_ssl_cert.update_ssl
 //}
 
-
-
-  # permissions {
-  #   type = "ALLOWED"
-  #   trustee = {
-  #       domain = "LOCAL"
-  #       auth_id = "500"
-  #       uid = null
-  #       gid = null
-  #       sid = "S-1-5-21-2821601516-3888733394-2762749966-500"
-  #       name = null
-  #   }
-  #   rights = [
-  #       "READ",
-  #       "WRITE",
-  #       "CHANGE_PERMISSIONS"
-  #   ]
-  # }
-  # permissions = 
-  #     {
-  #         type = "ALLOWED"
-  #         trustee = {
-  #             domain = "WORLD"
-  #             auth_id = "8589934592"
-  #             sid = "S-1-1-0"
-  #             name = null
-  #         }
-  #         rights = [
-  #             "READ",
-  #             "WRITE",
-  #             "CHANGE_PERMISSIONS"
-  #         ]
-  #     }
