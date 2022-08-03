@@ -20,6 +20,10 @@ First, set the following environment variables, specifying the host and port of 
     export QUMULO_USERNAME={username}
     export QUMULO_PASSWORD={password}
 
+Make sure the TF_ACC environment varialbe is set to enable acceptance testing
+
+    export TF_ACC=1
+
 Then, run the following command
 
     make testwip
