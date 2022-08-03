@@ -3,13 +3,12 @@ package qumulo
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
-
-// TODO write test steps
 
 func TestAccJoinActiveDirectoryFull(t *testing.T) {
 
@@ -36,7 +35,7 @@ func TestAccJoinActiveDirectoryPartial(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccActiveDirectoryConfigFull(testingActiveDirectoryConfigSettingsPartialJoin),
+				Config: testAccActiveDirectoryConfigFull(testingActiveDirectoryConfigPartialJoin),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCompareActiveDirectorySettings(defaultActiveDirectoryConfig),
 					testAccCheckActiveDirectorySettings(*defaultActiveDirectoryConfig.Settings),
@@ -180,15 +179,30 @@ func TestAccChangeActiveDirectorySettingsPartial(t *testing.T) {
 	})
 }
 
-// test invalid AD settings causes validation error
+func TestAccChangeActiveDirectorySettingsInvalid_ExpectError(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccActiveDirectoryConfigFull(testingActiveDirectoryConfigSettingsInvalid),
+				ExpectError: regexp.MustCompile("expected (signing|sealing|crypto) to be one of .+, got WHAT_IS_(SIGNING|SEALING|AES)"),
+			},
+		},
+	})
+}
 
 // Active Directory configurations
-
-// TODO create all relevant combinations for test
 
 var defaultActiveDirectoryConfig = ActiveDirectoryRequest{
 	Settings:     &defaultActiveDirectorySettingsConfig,
 	JoinSettings: &testingActiveDirectoryJoinSettingsConfigFull,
+}
+
+var testingActiveDirectoryConfigPartialJoin = ActiveDirectoryRequest{
+	Settings:     &defaultActiveDirectorySettingsConfig,
+	JoinSettings: &testingActiveDirectoryJoinSettingsConfigPartial,
 }
 
 var testingActiveDirectoryConfigSettings = ActiveDirectoryRequest{
@@ -206,9 +220,9 @@ var testingActiveDirectoryConfigSettingsReconfigure = ActiveDirectoryRequest{
 	JoinSettings: &testingActiveDirectoryJoinSettingsConfigFullReconfigure,
 }
 
-var testingActiveDirectoryConfigSettingsPartialJoin = ActiveDirectoryRequest{
-	Settings:     &defaultActiveDirectorySettingsConfig,
-	JoinSettings: &testingActiveDirectoryJoinSettingsConfigPartial,
+var testingActiveDirectoryConfigSettingsInvalid = ActiveDirectoryRequest{
+	Settings:     &testingActiveDirectorySettingsConfigInvalid,
+	JoinSettings: &testingActiveDirectoryJoinSettingsConfigFull,
 }
 
 // Active Directory Settings configurations
@@ -223,6 +237,12 @@ var testingActiveDirectorySettingsConfigFull = ActiveDirectorySettingsBody{
 	Signing: "REQUIRE_SIGNING",
 	Sealing: "WANT_SEALING",
 	Crypto:  "REQUIRE_AES",
+}
+
+var testingActiveDirectorySettingsConfigInvalid = ActiveDirectorySettingsBody{
+	Signing: "WHAT_IS_SIGNING",
+	Sealing: "WHAT_IS_SEALING",
+	Crypto:  "WHAT_IS_AES",
 }
 
 // Active Directory Join Settings configurations
@@ -262,6 +282,8 @@ var testingActiveDirectoryJoinSettingsConfigPartial = ActiveDirectoryJoinRequest
 	User:     "Administrator",
 	Password: "a",
 }
+
+// Formatting functions
 
 func testAccActiveDirectoryConfigFull(req ActiveDirectoryRequest) string {
 	return fmt.Sprintf(`
@@ -313,7 +335,7 @@ func testAccActiveDirectoryConfigNoSettings(req ActiveDirectoryRequest) string {
 		req.JoinSettings.Password, req.JoinSettings.Ou, req.JoinSettings.UseAdPosixAttributes, req.JoinSettings.BaseDn)
 }
 
-// TODO write actual test
+// Test helper functions
 
 func testAccCompareActiveDirectorySettings(adRequest ActiveDirectoryRequest) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
