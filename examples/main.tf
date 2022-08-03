@@ -111,44 +111,44 @@ resource "qumulo_cluster_name" "update_name" {
 #    allow_fs_path_create = true
 #  }
 
-resource "qumulo_nfs_settings" "my_new_settings" {
-  v4_enabled = false
-  krb5_enabled = true
-  auth_sys_enabled = true
-}
+# resource "qumulo_nfs_settings" "my_new_settings" {
+#   v4_enabled = false
+#   krb5_enabled = true
+#   auth_sys_enabled = true
+# }
 
 #resource "qumulo_ssl_cert" "update_ssl" {
 #  certificate = var.some_cert
 #  private_key = var.some_key
 #}
 
-resource "qumulo_ssl_ca" "update_ssl_ca" {
-  ca_certificate = var.some_cert
-}
+# resource "qumulo_ssl_ca" "update_ssl_ca" {
+#   ca_certificate = var.some_cert
+# }
 
-resource "qumulo_monitoring" "update_monitoring" {
-  enabled = false
-  mq_host = "missionq.qumulo.com"
-  mq_port = 443
-  mq_proxy_host = ""
-  mq_proxy_port = 32
-  s3_proxy_host = "monitor.qumulo.com"
-  s3_proxy_port = 443
-  s3_proxy_disable_https = false
-  vpn_enabled = false
-  vpn_host = "ep1.qumulo.com"
-  period = 60
-}
+# resource "qumulo_monitoring" "update_monitoring" {
+#   enabled = false
+#   mq_host = "missionq.qumulo.com"
+#   mq_port = 443
+#   mq_proxy_host = ""
+#   mq_proxy_port = 32
+#   s3_proxy_host = "monitor.qumulo.com"
+#   s3_proxy_port = 443
+#   s3_proxy_disable_https = false
+#   vpn_enabled = false
+#   vpn_host = "ep1.qumulo.com"
+#   period = 60
+# }
 
-resource "qumulo_smb_server" "update_smb" {
-  session_encryption = "NONE"
-  supported_dialects =["SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1"]
-  hide_shares_from_unauthorized_users = false
-  hide_shares_from_unauthorized_hosts = true
-  snapshot_directory_mode = "VISIBLE"
-  bypass_traverse_checking = false
-  signing_required = false
-}
+# resource "qumulo_smb_server" "update_smb" {
+#   session_encryption = "NONE"
+#   supported_dialects =["SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1"]
+#   hide_shares_from_unauthorized_users = false
+#   hide_shares_from_unauthorized_hosts = true
+#   snapshot_directory_mode = "VISIBLE"
+#   bypass_traverse_checking = false
+#   signing_required = false
+# }
 
 # resource "qumulo_ldap_server" "some_ldap_server" {
 #   use_ldap = true
@@ -169,33 +169,38 @@ resource "qumulo_smb_server" "update_smb" {
 #   encrypt_connection = false
 # }
 
-resource "qumulo_smb_share" "share1" {
-  share_name = "TestingShareHi344"
-  fs_path = "/"
-  description = "This is a share used for testing purposes"
-  permissions {
-    type = "ALLOWED"
-    trustee {
-      domain = "LOCAL"
-      name = "admin"
-    }
-    rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
-  }
-  permissions {
-    type = "DENIED"
-    trustee {
-      domain = "LOCAL"
-      uid = 65534
-    }
-    rights = ["WRITE"]
-  }
-  network_permissions {
-    type = "ALLOWED"
-    address_ranges = []
-    rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
-  }
-  access_based_enumeration_enabled = false
-  require_encryption = false
+# resource "qumulo_smb_share" "share1" {
+#   share_name = "TestingShareHi344"
+#   fs_path = "/"
+#   description = "This is a share used for testing purposes"
+#   permissions {
+#     type = "ALLOWED"
+#     trustee {
+#       domain = "LOCAL"
+#       name = "admin"
+#     }
+#     rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
+#   }
+#   permissions {
+#     type = "DENIED"
+#     trustee {
+#       domain = "LOCAL"
+#       uid = 65534
+#     }
+#     rights = ["WRITE"]
+#   }
+#   network_permissions {
+#     type = "ALLOWED"
+#     address_ranges = []
+#     rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
+#   }
+#   access_based_enumeration_enabled = false
+#   require_encryption = false
+# }
+
+resource "qumulo_time_configuration" "time_config" {
+    use_ad_for_primary = false
+    ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
 }
 
 # output "some_smb_server" {
