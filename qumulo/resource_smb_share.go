@@ -310,11 +310,7 @@ func expandPermissions(tfPermissions []interface{}) []SmbPermission {
 		}
 
 		if v, ok := tfMap["rights"].([]interface{}); ok {
-			expandedRights := make([]string, len(v))
-			for i, right := range v {
-				expandedRights[i] = right.(string)
-			}
-			permission.Rights = expandedRights
+			permission.Rights = InterfaceSliceToStringSlice(v)
 		}
 
 		permissions = append(permissions, permission)
@@ -340,18 +336,10 @@ func expandNetworkPermissions(tfNetworkPermissions []interface{}) []SmbNetworkPe
 			networkPermission.Type = v
 		}
 		if v, ok := tfMap["address_ranges"].([]interface{}); ok {
-			expandedAddressRanges := make([]string, len(v))
-			for i, addressRange := range v {
-				expandedAddressRanges[i] = addressRange.(string)
-			}
-			networkPermission.AddressRanges = expandedAddressRanges
+			networkPermission.AddressRanges = InterfaceSliceToStringSlice(v)
 		}
 		if v, ok := tfMap["rights"].([]interface{}); ok {
-			expandedRights := make([]string, len(v))
-			for i, right := range v {
-				expandedRights[i] = right.(string)
-			}
-			networkPermission.Rights = expandedRights
+			networkPermission.Rights = InterfaceSliceToStringSlice(v)
 		}
 
 		networkPermissions = append(networkPermissions, networkPermission)

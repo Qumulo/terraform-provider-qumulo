@@ -122,10 +122,7 @@ func setRoleSettings(ctx context.Context, d *schema.ResourceData, m interface{})
 	var privileges = []string{}
 
 	if v, ok := d.Get("privileges").([]interface{}); ok {
-		privileges = make([]string, len(v))
-		for i, priv := range v {
-			privileges[i] = priv.(string)
-		}
+		privileges = InterfaceSliceToStringSlice(v)
 	}
 
 	roleConfig := Role{
