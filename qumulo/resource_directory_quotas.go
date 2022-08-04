@@ -54,7 +54,7 @@ func resourceDirectoryQuota() *schema.Resource {
 }
 
 func resourceDirectoryQuotaCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setDirectoryQuota(ctx, d, m, POST)
+	err := createOrUpdateDirectoryQuota(ctx, d, m, POST, DirectoryQuotaEndpoint)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -83,7 +83,10 @@ func resourceDirectoryQuotaRead(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceDirectoryQuotaUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setDirectoryQuota(ctx, d, m, PUT)
+	directoryId := d.Get("directory_id").(string)
+	quotaUrl := DirectoryQuotaEndpoint + directoryId
+
+	err := createOrUpdateDirectoryQuota(ctx, d, m, PUT, quotaUrl)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -106,7 +109,7 @@ func resourceDirectoryQuotaDelete(ctx context.Context, d *schema.ResourceData, m
 	return diags
 }
 
-func setDirectoryQuota(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
+func createOrUpdateDirectoryQuota(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) error {
 	c := m.(*Client)
 
 	directoryId := d.Get("directory_id").(string)
@@ -116,14 +119,8 @@ func setDirectoryQuota(ctx context.Context, d *schema.ResourceData, m interface{
 		Limit: d.Get("limit").(string),
 	}
 
-	// Updates require the directory ID appended to the URL
-	quotaUrl := DirectoryQuotaEndpoint
-	if method == PUT {
-		quotaUrl += "/" + directoryId
-	}
-
 	tflog.Debug(ctx, fmt.Sprintf("Updating directory quota with id %q", directoryId))
-	_, err := DoRequest[DirectoryQuotaBody, DirectoryQuotaBody](ctx, c, method, quotaUrl, &directoryQuotaRequest)
+	_, err := DoRequest[DirectoryQuotaBody, DirectoryQuotaBody](ctx, c, method, url, &directoryQuotaRequest)
 
 	return err
 }
