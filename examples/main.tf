@@ -52,41 +52,27 @@ resource "qumulo_cluster_name" "update_name" {
 #   base_dn = "CN=Users,DC=ad,DC=eng,DC=qumulo,DC=com"
 # }
 
-# resource "qumulo_ldap_server" "some_ldap_server" {
-#   use_ldap = true
-#   bind_uri = "ldap://ldap.denvrdata.com"
-#   user = ""
-#   base_distinguished_names = "dc=cloud,dc=denvrdata,dc=com"
-#   ldap_schema = "CUSTOM"
-#   ldap_schema_description {
-#     group_member_attribute = "memberUid"
-#     user_group_identifier_attribute = "uid"
-#     login_name_attribute =  "uid"
-#     group_name_attribute = "cn"
-#     user_object_class = "posixAccount"
-#     group_object_class = "posixGroup"
-#     uid_number_attribute = "uidNumber"
-#     gid_number_attribute = "gidNumber"
-#   }
-#   encrypt_connection = false
-# }
+#resource "qumulo_nfs_export" "new_nfs_export" {
+#  export_path = "/lib"
+#  fs_path = "/testing"
+#  description = "testing nfs export via terraform"
+#  restrictions {
+#    host_restrictions = ["10.100.38.31"]
+#    read_only = true
+#    require_privileged_port = false
+#    user_mapping = "NFS_MAP_ALL"
+#    map_to_user = {
+#      id_type = "LOCAL_USER"
+#      id_value = "admin"
+#    }
+#  }
+#  fields_to_present_as_32_bit = []
+#  allow_fs_path_create = true
+#}
 
-resource "qumulo_nfs_export" "new_nfs_export" {
-  export_path = "/lib"
-  fs_path = "/testing"
-  description = "testing nfs export via terraform"
-  restrictions {
-    host_restrictions = ["10.100.38.31"]
-    read_only = true
-    require_privileged_port = false
-    user_mapping = "NFS_MAP_ALL"
-    map_to_user = {
-      id_type = "LOCAL_USER"
-      id_value = "admin"
-    }
-  }
-  fields_to_present_as_32_bit = []
-  allow_fs_path_create = true
+resource "qumulo_directory_quota" "new_quota" {
+    directory_id = "2"
+    limit = "1000000000"
 }
 
  resource "qumulo_nfs_export" "some_nfs_export" {

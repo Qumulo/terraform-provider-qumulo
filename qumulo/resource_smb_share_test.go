@@ -3,17 +3,12 @@ package qumulo
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
-
-// Note - this test assumes that a couple users exist. These should be created by default. These users are:
-// User 1:
-// name = admin
-// User 2:
-// uid = 65534
 
 func TestAccAddSmbShare(t *testing.T) {
 
@@ -21,21 +16,18 @@ func TestAccAddSmbShare(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			{ // Reset state to default
-				// Doesn't delete all existing shares, but makes sure any shares set through terraform
-				// are gone
-				Config: defaultSmbShareConfig,
-			},
 			{
 				Config: smbShare1,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSmbShareExists(),
+					testAccCheckShare(share1),
+					testAccCompareShare(share1),
 				),
 			},
 			{
-				Config: smbShare2,
+				Config: smbShare1Updated,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSmbShareExists(),
+					testAccCheckShare(share1Updated),
+					testAccCompareShare(share1Updated),
 				),
 			},
 		},
@@ -44,67 +36,181 @@ func TestAccAddSmbShare(t *testing.T) {
 
 var defaultSmbShareConfig = " "
 
-var share1Name = "ShareForTesting"
-var share2Name = "ShareInfinity"
+var share1 = SmbShare{
+	ShareName:   "ShareForTesting",
+	FsPath:      "/",
+	Description: "Surely not",
+	Permissions: []SmbPermission{
+		SmbPermission{
+			Type: "ALLOWED",
+			Trustee: SmbTrustee{
+				Domain: "LOCAL",
+				Name:   "user1",
+			},
+			Rights: []string{"READ", "WRITE", "CHANGE_PERMISSIONS"},
+		},
+		SmbPermission{
+			Type: "DENIED",
+			Trustee: SmbTrustee{
+				Name: "user2",
+			},
+			Rights: []string{"WRITE"},
+		},
+	},
+	NetworkPermissions: []SmbNetworkPermission{
+		SmbNetworkPermission{
+			Type:          "ALLOWED",
+			AddressRanges: []string{},
+			Rights:        []string{"READ", "WRITE", "CHANGE_PERMISSIONS"},
+		},
+	},
+	AccessBasedEnumEnabled: false,
+	RequireEncryption:      false,
+}
 
-var smbShare1 = fmt.Sprintf(`resource "qumulo_smb_share" "share" {
-		share_name = "%v"
-		fs_path = "/"
-		description = "Surely"
+var smbShare1 = fmt.Sprintf(`
+resource "qumulo_local_user" "user1" {
+	name = "user1"
+	primary_group = 514
+	password = "Test1234"
+}
+
+resource "qumulo_local_user" "user2" {
+	name = "user2"
+	primary_group = 514
+	password = "Test1234"
+}
+
+resource "qumulo_smb_share" "share" {
+		share_name = %q
+		fs_path = %q
+		description = %q
 		permissions {
-		  type = "ALLOWED"
+		  type = %q
 		  trustee {
-			  domain = "LOCAL"
-			  name = "admin"
+			name = %q
 		  }
-		  rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
+		  rights = %v
 		}
 		permissions {
-			type = "DENIED"
+			type = %q
 			trustee {
-				domain = "POSIX_USER"
-				uid = 65534
+				name = %q
 			}
-			rights = ["WRITE"]
+			rights = %v
 		  }
 		network_permissions {
-		  type = "ALLOWED"
-		  address_ranges = []
-		  rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
+		  type = %q
+		  address_ranges = %v
+		  rights = %v
 		}
-		access_based_enumeration_enabled = false
-		require_encryption = false
-	  }`, share1Name)
+		access_based_enumeration_enabled = %v
+		require_encryption = %v
+	  }`, share1.ShareName, share1.FsPath, share1.Description, share1.Permissions[0].Type, share1.Permissions[0].Trustee.Name,
+	strings.ReplaceAll(fmt.Sprintf("%+q", share1.Permissions[0].Rights), "\" \"", "\", \""), share1.Permissions[1].Type,
+	share1.Permissions[1].Trustee.Name, strings.ReplaceAll(fmt.Sprintf("%+q", share1.Permissions[1].Rights), "\" \"", "\", \""),
+	share1.NetworkPermissions[0].Type, "[]",
+	strings.ReplaceAll(fmt.Sprintf("%+q", share1.NetworkPermissions[0].Rights), "\" \"", "\", \""),
+	share1.AccessBasedEnumEnabled, share1.RequireEncryption)
 
-var smbShare2 = fmt.Sprintf(`resource "qumulo_smb_share" "share" {
-	share_name = "%v"
-	fs_path = "/"
-	description = "Sharing is caring"
-	permissions {
-	  type = "ALLOWED"
-	  trustee {
-		name = "admin"
-	  }
-	  rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
-	}
-	permissions {
-	  type = "DENIED"
-	  trustee {
-		domain = "POSIX_USER"
-		uid = 65534
-	  }
-	  rights = ["WRITE"]
-	}
-	network_permissions {
-	  type = "ALLOWED"
-	  address_ranges = []
-	  rights = ["READ", "WRITE", "CHANGE_PERMISSIONS"]
-	}
-	access_based_enumeration_enabled = false
-	require_encryption = false
-	}`, share2Name)
+var share1Updated = SmbShare{
+	ShareName:   "ShareForTesting",
+	FsPath:      "/",
+	Description: "Sharing is caring",
+	Permissions: []SmbPermission{
+		SmbPermission{
+			Type: "ALLOWED",
+			Trustee: SmbTrustee{
+				Name: "user1",
+			},
+			Rights: []string{"READ", "WRITE"},
+		},
+		SmbPermission{
+			Type: "DENIED",
+			Trustee: SmbTrustee{
+				Domain: "LOCAL",
+				Name:   "user2",
+			},
+			Rights: []string{"WRITE"},
+		},
+	},
+	NetworkPermissions: []SmbNetworkPermission{
+		SmbNetworkPermission{
+			Type:          "ALLOWED",
+			AddressRanges: []string{},
+			Rights:        []string{"READ", "WRITE", "CHANGE_PERMISSIONS"},
+		},
+	},
+	AccessBasedEnumEnabled: true,
+	RequireEncryption:      false,
+}
+var smbShare1Updated = fmt.Sprintf(`
+resource "qumulo_local_user" "user1" {
+	name = "user1"
+	primary_group = 514
+	password = "Test1234"
+}
 
-func testAccCheckSmbShareExists() resource.TestCheckFunc {
+resource "qumulo_local_user" "user2" {
+	name = "user2"
+	primary_group = 514
+	password = "Test1234"
+}
+
+resource "qumulo_smb_share" "share" {
+		share_name = %q
+		fs_path = %q
+		description = %q
+		permissions {
+		  type = %q
+		  trustee {
+			name = %q
+		  }
+		  rights = %v
+		}
+		permissions {
+			type = %q
+			trustee {
+				name = %q
+			}
+			rights = %v
+		  }
+		network_permissions {
+		  type = %q
+		  address_ranges = %v
+		  rights = %v
+		}
+		access_based_enumeration_enabled = %v
+		require_encryption = %v
+	  }`, share1Updated.ShareName, share1Updated.FsPath, share1Updated.Description, share1Updated.Permissions[0].Type,
+	share1Updated.Permissions[0].Trustee.Name,
+	strings.ReplaceAll(fmt.Sprintf("%+q", share1Updated.Permissions[0].Rights), "\" \"", "\", \""),
+	share1Updated.Permissions[1].Type, share1Updated.Permissions[1].Trustee.Name,
+	strings.ReplaceAll(fmt.Sprintf("%+q", share1Updated.Permissions[1].Rights), "\" \"", "\", \""),
+	share1Updated.NetworkPermissions[0].Type, "[]",
+	strings.ReplaceAll(fmt.Sprintf("%+q", share1Updated.NetworkPermissions[0].Rights), "\" \"", "\", \""),
+	share1Updated.AccessBasedEnumEnabled, share1Updated.RequireEncryption)
+
+func testAccCompareShare(share SmbShare) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr("qumulo_smb_share.share", "share_name",
+			share.ShareName),
+		resource.TestCheckResourceAttr("qumulo_smb_share.share", "description",
+			share.Description),
+		resource.TestCheckResourceAttr("qumulo_smb_share.share", "fs_path",
+			share.FsPath),
+		resource.TestCheckResourceAttr("qumulo_smb_share.share", "permissions.#",
+			fmt.Sprintf("%v", len(share.Permissions))),
+		resource.TestCheckResourceAttr("qumulo_smb_share.share", "network_permissions.#",
+			fmt.Sprintf("%v", len(share.NetworkPermissions))),
+		resource.TestCheckResourceAttr("qumulo_smb_share.share", "access_based_enumeration_enabled",
+			fmt.Sprintf("%v", share.AccessBasedEnumEnabled)),
+		resource.TestCheckResourceAttr("qumulo_smb_share.share", "require_encryption",
+			fmt.Sprintf("%v", share.RequireEncryption)),
+	)
+}
+
+func testAccCheckShare(share SmbShare) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources["qumulo_smb_share.share"]
 		if !ok {
@@ -123,10 +229,9 @@ func testAccCheckSmbShareExists() resource.TestCheckFunc {
 		if err != nil {
 			return err
 		}
-		localShareName := rs.Primary.Attributes["share_name"]
 
-		if sh.ShareName != localShareName {
-			return fmt.Errorf("Share names do not match - Local: %v, Cluster: %v", localShareName, sh.ShareName)
+		if sh.ShareName != share.ShareName {
+			return fmt.Errorf("Share names do not match - Local: %v, Cluster: %v", share.ShareName, sh.ShareName)
 		}
 		return nil
 	}
