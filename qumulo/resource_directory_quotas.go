@@ -116,6 +116,7 @@ func setDirectoryQuota(ctx context.Context, d *schema.ResourceData, m interface{
 		Limit: d.Get("limit").(string),
 	}
 
+	// Updates require the directory ID appended to the URL
 	quotaUrl := DirectoryQuotaEndpoint
 	if method == PUT {
 		quotaUrl += "/" + directoryId
