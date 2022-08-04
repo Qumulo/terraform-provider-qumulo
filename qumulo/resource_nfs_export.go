@@ -174,7 +174,9 @@ func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Info(ctx, "Deleting NFS Export")
+	tflog.Info(ctx, "Deleting NFS Export", map[string]interface{}{
+		"Id": d.Id(),
+	})
 	c := m.(*Client)
 
 	var diags diag.Diagnostics

@@ -71,45 +71,45 @@ resource "qumulo_cluster_name" "update_name" {
 #   encrypt_connection = false
 # }
 
-# resource "qumulo_nfs_export" "new_nfs_export" {
-#   export_path = "/lib"
-#   fs_path = "/testing"
-#   description = "testing nfs export via terraform"
-#   restrictions {
-#     host_restrictions = ["10.100.38.31"]
-#     read_only = true
-#     require_privileged_port = false
-#     user_mapping = "NFS_MAP_ALL"
-#     map_to_user = {
-#       id_type = "LOCAL_USER"
-#       id_value = "admin"
-#     }
-#   }
-#   fields_to_present_as_32_bit = []
-#   allow_fs_path_create = true
-# }
+resource "qumulo_nfs_export" "new_nfs_export" {
+  export_path = "/lib"
+  fs_path = "/testing"
+  description = "testing nfs export via terraform"
+  restrictions {
+    host_restrictions = ["10.100.38.31"]
+    read_only = true
+    require_privileged_port = false
+    user_mapping = "NFS_MAP_ALL"
+    map_to_user = {
+      id_type = "LOCAL_USER"
+      id_value = "admin"
+    }
+  }
+  fields_to_present_as_32_bit = []
+  allow_fs_path_create = true
+}
 
-#  resource "qumulo_nfs_export" "some_nfs_export" {
-#    export_path = "/tmp"
-#    fs_path = "/home/pthathamanjunatha"
-#    description = "testing nfs export via terraform"
-#    restrictions {
-#      host_restrictions = ["10.100.38.31"]
-#      read_only = false
-#      require_privileged_port = false
-#      user_mapping = "NFS_MAP_ALL"
-#      map_to_user = {
-#        id_type =  "NFS_UID"
-#        id_value = "994"
-#      }
-#      map_to_group = {
-#        id_type =  "NFS_GID"
-#        id_value = "994"
-#      }
-#    }
-#    fields_to_present_as_32_bit = ["FILE_IDS"]
-#    allow_fs_path_create = true
-#  }
+ resource "qumulo_nfs_export" "some_nfs_export" {
+   export_path = "/tmp"
+   fs_path = "/home/pthathamanjunatha"
+   description = "testing nfs export via terraform"
+   restrictions {
+     host_restrictions = ["10.100.38.31"]
+     read_only = false
+     require_privileged_port = false
+     user_mapping = "NFS_MAP_ALL"
+     map_to_user = {
+       id_type =  "NFS_UID"
+       id_value = "994"
+     }
+     map_to_group = {
+       id_type =  "NFS_GID"
+       id_value = "994"
+     }
+   }
+   fields_to_present_as_32_bit = ["FILE_IDS"]
+   allow_fs_path_create = true
+ }
 
 resource "qumulo_nfs_settings" "my_new_settings" {
   v4_enabled = false
@@ -210,6 +210,14 @@ resource "qumulo_monitoring" "update_monitoring" {
 resource "qumulo_time_configuration" "time_config" {
     use_ad_for_primary = false
     ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
+}
+
+resource "qumulo_interface_configuration" "interface_config" {
+  name = "bond0"
+  default_gateway = "10.220.0.1"
+  bonding_mode = "IEEE_8023AD"
+  mtu = 1500
+  interface_id = "1"
 }
 
 # output "some_smb_server" {
