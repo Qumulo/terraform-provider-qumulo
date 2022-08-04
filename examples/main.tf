@@ -111,11 +111,11 @@ resource "qumulo_cluster_name" "update_name" {
 #    allow_fs_path_create = true
 #  }
 
-# resource "qumulo_nfs_settings" "my_new_settings" {
-#   v4_enabled = false
-#   krb5_enabled = true
-#   auth_sys_enabled = true
-# }
+resource "qumulo_nfs_settings" "my_new_settings" {
+  v4_enabled = false
+  krb5_enabled = true
+  auth_sys_enabled = true
+}
 
 #resource "qumulo_ssl_cert" "update_ssl" {
 #  certificate = var.some_cert

@@ -41,7 +41,6 @@ func resourceTimeConfiguration() *schema.Resource {
 				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
-					// ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotWhitespace())
 				},
 			},
 		},
@@ -53,7 +52,7 @@ func resourceTimeConfiguration() *schema.Resource {
 }
 
 func resourceTimeConfigurationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setTimeConfiguration(ctx, d, m)
+	err := setTimeConfiguration(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -80,7 +79,7 @@ func resourceTimeConfigurationRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceTimeConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setTimeConfiguration(ctx, d, m)
+	err := setTimeConfiguration(ctx, d, m, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -94,7 +93,7 @@ func resourceTimeConfigurationDelete(ctx context.Context, d *schema.ResourceData
 	return diags
 }
 
-func setTimeConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+func setTimeConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
 	// convert the []interface{} into []string
@@ -110,7 +109,7 @@ func setTimeConfiguration(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	tflog.Debug(ctx, "Updating time configuration")
-	_, err := DoRequest[TimeConfigurationBody, TimeConfigurationBody](ctx, c, PUT, TimeConfigurationEndpoint, &timeConfigurationRequest)
+	_, err := DoRequest[TimeConfigurationBody, TimeConfigurationBody](ctx, c, method, TimeConfigurationEndpoint, &timeConfigurationRequest)
 
 	return err
 }
