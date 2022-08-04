@@ -71,6 +71,11 @@ resource "qumulo_cluster_name" "update_name" {
 #   encrypt_connection = false
 # }
 
+resource "qumulo_directory_quota" "new_quota" {
+    directory_id = "2"
+    limit = "1000000000"
+}
+
 # resource "qumulo_nfs_export" "new_nfs_export" {
 #   export_path = "/lib"
 #   fs_path = "/testing"
