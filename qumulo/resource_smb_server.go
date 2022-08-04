@@ -133,7 +133,7 @@ func resourceSmbServerDelete(ctx context.Context, d *schema.ResourceData, m inte
 func setSmbServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
-	dialects := interfaceSliceToStringSlice(d.Get("supported_dialects").([]interface{}))
+	dialects := InterfaceSliceToStringSlice(d.Get("supported_dialects").([]interface{}))
 
 	smbServerConfig := SmbServerBody{
 		SessionEncryption:               d.Get("session_encryption").(string),

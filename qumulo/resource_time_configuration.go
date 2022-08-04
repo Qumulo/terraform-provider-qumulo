@@ -97,7 +97,7 @@ func setTimeConfiguration(ctx context.Context, d *schema.ResourceData, m interfa
 	c := m.(*Client)
 
 	// convert the []interface{} into []string
-	ntpServers := interfaceSliceToStringSlice(d.Get("ntp_servers").([]interface{}))
+	ntpServers := InterfaceSliceToStringSlice(d.Get("ntp_servers").([]interface{}))
 
 	timeConfigurationRequest := TimeConfigurationBody{
 		UseAdForPrimary: d.Get("use_ad_for_primary").(bool),
