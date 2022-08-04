@@ -38,3 +38,6 @@ testacc:
 
 testwip:
 	TF_ACC=1 go test -v ./...
+
+runtest:
+	TF_ACC=1 go test -run $(TESTNAME) ./qumulo

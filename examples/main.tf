@@ -122,17 +122,24 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #  private_key = var.some_key
 #}
 
-resource "qumulo_role" "actors" {
-    description = "Testing testing 123"
-    name        = "Actors"
-    privileges  = [
-        "PRIVILEGE_AD_READ",
-        "PRIVILEGE_AD_USE",
-        "PRIVILEGE_AD_WRITE",
-    ]
+# resource "qumulo_local_user" "test_user" {
+#   name = "testuser"
+#   primary_group = 514
+#   password = "Test1234"
+#   home_directory = "/"
+# }
 
-    timeouts {}
-}
+# resource "qumulo_role" "actors" {
+#     description = "Testing testing 123"
+#     name        = "Actors"
+#     privileges  = [
+#         "PRIVILEGE_AD_READ",
+#         "PRIVILEGE_AD_USE",
+#         "PRIVILEGE_AD_WRITE",
+#     ]
+
+#     timeouts {}
+# }
 
 # resource "qumulo_ssl_ca" "update_ssl_ca" {
 #   ca_certificate = var.some_cert

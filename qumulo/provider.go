@@ -45,6 +45,7 @@ func Provider() *schema.Provider {
 			"qumulo_smb_server":   resourceSmbServer(),
 			"qumulo_smb_share":    resourceSmbShare(),
 			"qumulo_role":         resourceRole(),
+			"qumulo_local_user":   resourceUser(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
