@@ -3,7 +3,6 @@ package qumulo
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -40,6 +39,7 @@ func resourceDirectoryQuota() *schema.Resource {
 			"directory_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"limit": &schema.Schema{
 				Type:     schema.TypeString,
@@ -59,7 +59,7 @@ func resourceDirectoryQuotaCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
+	d.SetId(d.Get("directory_id").(string))
 
 	return resourceDirectoryQuotaRead(ctx, d, m)
 }
@@ -69,7 +69,7 @@ func resourceDirectoryQuotaRead(ctx context.Context, d *schema.ResourceData, m i
 
 	var errs ErrorCollection
 
-	quotaUrl := DirectoryQuotaEndpoint + d.Get("directory_id").(string)
+	quotaUrl := DirectoryQuotaEndpoint + d.Id()
 
 	directoryQuota, err := DoRequest[DirectoryQuotaEmptyBody, DirectoryQuotaBody](ctx, c, GET, quotaUrl, nil)
 	if err != nil {
@@ -83,8 +83,7 @@ func resourceDirectoryQuotaRead(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceDirectoryQuotaUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	directoryId := d.Get("directory_id").(string)
-	quotaUrl := DirectoryQuotaEndpoint + directoryId
+	quotaUrl := DirectoryQuotaEndpoint + d.Id()
 
 	err := createOrUpdateDirectoryQuota(ctx, d, m, PUT, quotaUrl)
 	if err != nil {
@@ -99,7 +98,7 @@ func resourceDirectoryQuotaDelete(ctx context.Context, d *schema.ResourceData, m
 
 	var diags diag.Diagnostics
 
-	quotaUrl := DirectoryQuotaEndpoint + d.Get("directory_id").(string)
+	quotaUrl := DirectoryQuotaEndpoint + d.Id()
 
 	_, err := DoRequest[DirectoryQuotaEmptyBody, DirectoryQuotaEmptyBody](ctx, c, DELETE, quotaUrl, nil)
 	if err != nil {

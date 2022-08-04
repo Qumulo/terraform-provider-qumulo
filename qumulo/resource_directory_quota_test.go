@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccCreateDirectoryQuota(t *testing.T) {
+func TestAccChangeDirectoryQuota(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -22,19 +22,6 @@ func TestAccCreateDirectoryQuota(t *testing.T) {
 					testAccCheckDirectoryQuota(defaultDirectoryQuota),
 					testAccCompareDirectoryQuotaSettings(defaultDirectoryQuota),
 				),
-			},
-		},
-	})
-}
-
-func TestAccChangeDirectoryQuota(t *testing.T) {
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccDirectoryQuotaConfig(defaultDirectoryQuota),
 			},
 			{
 				Config: testAccDirectoryQuotaConfig(testingDirectoryQuota),
