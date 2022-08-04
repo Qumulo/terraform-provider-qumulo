@@ -139,6 +139,8 @@ resource "qumulo_role" "actors" {
     timeouts {}
 }
 
+resource "qumulo_role" "observers" {}
+
 # resource "qumulo_ssl_ca" "update_ssl_ca" {
 #   ca_certificate = var.some_cert
 # }
