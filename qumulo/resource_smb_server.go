@@ -125,9 +125,8 @@ func resourceSmbServerUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceSmbServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting SMB settings resource")
-	var diags diag.Diagnostics
 
-	return diags
+	return nil
 }
 
 func setSmbServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {

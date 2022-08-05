@@ -94,9 +94,9 @@ func resourceDirectoryQuotaUpdate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceDirectoryQuotaDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
+	tflog.Info(ctx, fmt.Sprintf("Deleting directory quota with id %q", d.Id()))
 
-	var diags diag.Diagnostics
+	c := m.(*Client)
 
 	quotaUrl := DirectoryQuotaEndpoint + d.Id()
 
@@ -105,7 +105,7 @@ func resourceDirectoryQuotaDelete(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	return diags
+	return nil
 }
 
 func createOrUpdateDirectoryQuota(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) error {

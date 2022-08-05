@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -91,6 +92,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, fmt.Sprintf("Deleting role with name %q", d.Get("name").(string)))
 	c := m.(*Client)
 
 	role := setRoleSettings(ctx, d, m)
