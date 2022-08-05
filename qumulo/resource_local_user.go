@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -79,6 +80,8 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 	userSettings := setUserSettings(ctx, d, m)
 
+	tflog.Debug(ctx, fmt.Sprintf("Creating local user with name %q", userSettings.Name))
+
 	user, err := DoRequest[User, User](ctx, c, POST, UsersEndpoint, &userSettings)
 	if err != nil {
 		return diag.FromErr(err)
@@ -115,11 +118,13 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, m interface{}
 func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	user := setUserSettings(ctx, d, m)
-	user.Id = d.Id()
+	userSettings := setUserSettings(ctx, d, m)
+	userSettings.Id = d.Id()
 	updateUserByNameUri := UsersEndpoint + d.Id()
 
-	_, err := DoRequest[User, User](ctx, c, PUT, updateUserByNameUri, &user)
+	tflog.Debug(ctx, fmt.Sprintf("Updating local user with name %q", userSettings.Name))
+
+	_, err := DoRequest[User, User](ctx, c, PUT, updateUserByNameUri, &userSettings)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -131,6 +136,8 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, m interface
 	c := m.(*Client)
 
 	deleteUserByNameUri := UsersEndpoint + d.Id()
+
+	tflog.Debug(ctx, fmt.Sprintf("Deleting local user with id %q", d.Id()))
 
 	_, err := DoRequest[User, User](ctx, c, DELETE, deleteUserByNameUri, nil)
 
