@@ -71,10 +71,10 @@ resource "qumulo_cluster_name" "update_name" {
 #   encrypt_connection = false
 # }
 
-resource "qumulo_directory_quota" "new_quota" {
-    directory_id = "2"
-    limit = "1000000000"
-}
+# resource "qumulo_directory_quota" "new_quota" {
+#     directory_id = "2"
+#     limit = "1000000000"
+# }
 
 # resource "qumulo_nfs_export" "new_nfs_export" {
 #   export_path = "/lib"
@@ -142,6 +142,10 @@ resource "qumulo_role" "actors" {
 #   primary_group = 514
 #   password = "Test1234"
 #   home_directory = "/"
+# }
+
+# resource "qumulo_local_group" "test_group" {
+#     name = "testgroup"
 # }
 
 # resource "qumulo_role" "actors" {
