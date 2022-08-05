@@ -229,9 +229,15 @@ resource "qumulo_monitoring" "update_monitoring" {
 #   require_encryption = false
 # }
 
+resource "qumulo_time_configuration" "time_config" {
+    use_ad_for_primary = false
+    ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
+}
+
 # output "some_smb_server" {
 #   value = qumulo_smb_server.update_smb
 # }
+
 
 # output "some_monitoring_config" {
 #   value = qumulo_monitoring.update_monitoring
