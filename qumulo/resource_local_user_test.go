@@ -33,13 +33,13 @@ func TestAccCreateUser(t *testing.T) {
 	})
 }
 
-var userTest1 = User{
+var userTest1 = UserBody{
 	Name:         "test_user1",
 	PrimaryGroup: "514",
 	Password:     "Test1234",
 }
 
-var userTest2 = User{
+var userTest2 = UserBody{
 	Name:          "test_user2",
 	PrimaryGroup:  "513",
 	Uid:           "123",
@@ -47,7 +47,7 @@ var userTest2 = User{
 	Password:      "Test1234",
 }
 
-func testAccUserConfig(user User) string {
+func testAccUserConfig(user UserBody) string {
 	return fmt.Sprintf(`
 resource "qumulo_local_user" "test_user" {
 	name = %q
@@ -59,7 +59,7 @@ resource "qumulo_local_user" "test_user" {
   `, user.Name, user.PrimaryGroup, user.Uid, user.HomeDirectory, user.Password)
 }
 
-func testAccCompareUserResource(user User) resource.TestCheckFunc {
+func testAccCompareUserResource(user UserBody) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_local_user.test_user", "name",
 			user.Name),
@@ -74,7 +74,7 @@ func testAccCompareUserResource(user User) resource.TestCheckFunc {
 	)
 }
 
-func testAccCheckUser(user User) resource.TestCheckFunc {
+func testAccCheckUser(user UserBody) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
 		ctx := context.Background()
@@ -89,7 +89,7 @@ func testAccCheckUser(user User) resource.TestCheckFunc {
 		}
 
 		readUserByNameUri := UsersEndpoint + userResource.Primary.ID
-		remoteUser, err := DoRequest[User, User](ctx, c, GET, readUserByNameUri, nil)
+		remoteUser, err := DoRequest[UserBody, UserBody](ctx, c, GET, readUserByNameUri, nil)
 		if err != nil {
 			return err
 		}

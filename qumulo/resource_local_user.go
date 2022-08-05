@@ -13,7 +13,7 @@ import (
 
 const UsersEndpoint = "/v1/users/"
 
-type User struct {
+type UserBody struct {
 	Id                string `json:"id"`
 	Name              string `json:"name"`
 	PrimaryGroup      string `json:"primary_group"`
@@ -82,7 +82,7 @@ func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 	tflog.Debug(ctx, fmt.Sprintf("Creating local user with name %q", userSettings.Name))
 
-	user, err := DoRequest[User, User](ctx, c, POST, UsersEndpoint, &userSettings)
+	user, err := DoRequest[UserBody, UserBody](ctx, c, POST, UsersEndpoint, &userSettings)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -100,7 +100,7 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	readUserByIdUri := UsersEndpoint + d.Id()
 
-	user, err := DoRequest[User, User](ctx, c, GET, readUserByIdUri, nil)
+	user, err := DoRequest[UserBody, UserBody](ctx, c, GET, readUserByIdUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -124,7 +124,7 @@ func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, m interface
 
 	tflog.Debug(ctx, fmt.Sprintf("Updating local user with name %q", userSettings.Name))
 
-	_, err := DoRequest[User, User](ctx, c, PUT, updateUserByNameUri, &userSettings)
+	_, err := DoRequest[UserBody, UserBody](ctx, c, PUT, updateUserByNameUri, &userSettings)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -139,7 +139,7 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting local user with id %q", d.Id()))
 
-	_, err := DoRequest[User, User](ctx, c, DELETE, deleteUserByNameUri, nil)
+	_, err := DoRequest[UserBody, UserBody](ctx, c, DELETE, deleteUserByNameUri, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -148,19 +148,15 @@ func resourceUserDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func setUserSettings(ctx context.Context, d *schema.ResourceData, m interface{}) User {
+func setUserSettings(ctx context.Context, d *schema.ResourceData, m interface{}) UserBody {
 
-	userConfig := User{
+	userConfig := UserBody{
 		Name:          d.Get("name").(string),
 		PrimaryGroup:  d.Get("primary_group").(string),
 		Uid:           d.Get("uid").(string),
 		HomeDirectory: d.Get("home_directory").(string),
 		Password:      d.Get("password").(string),
 	}
-
-	tflog.Debug(ctx, "Updating or creating User: %v", map[string]interface{}{
-		"Name": userConfig.Name,
-	})
 
 	return userConfig
 }
