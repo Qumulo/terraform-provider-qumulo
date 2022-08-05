@@ -198,9 +198,9 @@ resource "qumulo_time_configuration" "time_config" {
     ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
 }
 
-resource "qumulo_interface_configuration" "interface_config" {
+resource "qumulo_network_configuration" "network_config" {
   name = "Default"
-  assigned_by = "10.220.0.1"
+  assigned_by = "STATIC"
   floating_ip_ranges = [
     "10.220.249.3",
     "10.220.249.4",
@@ -220,10 +220,12 @@ resource "qumulo_interface_configuration" "interface_config" {
     "10.220.246.238"
   ]
   netmask = "255.255.0.0"
-  mtu =
+  mtu =  1500
+  vlan_id = 4094
+  interface_id = "1"
 }
 
-resource "qumulo_network_configuration" "interface_config" {
+resource "qumulo_interface_configuration" "interface_config" {
   name = "bond0"
   default_gateway = "10.220.0.1"
   bonding_mode = "IEEE_8023AD"

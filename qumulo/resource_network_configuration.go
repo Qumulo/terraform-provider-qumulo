@@ -1,5 +1,6 @@
 package qumulo
 
+//TODO testing after imports
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -12,7 +13,7 @@ import (
 
 const NetworksEndpointSuffix = "/networks/"
 
-var assignedByValues = []string{"DHCP", "LINK_LOCAL", "STATIC"}
+var assignedByValues = []string{"DHCP", "STATIC"}
 
 type NetworkConfiguration struct {
 	Id               int      `json:"id"`
@@ -57,22 +58,30 @@ func resourceNetworkConfiguration() *schema.Resource {
 			"floating_ip_ranges": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem:     schema.TypeString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"dns_servers": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem:     schema.TypeString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"dns_search_domains": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem:     schema.TypeString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"ip_ranges": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem:     schema.TypeString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"netmask": &schema.Schema{
 				Type:     schema.TypeString,
@@ -115,14 +124,14 @@ func resourceNetworkConfigurationRead(ctx context.Context, d *schema.ResourceDat
 	var errs ErrorCollection
 
 	interfaceId := d.Get("interface_id").(string)
-	networkId := d.Get("network_id").(string)
+	networkId := d.Id()
 	readNetworkConfigUri := InterfaceConfigurationEndpoint + interfaceId + NetworksEndpointSuffix + networkId
 	networkConfig, err := DoRequest[NetworkConfiguration, NetworkConfiguration](ctx, c, GET, readNetworkConfigUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	errs.addMaybeError(d.Set("id", networkConfig.Id))
+	errs.addMaybeError(d.Set("id", strconv.Itoa(networkConfig.Id)))
 	errs.addMaybeError(d.Set("name", networkConfig.Name))
 	errs.addMaybeError(d.Set("assigned_by", networkConfig.AssignedBy))
 	errs.addMaybeError(d.Set("floating_ip_ranges", networkConfig.FloatingIpRanges))
@@ -156,7 +165,7 @@ func resourceNetworkConfigurationDelete(ctx context.Context, d *schema.ResourceD
 
 	var diags diag.Diagnostics
 	interfaceId := d.Get("interface_id").(string)
-	networkId := d.Get("network_id").(string)
+	networkId := d.Id()
 	deleteNetworkConfigUri := InterfaceConfigurationEndpoint + interfaceId + NetworksEndpointSuffix + networkId
 	_, err := DoRequest[NetworkConfiguration, NetworkConfiguration](ctx, c, DELETE, deleteNetworkConfigUri, nil)
 	if err != nil {
@@ -169,7 +178,6 @@ func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData,
 	c := m.(*Client)
 
 	networkConfig := NetworkConfiguration{
-		Id:               d.Get("id").(int),
 		Name:             d.Get("name").(string),
 		AssignedBy:       d.Get("assigned_by").(string),
 		FloatingIpRanges: InterfaceSliceToStringSlice(d.Get("floating_ip_ranges").([]interface{})),

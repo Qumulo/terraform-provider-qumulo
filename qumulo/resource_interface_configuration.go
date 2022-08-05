@@ -67,7 +67,7 @@ func resourceInterfaceConfiguration() *schema.Resource {
 			"interface_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				//ForceNew: true,
+				ForceNew: true,
 			},
 		},
 	}
