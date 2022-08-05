@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,7 +13,16 @@ import (
 
 const InterfaceConfigurationEndpoint = "/v2/network/interfaces/"
 
-type InterfaceConfiguration struct {
+type InterfaceConfigurationResponse struct {
+	Id                 int    `json:"id"`
+	Name               string `json:"name"`
+	DefaultGateway     string `json:"default_gateway"`
+	DefaultGatewayIpv6 string `json:"default_gateway_ipv6"`
+	BondingMode        string `json:"bonding_mode"`
+	Mtu                int    `json:"mtu"`
+}
+
+type InterfaceConfigurationBody struct {
 	Id                 int    `json:"id"`
 	Name               string `json:"name"`
 	DefaultGateway     string `json:"default_gateway"`
@@ -74,7 +84,7 @@ func resourceInterfaceConfiguration() *schema.Resource {
 }
 
 func resourceInterfaceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	_, err := setOrPatchInterfaceConfiguration(ctx, d, m, PUT)
+	err := setOrPatchInterfaceConfiguration(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -90,7 +100,7 @@ func resourceInterfaceConfigurationRead(ctx context.Context, d *schema.ResourceD
 	interfaceId := d.Id()
 
 	interfaceConfigUri := InterfaceConfigurationEndpoint + interfaceId
-	interfaceConfig, err := DoRequest[InterfaceConfiguration, InterfaceConfiguration](ctx, c, GET, interfaceConfigUri, nil)
+	interfaceConfig, err := DoRequest[InterfaceConfigurationBody, InterfaceConfigurationResponse](ctx, c, GET, interfaceConfigUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,13 +111,13 @@ func resourceInterfaceConfigurationRead(ctx context.Context, d *schema.ResourceD
 	errs.addMaybeError(d.Set("default_gateway_ipv6", interfaceConfig.DefaultGatewayIpv6))
 	errs.addMaybeError(d.Set("bonding_mode", interfaceConfig.BondingMode))
 	errs.addMaybeError(d.Set("mtu", interfaceConfig.Mtu))
-	errs.addMaybeError(d.Set("interface_id", strconv.Itoa(interfaceConfig.Id)))
+	//errs.addMaybeError(d.Set("interface_id", strconv.Itoa(interfaceConfig.Id)))
 
 	return errs.diags
 }
 
 func resourceInterfaceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	_, err := setOrPatchInterfaceConfiguration(ctx, d, m, PATCH)
+	err := setOrPatchInterfaceConfiguration(ctx, d, m, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -116,15 +126,11 @@ func resourceInterfaceConfigurationUpdate(ctx context.Context, d *schema.Resourc
 }
 
 func resourceInterfaceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Info(ctx, "Deleting interface configuration resource", map[string]interface{}{
-		"interface_id": d.Get("interface_id"),
-	})
-	var diags diag.Diagnostics
-
-	return diags
+	tflog.Info(ctx, fmt.Sprintf("Deleting interface configuration resource with id: %q", d.Get("interface_id")))
+	return nil
 }
 
-func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) (*InterfaceConfiguration, error) {
+func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
 	interfaceId := d.Get("interface_id").(string)
@@ -133,7 +139,7 @@ func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceDat
 	//ID has to be set to the interface ID passed in the URI as per API validation
 	id, _ := strconv.Atoi(interfaceId)
 
-	interfaceConfig := InterfaceConfiguration{
+	interfaceConfig := InterfaceConfigurationBody{
 		Id:                 id,
 		Name:               d.Get("name").(string),
 		DefaultGateway:     d.Get("default_gateway").(string),
@@ -144,6 +150,6 @@ func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceDat
 	}
 
 	tflog.Debug(ctx, "Setting/Patching interface configuration")
-	res, err := DoRequest[InterfaceConfiguration, InterfaceConfiguration](ctx, c, method, interfaceConfigUri, &interfaceConfig)
-	return res, err
+	_, err := DoRequest[InterfaceConfigurationBody, InterfaceConfigurationResponse](ctx, c, method, interfaceConfigUri, &interfaceConfig)
+	return err
 }
