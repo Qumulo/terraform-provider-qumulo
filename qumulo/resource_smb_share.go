@@ -56,10 +56,6 @@ func resourceSmbShare() *schema.Resource {
 		UpdateContext: resourceSmbShareUpdate,
 		DeleteContext: resourceSmbShareDelete,
 		Schema: map[string]*schema.Schema{
-			"id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"share_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -218,14 +214,12 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 	c := m.(*Client)
 
 	var errs ErrorCollection
-	smbShareId := d.Id()
-	getSmbShareByIdUri := SmbSharesEndpoint + smbShareId
+	getSmbShareByIdUri := SmbSharesEndpoint + d.Id()
 	smbShare, err := DoRequest[SmbShare, SmbShare](ctx, c, GET, getSmbShareByIdUri, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	errs.addMaybeError(d.Set("id", smbShareId))
 	errs.addMaybeError(d.Set("share_name", smbShare.ShareName))
 	errs.addMaybeError(d.Set("fs_path", smbShare.FsPath))
 	errs.addMaybeError(d.Set("description", smbShare.Description))
@@ -244,10 +238,9 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	c := m.(*Client)
 
 	smbShare := setSmbShare(d)
-	smbShare.Id = d.Get("id").(string)
+	smbShare.Id = d.Id()
 
-	smbShareId := d.Id()
-	updateSmbShareByIdUri := SmbSharesEndpoint + smbShareId
+	updateSmbShareByIdUri := SmbSharesEndpoint + d.Id()
 
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
 		updateSmbShareByIdUri = updateSmbShareByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
