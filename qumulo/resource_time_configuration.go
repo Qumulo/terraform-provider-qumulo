@@ -88,6 +88,8 @@ func resourceTimeConfigurationUpdate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceTimeConfigurationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, "Deleting time configuration resource")
+
 	return nil
 }
 

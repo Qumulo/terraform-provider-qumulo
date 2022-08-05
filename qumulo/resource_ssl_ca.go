@@ -87,8 +87,6 @@ func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
-	d.SetId("")
-
 	return nil
 }
 
