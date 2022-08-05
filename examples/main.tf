@@ -3,6 +3,10 @@ terraform {
     qumulo = {
       source = "qumulo.com/terraform-intern/qumulo"
     }
+    vault = {
+      source  = "hashicorp/vault"
+      version = "2.17.0"
+    }
   }
 }
 

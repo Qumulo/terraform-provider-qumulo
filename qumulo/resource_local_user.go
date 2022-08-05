@@ -57,7 +57,6 @@ func resourceUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			// XXX rgotlieb - configure passwords to not be in plaintext config
 			"password": &schema.Schema{
 				Type:      schema.TypeString,
 				Required:  true,
