@@ -34,20 +34,6 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-<<<<<<< HEAD
-			"qumulo_cluster_name": resourceClusterSettings(),
-			"qumulo_ad_settings":  resourceActiveDirectory(),
-			"qumulo_ldap_server":  resourceLdapServer(),
-			"qumulo_ssl_cert":     resourceSsl(),
-			"qumulo_ssl_ca":       resourceSslCa(),
-			"qumulo_monitoring":   resourceMonitoring(),
-			"qumulo_nfs_export":   resourceNfsExport(),
-			"qumulo_nfs_settings": resourceNfsSettings(),
-			"qumulo_smb_server":   resourceSmbServer(),
-			"qumulo_smb_share":    resourceSmbShare(),
-			"qumulo_role":         resourceRole(),
-			"qumulo_local_user":   resourceUser(),
-=======
 			"qumulo_cluster_name":       resourceClusterSettings(),
 			"qumulo_ad_settings":        resourceActiveDirectory(),
 			"qumulo_ldap_server":        resourceLdapServer(),
@@ -61,7 +47,7 @@ func Provider() *schema.Provider {
 			"qumulo_role":               resourceRole(),
 			"qumulo_time_configuration": resourceTimeConfiguration(),
 			"qumulo_directory_quota":    resourceDirectoryQuota(),
->>>>>>> main
+			"qumulo_local_user":         resourceUser(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

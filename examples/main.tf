@@ -71,6 +71,11 @@ resource "qumulo_cluster_name" "update_name" {
 #   encrypt_connection = false
 # }
 
+resource "qumulo_directory_quota" "new_quota" {
+    directory_id = "2"
+    limit = "1000000000"
+}
+
 # resource "qumulo_nfs_export" "new_nfs_export" {
 #   export_path = "/lib"
 #   fs_path = "/testing"
@@ -121,6 +126,16 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #  certificate = var.some_cert
 #  private_key = var.some_key
 #}
+
+resource "qumulo_role" "actors" {
+    description = "Testing testing 123"
+    name        = "Actors"
+    privileges  = [
+        "PRIVILEGE_AD_READ",
+        "PRIVILEGE_AD_USE",
+        "PRIVILEGE_AD_WRITE",
+    ]
+}
 
 # resource "qumulo_local_user" "test_user" {
 #   name = "testuser"

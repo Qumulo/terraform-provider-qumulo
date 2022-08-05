@@ -45,22 +45,14 @@ var share1 = SmbShare{
 			Type: "ALLOWED",
 			Trustee: SmbTrustee{
 				Domain: "LOCAL",
-<<<<<<< HEAD
 				Name:   "user1",
-=======
-				Name:   "admin",
->>>>>>> main
 			},
 			Rights: []string{"READ", "WRITE", "CHANGE_PERMISSIONS"},
 		},
 		SmbPermission{
 			Type: "DENIED",
 			Trustee: SmbTrustee{
-<<<<<<< HEAD
 				Name: "user2",
-=======
-				Name: "guest",
->>>>>>> main
 			},
 			Rights: []string{"WRITE"},
 		},
@@ -75,7 +67,6 @@ var share1 = SmbShare{
 	AccessBasedEnumEnabled: false,
 	RequireEncryption:      false,
 }
-<<<<<<< HEAD
 
 var smbShare1 = fmt.Sprintf(`
 resource "qumulo_local_user" "user1" {
@@ -90,10 +81,6 @@ resource "qumulo_local_user" "user2" {
 	password = "Test1234"
 }
 
-=======
-
-var smbShare1 = fmt.Sprintf(`
->>>>>>> main
 resource "qumulo_smb_share" "share" {
 		share_name = %q
 		fs_path = %q
@@ -134,11 +121,7 @@ var share1Updated = SmbShare{
 		SmbPermission{
 			Type: "ALLOWED",
 			Trustee: SmbTrustee{
-<<<<<<< HEAD
 				Name: "user1",
-=======
-				Name: "admin",
->>>>>>> main
 			},
 			Rights: []string{"READ", "WRITE"},
 		},
@@ -146,11 +129,7 @@ var share1Updated = SmbShare{
 			Type: "DENIED",
 			Trustee: SmbTrustee{
 				Domain: "LOCAL",
-<<<<<<< HEAD
 				Name:   "user2",
-=======
-				Name:   "guest",
->>>>>>> main
 			},
 			Rights: []string{"WRITE"},
 		},
@@ -166,7 +145,6 @@ var share1Updated = SmbShare{
 	RequireEncryption:      false,
 }
 var smbShare1Updated = fmt.Sprintf(`
-<<<<<<< HEAD
 resource "qumulo_local_user" "user1" {
 	name = "user1"
 	primary_group = 514
@@ -179,8 +157,6 @@ resource "qumulo_local_user" "user2" {
 	password = "Test1234"
 }
 
-=======
->>>>>>> main
 resource "qumulo_smb_share" "share" {
 		share_name = %q
 		fs_path = %q
