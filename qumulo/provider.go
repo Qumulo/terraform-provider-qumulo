@@ -47,6 +47,7 @@ func Provider() *schema.Provider {
 			"qumulo_role":               resourceRole(),
 			"qumulo_time_configuration": resourceTimeConfiguration(),
 			"qumulo_directory_quota":    resourceDirectoryQuota(),
+			"qumulo_local_user":         resourceUser(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
