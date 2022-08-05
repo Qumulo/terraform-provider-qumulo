@@ -199,6 +199,31 @@ resource "qumulo_time_configuration" "time_config" {
 }
 
 resource "qumulo_interface_configuration" "interface_config" {
+  name = "Default"
+  assigned_by = "10.220.0.1"
+  floating_ip_ranges = [
+    "10.220.249.3",
+    "10.220.249.4",
+    "10.220.249.5",
+    "10.220.249.6"
+  ]
+  dns_servers = [
+    "10.102.0.11"
+  ]
+  dns_search_domains = [
+    "domain.local"
+  ]
+  ip_ranges = [
+    "10.220.246.235",
+    "10.220.246.236",
+    "10.220.246.237",
+    "10.220.246.238"
+  ]
+  netmask = "255.255.0.0"
+  mtu =
+}
+
+resource "qumulo_network_configuration" "interface_config" {
   name = "bond0"
   default_gateway = "10.220.0.1"
   bonding_mode = "IEEE_8023AD"

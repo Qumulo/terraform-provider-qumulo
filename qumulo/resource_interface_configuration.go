@@ -67,6 +67,7 @@ func resourceInterfaceConfiguration() *schema.Resource {
 			"interface_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 		},
 	}
@@ -93,7 +94,7 @@ func resourceInterfaceConfigurationRead(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	errs.addMaybeError(d.Set("id", interfaceConfig.Id))
+	errs.addMaybeError(d.Set("id", strconv.Itoa(interfaceConfig.Id)))
 	errs.addMaybeError(d.Set("name", interfaceConfig.Name))
 	errs.addMaybeError(d.Set("default_gateway", interfaceConfig.DefaultGateway))
 	errs.addMaybeError(d.Set("default_gateway_ipv6", interfaceConfig.DefaultGatewayIpv6))
@@ -128,7 +129,9 @@ func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceDat
 	interfaceId := d.Get("interface_id").(string)
 	interfaceConfigUri := InterfaceConfigurationEndpoint + interfaceId
 
-	id, _ := strconv.Atoi(d.Get("id").(string))
+	//ID has to be set to the interface ID passed in the URI as per API validation
+	id, _ := strconv.Atoi(d.Get("interface_id").(string))
+
 	interfaceConfig := InterfaceConfiguration{
 		Id:                 id,
 		Name:               d.Get("name").(string),
