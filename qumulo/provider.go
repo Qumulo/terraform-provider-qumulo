@@ -34,6 +34,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
+<<<<<<< HEAD
 			"qumulo_cluster_name": resourceClusterSettings(),
 			"qumulo_ad_settings":  resourceActiveDirectory(),
 			"qumulo_ldap_server":  resourceLdapServer(),
@@ -46,6 +47,21 @@ func Provider() *schema.Provider {
 			"qumulo_smb_share":    resourceSmbShare(),
 			"qumulo_role":         resourceRole(),
 			"qumulo_local_user":   resourceUser(),
+=======
+			"qumulo_cluster_name":       resourceClusterSettings(),
+			"qumulo_ad_settings":        resourceActiveDirectory(),
+			"qumulo_ldap_server":        resourceLdapServer(),
+			"qumulo_ssl_cert":           resourceSsl(),
+			"qumulo_ssl_ca":             resourceSslCa(),
+			"qumulo_monitoring":         resourceMonitoring(),
+			"qumulo_nfs_export":         resourceNfsExport(),
+			"qumulo_nfs_settings":       resourceNfsSettings(),
+			"qumulo_smb_server":         resourceSmbServer(),
+			"qumulo_smb_share":          resourceSmbShare(),
+			"qumulo_role":               resourceRole(),
+			"qumulo_time_configuration": resourceTimeConfiguration(),
+			"qumulo_directory_quota":    resourceDirectoryQuota(),
+>>>>>>> main
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
@@ -58,12 +74,10 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 
-	var diags diag.Diagnostics
-
 	c, err := NewClient(ctx, &host, &port, &username, &password)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
 
-	return c, diags
+	return c, nil
 }

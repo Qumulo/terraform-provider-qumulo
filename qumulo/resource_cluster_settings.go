@@ -56,8 +56,6 @@ func resourceClusterSettingsCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	var diags diag.Diagnostics
-
 	cs, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, GET, ClusterSettingsEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
@@ -65,7 +63,8 @@ func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m 
 	if err := d.Set("cluster_name", cs.ClusterName); err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
+
+	return nil
 }
 
 func resourceClusterSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -79,8 +78,8 @@ func resourceClusterSettingsUpdate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceClusterSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting cluster settings resource")
-	var diags diag.Diagnostics
-	return diags
+
+	return nil
 }
 
 func setClusterSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {

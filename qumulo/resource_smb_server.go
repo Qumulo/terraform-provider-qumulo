@@ -125,20 +125,14 @@ func resourceSmbServerUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceSmbServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting SMB settings resource")
-	var diags diag.Diagnostics
 
-	return diags
+	return nil
 }
 
 func setSmbServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
-	// convert the []interface{} into []string
-	dials := d.Get("supported_dialects").([]interface{})
-	dialects := make([]string, len(dials))
-	for i, dial := range dials {
-		dialects[i] = dial.(string)
-	}
+	dialects := InterfaceSliceToStringSlice(d.Get("supported_dialects").([]interface{}))
 
 	smbServerConfig := SmbServerBody{
 		SessionEncryption:               d.Get("session_encryption").(string),

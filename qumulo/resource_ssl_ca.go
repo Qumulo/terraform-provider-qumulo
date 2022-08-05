@@ -3,6 +3,7 @@ package qumulo
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -57,10 +58,18 @@ func resourceSslCaCreate(ctx context.Context, d *schema.ResourceData, m interfac
 func resourceSslCaRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	var diags diag.Diagnostics
-
 	cert, err := DoRequest[SslCaBody, SslCaBody](ctx, c, GET, SslCaEndpoint, nil)
+
 	if err != nil {
+		// XXX amanning32: Endpoint returns 404 error if no certificate instead of empty string, so just return
+		if strings.Contains(err.Error(), "api_ssl_ca_cert_not_found_error") {
+			if err := d.Set("ca_certificate", ""); err != nil {
+				return diag.FromErr(err)
+			}
+
+			return nil
+		}
+
 		return diag.FromErr(err)
 	}
 
@@ -68,7 +77,7 @@ func resourceSslCaRead(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	return diags
+	return nil
 }
 
 func resourceSslCaUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -83,17 +92,13 @@ func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	tflog.Info(ctx, "Deleting SSL CA Settings")
 	c := m.(*Client)
 
-	var diags diag.Diagnostics
-
 	_, err := DoRequest[SslCaBody, SslCaBody](ctx, c, DELETE, SslCaEndpoint, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId("")
-
-	return diags
+	return nil
 }
 
 func setSslCaSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {

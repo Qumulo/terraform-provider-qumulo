@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -174,10 +175,8 @@ func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Info(ctx, "Deleting NFS Export")
+	tflog.Info(ctx, fmt.Sprintf("Deleting NFS Export with id %q", d.Id()))
 	c := m.(*Client)
-
-	var diags diag.Diagnostics
 
 	nfsExportId := d.Id()
 	deleteNfsExportByIdUri := NfsExportsEndpoint + nfsExportId
@@ -186,7 +185,8 @@ func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
+
+	return nil
 }
 
 func createOrUpdateNfsExport(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) (*NfsExport, error) {
@@ -198,7 +198,7 @@ func createOrUpdateNfsExport(ctx context.Context, d *schema.ResourceData, m inte
 		FsPath:                 d.Get("fs_path").(string),
 		Description:            d.Get("description").(string),
 		Restrictions:           expandRestrictions(ctx, d.Get("restrictions").([]interface{})),
-		FieldsToPresentAs32Bit: expandFieldsToPresentAs32Bit(ctx, d.Get("fields_to_present_as_32_bit").([]interface{})),
+		FieldsToPresentAs32Bit: InterfaceSliceToStringSlice(d.Get("fields_to_present_as_32_bit").([]interface{})),
 	}
 
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
@@ -225,11 +225,7 @@ func expandRestrictions(ctx context.Context, tfRestrictions []interface{}) []Nfs
 		}
 
 		if v, ok := tfMap["host_restrictions"].([]interface{}); ok {
-			expandedHostRestrictions := make([]string, len(v))
-			for i, hostRestriction := range v {
-				expandedHostRestrictions[i] = hostRestriction.(string)
-			}
-			restriction.HostRestrictions = expandedHostRestrictions
+			restriction.HostRestrictions = InterfaceSliceToStringSlice(v)
 		}
 		if v, ok := tfMap["read_only"].(bool); ok {
 			restriction.ReadOnly = v
@@ -268,12 +264,4 @@ func flattenNfsRestrictions(restrictions []NfsRestriction) []interface{} {
 		tfList = append(tfList, tfMap)
 	}
 	return tfList
-}
-
-func expandFieldsToPresentAs32Bit(ctx context.Context, tfFieldsToPresentAs32Bit []interface{}) []string {
-	expandedFieldsToPresentAs32Bit := make([]string, len(tfFieldsToPresentAs32Bit))
-	for i, field := range tfFieldsToPresentAs32Bit {
-		expandedFieldsToPresentAs32Bit[i] = field.(string)
-	}
-	return expandedFieldsToPresentAs32Bit
 }

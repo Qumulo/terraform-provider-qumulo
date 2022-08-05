@@ -332,8 +332,6 @@ func resourceActiveDirectoryUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*Client)
 
-	var diags diag.Diagnostics
-
 	leaveAdSettings := ActiveDirectoryLeaveRequest{
 		Domain:   d.Get("domain").(string),
 		User:     d.Get("ad_username").(string),
@@ -351,7 +349,7 @@ func resourceActiveDirectoryDelete(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	return diags
+	return nil
 }
 
 func (c *Client) createActiveDirectory(ctx context.Context, clusterReq ActiveDirectoryRequest) (*ActiveDirectoryResponse, error) {
