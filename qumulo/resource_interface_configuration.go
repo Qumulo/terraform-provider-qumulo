@@ -67,18 +67,18 @@ func resourceInterfaceConfiguration() *schema.Resource {
 			"interface_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
+				//ForceNew: true,
 			},
 		},
 	}
 }
 
 func resourceInterfaceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	res, err := setOrPatchInterfaceConfiguration(ctx, d, m, PUT)
+	_, err := setOrPatchInterfaceConfiguration(ctx, d, m, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(strconv.Itoa(res.Id))
+	d.SetId(d.Get("interface_id").(string))
 
 	return resourceInterfaceConfigurationRead(ctx, d, m)
 }
@@ -87,7 +87,8 @@ func resourceInterfaceConfigurationRead(ctx context.Context, d *schema.ResourceD
 	c := m.(*Client)
 
 	var errs ErrorCollection
-	interfaceId := d.Get("interface_id").(string)
+	interfaceId := d.Id()
+
 	interfaceConfigUri := InterfaceConfigurationEndpoint + interfaceId
 	interfaceConfig, err := DoRequest[InterfaceConfiguration, InterfaceConfiguration](ctx, c, GET, interfaceConfigUri, nil)
 	if err != nil {
@@ -100,7 +101,7 @@ func resourceInterfaceConfigurationRead(ctx context.Context, d *schema.ResourceD
 	errs.addMaybeError(d.Set("default_gateway_ipv6", interfaceConfig.DefaultGatewayIpv6))
 	errs.addMaybeError(d.Set("bonding_mode", interfaceConfig.BondingMode))
 	errs.addMaybeError(d.Set("mtu", interfaceConfig.Mtu))
-	errs.addMaybeError(d.Set("interface_id", interfaceConfig.InterfaceId))
+	errs.addMaybeError(d.Set("interface_id", strconv.Itoa(interfaceConfig.Id)))
 
 	return errs.diags
 }
@@ -130,7 +131,7 @@ func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceDat
 	interfaceConfigUri := InterfaceConfigurationEndpoint + interfaceId
 
 	//ID has to be set to the interface ID passed in the URI as per API validation
-	id, _ := strconv.Atoi(d.Get("interface_id").(string))
+	id, _ := strconv.Atoi(interfaceId)
 
 	interfaceConfig := InterfaceConfiguration{
 		Id:                 id,
