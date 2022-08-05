@@ -177,8 +177,6 @@ func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m inte
 	tflog.Info(ctx, "Deleting NFS Export")
 	c := m.(*Client)
 
-	var diags diag.Diagnostics
-
 	nfsExportId := d.Id()
 	deleteNfsExportByIdUri := NfsExportsEndpoint + nfsExportId
 
@@ -186,7 +184,8 @@ func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
+
+	return nil
 }
 
 func createOrUpdateNfsExport(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) (*NfsExport, error) {

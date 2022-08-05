@@ -57,8 +57,6 @@ func resourceSslCaCreate(ctx context.Context, d *schema.ResourceData, m interfac
 func resourceSslCaRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	var diags diag.Diagnostics
-
 	cert, err := DoRequest[SslCaBody, SslCaBody](ctx, c, GET, SslCaEndpoint, nil)
 	if err != nil {
 		return diag.FromErr(err)
@@ -68,7 +66,7 @@ func resourceSslCaRead(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	return diags
+	return nil
 }
 
 func resourceSslCaUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -83,8 +81,6 @@ func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	tflog.Info(ctx, "Deleting SSL CA Settings")
 	c := m.(*Client)
 
-	var diags diag.Diagnostics
-
 	_, err := DoRequest[SslCaBody, SslCaBody](ctx, c, DELETE, SslCaEndpoint, nil)
 
 	if err != nil {
@@ -93,7 +89,7 @@ func resourceSslCaDelete(ctx context.Context, d *schema.ResourceData, m interfac
 
 	d.SetId("")
 
-	return diags
+	return nil
 }
 
 func setSslCaSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {

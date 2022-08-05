@@ -263,13 +263,13 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
-	var diags diag.Diagnostics
+
 	deleteSmbShareByIdUri := SmbSharesEndpoint + d.Id()
 	_, err := DoRequest[string, SmbShare](ctx, c, DELETE, deleteSmbShareByIdUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
+	return nil
 }
 
 func setSmbShare(d *schema.ResourceData) SmbShare {
