@@ -2,8 +2,10 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -200,6 +202,8 @@ func resourceSmbShareCreate(ctx context.Context, d *schema.ResourceData, m inter
 		createSmbSharetUri = SmbSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
 
+	tflog.Debug(ctx, fmt.Sprintf("Creating SMB share with name %q", smbShare.ShareName))
+
 	res, err := DoRequest[SmbShare, SmbShare](ctx, c, POST, createSmbSharetUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
@@ -246,6 +250,8 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		updateSmbShareByIdUri = updateSmbShareByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
 
+	tflog.Debug(ctx, fmt.Sprintf("Updating SMB share with name %q", smbShare.ShareName))
+
 	_, err := DoRequest[SmbShare, SmbShare](ctx, c, PATCH, updateSmbShareByIdUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
@@ -255,14 +261,15 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, fmt.Sprintf("Deleting SMB share with id %q", d.Id()))
 	c := m.(*Client)
-	var diags diag.Diagnostics
+
 	deleteSmbShareByIdUri := SmbSharesEndpoint + d.Id()
 	_, err := DoRequest[string, SmbShare](ctx, c, DELETE, deleteSmbShareByIdUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
+	return nil
 }
 
 func setSmbShare(d *schema.ResourceData) SmbShare {

@@ -65,9 +65,7 @@ func resourceSslCreate(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceSslRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	return diags
+	return nil
 }
 
 func resourceSslUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -80,9 +78,8 @@ func resourceSslUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 
 func resourceSslDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting SSL settings resource")
-	var diags diag.Diagnostics
 
-	return diags
+	return nil
 }
 
 func setSslSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {

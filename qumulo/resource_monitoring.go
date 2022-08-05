@@ -141,9 +141,8 @@ func resourceMonitoringUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceMonitoringDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting monitor settings resource")
-	var diags diag.Diagnostics
 
-	return diags
+	return nil
 }
 
 func setMonitoringSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {

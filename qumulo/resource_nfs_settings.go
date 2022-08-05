@@ -90,8 +90,8 @@ func resourceNfsSettingsUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceNfsSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting NFS settings resource")
-	var diags diag.Diagnostics
-	return diags
+
+	return nil
 }
 
 func setNfsSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
