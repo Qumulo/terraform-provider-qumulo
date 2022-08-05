@@ -217,7 +217,6 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	//errs.addMaybeError(d.Set("id", smbShareId))
 	errs.addMaybeError(d.Set("share_name", smbShare.ShareName))
 	errs.addMaybeError(d.Set("fs_path", smbShare.FsPath))
 	errs.addMaybeError(d.Set("description", smbShare.Description))
