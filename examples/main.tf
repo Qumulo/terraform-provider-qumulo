@@ -71,10 +71,10 @@ resource "qumulo_cluster_name" "update_name" {
 #   encrypt_connection = false
 # }
 
-resource "qumulo_directory_quota" "new_quota" {
-    directory_id = "2"
-    limit = "1000000000"
-}
+# resource "qumulo_directory_quota" "new_quota" {
+#     directory_id = "2"
+#     limit = "1000000000"
+# }
 
 # resource "qumulo_nfs_export" "new_nfs_export" {
 #   export_path = "/lib"
@@ -126,16 +126,6 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #  certificate = var.some_cert
 #  private_key = var.some_key
 #}
-
-resource "qumulo_role" "actors" {
-    description = "Testing testing 123"
-    name        = "Actors"
-    privileges  = [
-        "PRIVILEGE_AD_READ",
-        "PRIVILEGE_AD_USE",
-        "PRIVILEGE_AD_WRITE",
-    ]
-}
 
 # resource "qumulo_local_user" "test_user" {
 #   name = "testuser"
@@ -232,6 +222,12 @@ resource "qumulo_monitoring" "update_monitoring" {
 resource "qumulo_time_configuration" "time_config" {
     use_ad_for_primary = false
     ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
+}
+
+resource "qumulo_web_ui" "settings" {
+  inactivity_timeout {
+    nanoseconds = 900000000000
+  }
 }
 
 # output "some_smb_server" {
