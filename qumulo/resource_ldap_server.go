@@ -194,9 +194,8 @@ func resourceLdapServerUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceLdapServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting LDAP settings resource")
-	var diags diag.Diagnostics
 
-	return diags
+	return nil
 }
 
 func setLdapServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {

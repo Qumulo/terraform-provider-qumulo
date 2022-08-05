@@ -2,8 +2,10 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -56,10 +58,6 @@ func resourceSmbShare() *schema.Resource {
 		UpdateContext: resourceSmbShareUpdate,
 		DeleteContext: resourceSmbShareDelete,
 		Schema: map[string]*schema.Schema{
-			"id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"share_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -204,6 +202,8 @@ func resourceSmbShareCreate(ctx context.Context, d *schema.ResourceData, m inter
 		createSmbSharetUri = SmbSharesEndpoint + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
 
+	tflog.Debug(ctx, fmt.Sprintf("Creating SMB share with name %q", smbShare.ShareName))
+
 	res, err := DoRequest[SmbShare, SmbShare](ctx, c, POST, createSmbSharetUri, &smbShare)
 	if err != nil {
 		return diag.FromErr(err)
@@ -218,14 +218,12 @@ func resourceSmbShareRead(ctx context.Context, d *schema.ResourceData, m interfa
 	c := m.(*Client)
 
 	var errs ErrorCollection
-	smbShareId := d.Id()
-	getSmbShareByIdUri := SmbSharesEndpoint + smbShareId
+	getSmbShareByIdUri := SmbSharesEndpoint + d.Id()
 	smbShare, err := DoRequest[SmbShare, SmbShare](ctx, c, GET, getSmbShareByIdUri, nil)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	errs.addMaybeError(d.Set("id", smbShareId))
 	errs.addMaybeError(d.Set("share_name", smbShare.ShareName))
 	errs.addMaybeError(d.Set("fs_path", smbShare.FsPath))
 	errs.addMaybeError(d.Set("description", smbShare.Description))
@@ -244,14 +242,15 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	c := m.(*Client)
 
 	smbShare := setSmbShare(d)
-	smbShare.Id = d.Get("id").(string)
+	smbShare.Id = d.Id()
 
-	smbShareId := d.Id()
-	updateSmbShareByIdUri := SmbSharesEndpoint + smbShareId
+	updateSmbShareByIdUri := SmbSharesEndpoint + d.Id()
 
 	if v, ok := d.Get("allow_fs_path_create").(bool); ok {
 		updateSmbShareByIdUri = updateSmbShareByIdUri + "?allow-fs-path-create=" + strconv.FormatBool(v)
 	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Updating SMB share with name %q", smbShare.ShareName))
 
 	_, err := DoRequest[SmbShare, SmbShare](ctx, c, PATCH, updateSmbShareByIdUri, &smbShare)
 	if err != nil {
@@ -262,14 +261,15 @@ func resourceSmbShareUpdate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceSmbShareDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	tflog.Info(ctx, fmt.Sprintf("Deleting SMB share with id %q", d.Id()))
 	c := m.(*Client)
-	var diags diag.Diagnostics
+
 	deleteSmbShareByIdUri := SmbSharesEndpoint + d.Id()
 	_, err := DoRequest[string, SmbShare](ctx, c, DELETE, deleteSmbShareByIdUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
+	return nil
 }
 
 func setSmbShare(d *schema.ResourceData) SmbShare {

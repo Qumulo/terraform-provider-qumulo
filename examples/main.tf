@@ -116,9 +116,26 @@ resource "qumulo_role" "actors" {
         "PRIVILEGE_AD_USE",
         "PRIVILEGE_AD_WRITE",
     ]
-
-    timeouts {}
 }
+
+# resource "qumulo_local_user" "test_user" {
+#   name = "testuser"
+#   primary_group = 514
+#   password = "Test1234"
+#   home_directory = "/"
+# }
+
+# resource "qumulo_role" "actors" {
+#     description = "Testing testing 123"
+#     name        = "Actors"
+#     privileges  = [
+#         "PRIVILEGE_AD_READ",
+#         "PRIVILEGE_AD_USE",
+#         "PRIVILEGE_AD_WRITE",
+#     ]
+
+#     timeouts {}
+# }
 
 # resource "qumulo_ssl_ca" "update_ssl_ca" {
 #   ca_certificate = var.some_cert
@@ -236,6 +253,7 @@ resource "qumulo_interface_configuration" "interface_config" {
 # output "some_smb_server" {
 #   value = qumulo_smb_server.update_smb
 # }
+
 
 # output "some_monitoring_config" {
 #   value = qumulo_monitoring.update_monitoring

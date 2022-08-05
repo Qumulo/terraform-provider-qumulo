@@ -2,6 +2,7 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -174,12 +175,8 @@ func resourceNfsExportUpdate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Info(ctx, "Deleting NFS Export", map[string]interface{}{
-		"Id": d.Id(),
-	})
+	tflog.Info(ctx, fmt.Sprintf("Deleting NFS Export with id %q", d.Id()))
 	c := m.(*Client)
-
-	var diags diag.Diagnostics
 
 	nfsExportId := d.Id()
 	deleteNfsExportByIdUri := NfsExportsEndpoint + nfsExportId
@@ -188,7 +185,8 @@ func resourceNfsExportDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
+
+	return nil
 }
 
 func createOrUpdateNfsExport(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) (*NfsExport, error) {

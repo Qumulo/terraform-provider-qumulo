@@ -47,6 +47,7 @@ func Provider() *schema.Provider {
 			"qumulo_role":                    resourceRole(),
 			"qumulo_time_configuration":      resourceTimeConfiguration(),
 			"qumulo_directory_quota":         resourceDirectoryQuota(),
+			"qumulo_local_user":              resourceUser(),
 			"qumulo_interface_configuration": resourceInterfaceConfiguration(),
 			"qumulo_network_configuration":   resourceNetworkConfiguration(),
 		},
@@ -61,12 +62,10 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 
-	var diags diag.Diagnostics
-
 	c, err := NewClient(ctx, &host, &port, &username, &password)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
 
-	return c, diags
+	return c, nil
 }
