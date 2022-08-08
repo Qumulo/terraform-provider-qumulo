@@ -58,7 +58,6 @@ func resourceGroupMember() *schema.Resource {
 				// Now, ids is guaranteed to have length 2, and d.Id() is well formed
 				d.Set("group_id", ids[0])
 				d.Set("member_id", ids[1])
-				d.SetId(d.Id())
 
 				return []*schema.ResourceData{d}, nil
 			},
@@ -99,13 +98,7 @@ func resourceGroupMemberCreate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceGroupMemberRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading group member; This is a no-op"))
-	return nil
-}
-
-func resourceGroupMemberUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Since all fields in the GroupMember resource have the ForceNew attribute set to true,
-	// this function should never be called
+	tflog.Debug(ctx, "Reading group member; This is a no-op")
 	return nil
 }
 

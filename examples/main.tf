@@ -128,7 +128,8 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #}
 
 resource "qumulo_local_user" "test_user" {
-  name = "testuser2"
+  for_each = toset( ["testuser1", "testuser2", "testuser3"] )
+  name = each.key
   primary_group = 514
   password = "Test1234"
   home_directory = "/"
@@ -139,7 +140,8 @@ resource "qumulo_local_group" "test_group" {
 }
 
 resource "qumulo_local_group_member" "test_member" {
-  member_id = qumulo_local_user.test_user.id
+  for_each = qumulo_local_user.test_user
+  member_id = each.value.id
   group_id = qumulo_local_group.test_group.id
 }
 
