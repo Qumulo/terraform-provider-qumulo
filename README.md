@@ -14,6 +14,8 @@ The Terraform Qumulo provider is a plugin for Terraform that allows for the upda
 - Roles
 - Time Configuration
 - Directory Quotas
+- Interface and Network Configuration
+- Web UI Settings
 
 ## To Run Acceptance Tests
 First, set the following environment variables, specifying the host and port of the cluster you wish to test on, and the appropriate credentials to log in to that cluster
