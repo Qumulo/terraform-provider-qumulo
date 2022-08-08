@@ -114,7 +114,6 @@ func resourceInterfaceConfigurationRead(ctx context.Context, d *schema.ResourceD
 	errs.addMaybeError(d.Set("default_gateway_ipv6", interfaceConfig.DefaultGatewayIpv6))
 	errs.addMaybeError(d.Set("bonding_mode", interfaceConfig.BondingMode))
 	errs.addMaybeError(d.Set("mtu", interfaceConfig.Mtu))
-	//errs.addMaybeError(d.Set("interface_id", strconv.Itoa(interfaceConfig.Id)))
 
 	return errs.diags
 }

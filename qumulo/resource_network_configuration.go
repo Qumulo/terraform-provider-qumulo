@@ -15,7 +15,7 @@ const NetworksEndpointSuffix = "/networks/"
 
 var assignedByValues = []string{"DHCP", "STATIC"}
 
-type NetworkConfiguration struct {
+type NetworkConfigurationResponse struct {
 	Id               int      `json:"id"`
 	Name             string   `json:"name"`
 	AssignedBy       string   `json:"assigned_by"`
@@ -26,6 +26,20 @@ type NetworkConfiguration struct {
 	Netmask          string   `json:"netmask"`
 	Mtu              int      `json:"mtu"`
 	VlanId           int      `json:"vlan_id"`
+}
+
+type NetworkConfigurationBody struct {
+	Id               int      `json:"id"`
+	Name             string   `json:"name"`
+	AssignedBy       string   `json:"assigned_by"`
+	FloatingIpRanges []string `json:"floating_ip_ranges"`
+	DnsServers       []string `json:"dns_servers"`
+	DnsSearchDomains []string `json:"dns_search_domains"`
+	IpRanges         []string `json:"ip_ranges"`
+	Netmask          string   `json:"netmask"`
+	Mtu              int      `json:"mtu"`
+	VlanId           int      `json:"vlan_id"`
+	InterfaceId      string   `json:"interface_id"`
 }
 
 func resourceNetworkConfiguration() *schema.Resource {
@@ -101,7 +115,8 @@ func resourceNetworkConfiguration() *schema.Resource {
 			},
 			"network_id": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
+				ForceNew: true,
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -113,11 +128,11 @@ func resourceNetworkConfiguration() *schema.Resource {
 func resourceNetworkConfigurationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	interfaceId := d.Get("interface_id").(string)
 	addNetworkConfigUri := InterfaceConfigurationEndpoint + interfaceId + NetworksEndpointSuffix
-	res, err := addOrPatchNetworkConfiguration(ctx, d, m, POST, addNetworkConfigUri)
+	err := addOrPatchNetworkConfiguration(ctx, d, m, POST, addNetworkConfigUri)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(strconv.Itoa(res.Id))
+	d.SetId(d.Get("network_id").(string))
 	return resourceNetworkConfigurationRead(ctx, d, m)
 }
 
@@ -127,9 +142,9 @@ func resourceNetworkConfigurationRead(ctx context.Context, d *schema.ResourceDat
 	var errs ErrorCollection
 
 	interfaceId := d.Get("interface_id").(string)
-	networkId := d.Id()
+	networkId := d.Get("network_id").(string)
 	readNetworkConfigUri := InterfaceConfigurationEndpoint + interfaceId + NetworksEndpointSuffix + networkId
-	networkConfig, err := DoRequest[NetworkConfiguration, NetworkConfiguration](ctx, c, GET, readNetworkConfigUri, nil)
+	networkConfig, err := DoRequest[NetworkConfigurationBody, NetworkConfigurationResponse](ctx, c, GET, readNetworkConfigUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -152,7 +167,7 @@ func resourceNetworkConfigurationUpdate(ctx context.Context, d *schema.ResourceD
 	interfaceId := d.Get("interface_id").(string)
 	networkId := d.Get("network_id").(string)
 	updateNetworkConfigUri := InterfaceConfigurationEndpoint + interfaceId + NetworksEndpointSuffix + networkId
-	_, err := addOrPatchNetworkConfiguration(ctx, d, m, PATCH, updateNetworkConfigUri)
+	err := addOrPatchNetworkConfiguration(ctx, d, m, PATCH, updateNetworkConfigUri)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -170,17 +185,23 @@ func resourceNetworkConfigurationDelete(ctx context.Context, d *schema.ResourceD
 	interfaceId := d.Get("interface_id").(string)
 	networkId := d.Id()
 	deleteNetworkConfigUri := InterfaceConfigurationEndpoint + interfaceId + NetworksEndpointSuffix + networkId
-	_, err := DoRequest[NetworkConfiguration, NetworkConfiguration](ctx, c, DELETE, deleteNetworkConfigUri, nil)
+	_, err := DoRequest[NetworkConfigurationBody, NetworkConfigurationResponse](ctx, c, DELETE, deleteNetworkConfigUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	return diags
 }
 
-func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, uri string) (*NetworkConfiguration, error) {
+func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, uri string) error {
 	c := m.(*Client)
 
-	networkConfig := NetworkConfiguration{
+	networkId := d.Get("network_id").(string)
+
+	//ID has to be set to the network Id passed in the URI as per API validation
+	id, _ := strconv.Atoi(networkId)
+
+	networkConfig := NetworkConfigurationBody{
+		Id:               id,
 		Name:             d.Get("name").(string),
 		AssignedBy:       d.Get("assigned_by").(string),
 		FloatingIpRanges: InterfaceSliceToStringSlice(d.Get("floating_ip_ranges").([]interface{})),
@@ -190,9 +211,10 @@ func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData,
 		Netmask:          d.Get("netmask").(string),
 		Mtu:              d.Get("mtu").(int),
 		VlanId:           d.Get("vlan_id").(int),
+		InterfaceId:      d.Get("interface_id").(string),
 	}
 
 	tflog.Debug(ctx, "Adding/Patching network configuration")
-	res, err := DoRequest[NetworkConfiguration, NetworkConfiguration](ctx, c, method, uri, &networkConfig)
-	return res, err
+	_, err := DoRequest[NetworkConfigurationBody, NetworkConfigurationResponse](ctx, c, method, uri, &networkConfig)
+	return err
 }
