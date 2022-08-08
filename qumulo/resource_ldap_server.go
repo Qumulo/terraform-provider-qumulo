@@ -205,7 +205,7 @@ func setLdapServerSettings(ctx context.Context, d *schema.ResourceData, m interf
 		UseLdap:                d.Get("use_ldap").(bool),
 		BindUri:                d.Get("bind_uri").(string),
 		BaseDistinguishedNames: d.Get("base_distinguished_names").(string),
-		LdapSchemaDescription:  expandLdapSchemaDescription(ctx, d.Get("ldap_schema_description").([]interface{})),
+		LdapSchemaDescription:  expandLdapSchemaDescription(d.Get("ldap_schema_description").([]interface{})),
 		LdapSchema:             d.Get("ldap_schema").(string),
 		EncryptConnection:      d.Get("encrypt_connection").(bool),
 	}
@@ -223,7 +223,7 @@ func setLdapServerSettings(ctx context.Context, d *schema.ResourceData, m interf
 	return err
 }
 
-func expandLdapSchemaDescription(ctx context.Context, tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
+func expandLdapSchemaDescription(tfLdapSchemaDescriptions []interface{}) LdapSchemaDescription {
 	apiObject := LdapSchemaDescription{}
 
 	if len(tfLdapSchemaDescriptions) == 0 {
