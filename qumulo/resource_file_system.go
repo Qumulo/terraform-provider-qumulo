@@ -94,7 +94,7 @@ func resourceFileSystemSettings() *schema.Resource {
 func resourceFileSystemSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	_, err := c.createOrUpdateFileSystemSettings(ctx, d, PUT)
+	err := c.createOrUpdateFileSystemSettings(ctx, d, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -131,7 +131,7 @@ func resourceFileSystemSettingsRead(ctx context.Context, d *schema.ResourceData,
 func resourceFileSystemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	_, err := c.createOrUpdateFileSystemSettings(ctx, d, PATCH)
+	err := c.createOrUpdateFileSystemSettings(ctx, d, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,7 +145,7 @@ func resourceFileSystemSettingsDelete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func (c *Client) createOrUpdateFileSystemSettings(ctx context.Context, d *schema.ResourceData, atimeMethod Method) (*FileSystemSettingsBody, error) {
+func (c *Client) createOrUpdateFileSystemSettings(ctx context.Context, d *schema.ResourceData, atimeMethod Method) error {
 
 	permissionsSettings := FileSystemPermissionsSettingsBody{
 		Mode: d.Get("permissions_mode").(string),
@@ -156,34 +156,27 @@ func (c *Client) createOrUpdateFileSystemSettings(ctx context.Context, d *schema
 		Granularity: d.Get("atime_granularity").(string),
 	}
 
-	var permissionsResponsePointer *FileSystemPermissionsSettingsBody
 	var err error
 
 	if d.HasChanges("permissions_mode") {
 		tflog.Info(ctx, "Updating file system permission settings")
 
-		permissionsResponsePointer, err = DoRequest[FileSystemPermissionsSettingsBody, FileSystemPermissionsSettingsBody](ctx,
+		_, err = DoRequest[FileSystemPermissionsSettingsBody, FileSystemPermissionsSettingsBody](ctx,
 			c, PUT, FileSystemPermissionsEndpoint, &permissionsSettings)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	var atimeResponsePointer *FileSystemAtimeSettingsBody
 	if d.HasChanges("atime_enabled", "atime_granularity") {
 		tflog.Info(ctx, "Updating file system atime settings")
 
-		atimeResponsePointer, err = DoRequest[FileSystemAtimeSettingsBody, FileSystemAtimeSettingsBody](ctx, c, atimeMethod,
+		_, err = DoRequest[FileSystemAtimeSettingsBody, FileSystemAtimeSettingsBody](ctx, c, atimeMethod,
 			FileSystemAtimeEndpoint, &atimeSettings)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	fileSystemResponse := FileSystemSettingsBody{
-		Permissions:   permissionsResponsePointer,
-		AtimeSettings: atimeResponsePointer,
-	}
-
-	return &fileSystemResponse, nil
+	return nil
 }
