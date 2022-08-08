@@ -224,11 +224,11 @@ resource "qumulo_time_configuration" "time_config" {
     ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
 }
 
-resource "qumulo_web_ui" "settings" {
-  inactivity_timeout {
-    nanoseconds = 900000000000
-  }
-}
+# resource "qumulo_web_ui" "settings" {
+#   inactivity_timeout {
+#     nanoseconds = 900000000001
+#   }
+# }
 
 # output "some_smb_server" {
 #   value = qumulo_smb_server.update_smb

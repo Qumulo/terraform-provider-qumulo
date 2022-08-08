@@ -2,7 +2,6 @@ package qumulo
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -16,6 +15,10 @@ const WebUiEndpoint = "/v1/web-ui/settings"
 
 type WebUiBody struct {
 	InactivityTimeout WebUiTimeout `json:"inactivity_timeout"`
+}
+
+type WebUiEmpty struct {
+	InactivityTimeout *string `json:"inactivity_timeout"`
 }
 
 type WebUiTimeout struct {
@@ -103,7 +106,16 @@ func resourceWebUiUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 func resourceWebUiDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	tflog.Info(ctx, "Deleting web UI resource")
 
-	return nil
+	c := m.(*Client)
+
+	// Using a different struct here is a workaround. We have to pass in something that will be represented
+	// as null in json, and a nil string pointer is the simplest way to do that.
+	nullTimeout := WebUiEmpty{}
+	nullTimeout.InactivityTimeout = nil
+
+	_, err := DoRequest[WebUiEmpty, WebUiEmpty](ctx, c, PATCH, WebUiEndpoint, &nullTimeout)
+
+	return diag.FromErr(err)
 }
 
 func setWebUi(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
@@ -112,8 +124,6 @@ func setWebUi(ctx context.Context, d *schema.ResourceData, m interface{}, method
 	tfMap, ok := d.Get("inactivity_timeout").([]interface{})[0].(map[string]interface{})
 	if !ok {
 		tflog.Debug(ctx, "Error getting web UI resource")
-		fmt.Printf("SOMETHING HAS GONE WRONG P1")
-
 	}
 
 	timeout := WebUiTimeout{}
@@ -121,7 +131,6 @@ func setWebUi(ctx context.Context, d *schema.ResourceData, m interface{}, method
 		timeout.Nanoseconds = v
 	} else {
 		tflog.Debug(ctx, "Error getting web UI timeout")
-		fmt.Printf("SOMETHING HAS GONE WRONG")
 	}
 
 	webUiRequest := WebUiBody{
