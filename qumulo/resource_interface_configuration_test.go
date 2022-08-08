@@ -30,7 +30,7 @@ func TestAccTestInterfaceConfiguration(t *testing.T) {
 	})
 }
 
-var defaultInterfaceConfiguration = InterfaceConfigurationBody{
+var defaultInterfaceConfiguration = InterfaceConfigurationRequest{
 	Name:           "bond0",
 	DefaultGateway: "10.220.0.1",
 	BondingMode:    "IEEE_8023AD",
@@ -45,7 +45,7 @@ var defaultInterfaceConfigurationResp = InterfaceConfigurationResponse{
 	Mtu:            1500,
 }
 
-var testInterfaceConfiguration = InterfaceConfigurationBody{
+var testInterfaceConfiguration = InterfaceConfigurationRequest{
 	Name:           "bond0",
 	DefaultGateway: "10.220.0.2",
 	BondingMode:    "IEEE_8023AD",
@@ -60,7 +60,7 @@ var testInterfaceConfigurationResp = InterfaceConfigurationResponse{
 	Mtu:            1700,
 }
 
-func testAccInterfaceConfiguration(ic InterfaceConfigurationBody) string {
+func testAccInterfaceConfiguration(ic InterfaceConfigurationRequest) string {
 	return fmt.Sprintf(`
 resource "qumulo_interface_configuration" "interface_config" {
   name = %q
@@ -97,7 +97,7 @@ func testAccCheckInterfaceConfiguration(ic InterfaceConfigurationResponse, resou
 		interfaceId := res.Primary.ID
 		interfaceConfigUri := InterfaceConfigurationEndpoint + interfaceId
 
-		interfaceConfig, err := DoRequest[InterfaceConfigurationBody, InterfaceConfigurationResponse](ctx, c, GET, interfaceConfigUri, nil)
+		interfaceConfig, err := DoRequest[InterfaceConfigurationRequest, InterfaceConfigurationResponse](ctx, c, GET, interfaceConfigUri, nil)
 		if err != nil {
 			return err
 		}

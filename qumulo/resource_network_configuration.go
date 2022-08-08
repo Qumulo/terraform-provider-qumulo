@@ -28,7 +28,7 @@ type NetworkConfigurationResponse struct {
 	VlanId           int      `json:"vlan_id"`
 }
 
-type NetworkConfigurationBody struct {
+type NetworkConfigurationRequest struct {
 	Id               int      `json:"id"`
 	Name             string   `json:"name"`
 	AssignedBy       string   `json:"assigned_by"`
@@ -144,7 +144,7 @@ func resourceNetworkConfigurationRead(ctx context.Context, d *schema.ResourceDat
 	interfaceId := d.Get("interface_id").(string)
 	networkId := d.Get("network_id").(string)
 	readNetworkConfigUri := InterfaceConfigurationEndpoint + interfaceId + NetworksEndpointSuffix + networkId
-	networkConfig, err := DoRequest[NetworkConfigurationBody, NetworkConfigurationResponse](ctx, c, GET, readNetworkConfigUri, nil)
+	networkConfig, err := DoRequest[NetworkConfigurationRequest, NetworkConfigurationResponse](ctx, c, GET, readNetworkConfigUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -185,7 +185,7 @@ func resourceNetworkConfigurationDelete(ctx context.Context, d *schema.ResourceD
 	interfaceId := d.Get("interface_id").(string)
 	networkId := d.Id()
 	deleteNetworkConfigUri := InterfaceConfigurationEndpoint + interfaceId + NetworksEndpointSuffix + networkId
-	_, err := DoRequest[NetworkConfigurationBody, NetworkConfigurationResponse](ctx, c, DELETE, deleteNetworkConfigUri, nil)
+	_, err := DoRequest[NetworkConfigurationRequest, NetworkConfigurationResponse](ctx, c, DELETE, deleteNetworkConfigUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -200,7 +200,7 @@ func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData,
 	//ID has to be set to the network Id passed in the URI as per API validation
 	id, _ := strconv.Atoi(networkId)
 
-	networkConfig := NetworkConfigurationBody{
+	networkConfig := NetworkConfigurationRequest{
 		Id:               id,
 		Name:             d.Get("name").(string),
 		AssignedBy:       d.Get("assigned_by").(string),
@@ -215,6 +215,6 @@ func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData,
 	}
 
 	tflog.Debug(ctx, "Adding/Patching network configuration")
-	_, err := DoRequest[NetworkConfigurationBody, NetworkConfigurationResponse](ctx, c, method, uri, &networkConfig)
+	_, err := DoRequest[NetworkConfigurationRequest, NetworkConfigurationResponse](ctx, c, method, uri, &networkConfig)
 	return err
 }

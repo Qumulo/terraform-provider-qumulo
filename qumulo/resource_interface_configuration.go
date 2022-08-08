@@ -22,7 +22,7 @@ type InterfaceConfigurationResponse struct {
 	Mtu                int    `json:"mtu"`
 }
 
-type InterfaceConfigurationBody struct {
+type InterfaceConfigurationRequest struct {
 	Id                 int    `json:"id"`
 	Name               string `json:"name"`
 	DefaultGateway     string `json:"default_gateway"`
@@ -31,8 +31,19 @@ type InterfaceConfigurationBody struct {
 	Mtu                int    `json:"mtu"`
 	InterfaceId        string `json:"interface_id"`
 }
+type InterfaceConfigBondingMode int
 
 var InterfaceConfigBondingModes = []string{"ACTIVE_BACKUP", "IEEE_8023AD", "UNSPECIFIED"}
+
+const (
+	ActiveBackup InterfaceConfigBondingMode = iota + 1
+	Ieee8023Ad
+	Unspecified
+)
+
+func (e InterfaceConfigBondingMode) String() string {
+	return InterfaceConfigBondingModes[e-1]
+}
 
 func resourceInterfaceConfiguration() *schema.Resource {
 	return &schema.Resource{
@@ -67,7 +78,7 @@ func resourceInterfaceConfiguration() *schema.Resource {
 			"bonding_mode": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
-				Default:          "UNSPECIFIED",
+				Default:          Unspecified,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(InterfaceConfigBondingModes, false)),
 			},
 			"mtu": &schema.Schema{
@@ -103,7 +114,7 @@ func resourceInterfaceConfigurationRead(ctx context.Context, d *schema.ResourceD
 	interfaceId := d.Id()
 
 	interfaceConfigUri := InterfaceConfigurationEndpoint + interfaceId
-	interfaceConfig, err := DoRequest[InterfaceConfigurationBody, InterfaceConfigurationResponse](ctx, c, GET, interfaceConfigUri, nil)
+	interfaceConfig, err := DoRequest[InterfaceConfigurationRequest, InterfaceConfigurationResponse](ctx, c, GET, interfaceConfigUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -128,7 +139,7 @@ func resourceInterfaceConfigurationUpdate(ctx context.Context, d *schema.Resourc
 }
 
 func resourceInterfaceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Info(ctx, fmt.Sprintf("Deleting interface configuration resource with id: %q", d.Get("interface_id")))
+	tflog.Info(ctx, fmt.Sprintf("Deleting interface configuration resource with id: %q", d.Id()))
 	return nil
 }
 
@@ -141,7 +152,7 @@ func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceDat
 	//ID has to be set to the interface ID passed in the URI as per API validation
 	id, _ := strconv.Atoi(interfaceId)
 
-	interfaceConfig := InterfaceConfigurationBody{
+	interfaceConfig := InterfaceConfigurationRequest{
 		Id:                 id,
 		Name:               d.Get("name").(string),
 		DefaultGateway:     d.Get("default_gateway").(string),
@@ -152,6 +163,6 @@ func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceDat
 	}
 
 	tflog.Debug(ctx, "Setting/Patching interface configuration")
-	_, err := DoRequest[InterfaceConfigurationBody, InterfaceConfigurationResponse](ctx, c, method, interfaceConfigUri, &interfaceConfig)
+	_, err := DoRequest[InterfaceConfigurationRequest, InterfaceConfigurationResponse](ctx, c, method, interfaceConfigUri, &interfaceConfig)
 	return err
 }
