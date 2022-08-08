@@ -53,6 +53,7 @@ func Provider() *schema.Provider {
 			"qumulo_file_system_settings":    resourceFileSystemSettings(),
 			"qumulo_interface_configuration": resourceInterfaceConfiguration(),
 			"qumulo_network_configuration":   resourceNetworkConfiguration(),
+      "qumulo_local_group_member":      resourceGroupMember(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

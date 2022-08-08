@@ -108,22 +108,24 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #  private_key = var.some_key
 #}
 
-resource "qumulo_role" "actors" {
-    description = "Testing testing 123"
-    name        = "Actors"
-    privileges  = [
-        "PRIVILEGE_AD_READ",
-        "PRIVILEGE_AD_USE",
-        "PRIVILEGE_AD_WRITE",
-    ]
+
+resource "qumulo_local_user" "test_user" {
+  for_each = toset( ["testuser1", "testuser2", "testuser3"] )
+  name = each.key
+  primary_group = 514
+  password = "Test1234"
+  home_directory = "/"
 }
 
- resource "qumulo_local_user" "test_user" {
-   name = "testuser"
-   primary_group = 514
-   password = "Test1234"
-   home_directory = "/"
- }
+resource "qumulo_local_group" "test_group" {
+    name = "testgroup2"
+}
+
+resource "qumulo_local_group_member" "test_member" {
+  for_each = qumulo_local_user.test_user
+  member_id = each.value.id
+  group_id = qumulo_local_group.test_group.id
+}
 
  resource "qumulo_role" "actors" {
    description = "Testing testing 123"
@@ -133,10 +135,6 @@ resource "qumulo_role" "actors" {
      "PRIVILEGE_AD_USE",
      "PRIVILEGE_AD_WRITE",
    ]
- }
-
- resource "qumulo_local_group" "test_group" {
-     name = "testgroup"
  }
 
  resource "qumulo_ssl_ca" "update_ssl_ca" {
