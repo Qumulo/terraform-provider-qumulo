@@ -234,6 +234,12 @@ resource "qumulo_time_configuration" "time_config" {
 #   }
 # }
 
+resource "qumulo_file_system_settings" "fs_settings" {
+  permissions_mode = "CROSS_PROTOCOL"
+  atime_enabled = false
+  atime_granularity = "HOUR"
+}
+
 # output "some_smb_server" {
 #   value = qumulo_smb_server.update_smb
 # }
