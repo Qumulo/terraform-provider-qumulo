@@ -50,6 +50,7 @@ func Provider() *schema.Provider {
 			"qumulo_local_user":         resourceUser(),
 			"qumulo_local_group":        resourceGroup(),
 			"qumulo_web_ui":             resourceWebUi(),
+			"qumulo_local_group_member": resourceGroupMember(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

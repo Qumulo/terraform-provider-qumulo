@@ -127,16 +127,21 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #  private_key = var.some_key
 #}
 
-# resource "qumulo_local_user" "test_user" {
-#   name = "testuser"
-#   primary_group = 514
-#   password = "Test1234"
-#   home_directory = "/"
-# }
+resource "qumulo_local_user" "test_user" {
+  name = "testuser2"
+  primary_group = 514
+  password = "Test1234"
+  home_directory = "/"
+}
 
-# resource "qumulo_local_group" "test_group" {
-#     name = "testgroup"
-# }
+resource "qumulo_local_group" "test_group" {
+    name = "testgroup2"
+}
+
+resource "qumulo_local_group_member" "test_member" {
+  member_id = qumulo_local_user.test_user.id
+  group_id = qumulo_local_group.test_group.id
+}
 
 # resource "qumulo_role" "actors" {
 #     description = "Testing testing 123"
