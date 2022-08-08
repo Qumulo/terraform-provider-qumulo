@@ -239,6 +239,12 @@ resource "qumulo_interface_configuration" "interface_config" {
   interface_id = "1"
 }
 
+resource "qumulo_file_system_settings" "fs_settings" {
+  permissions_mode = "CROSS_PROTOCOL"
+  atime_enabled = false
+  atime_granularity = "HOUR"
+}
+
  resource "qumulo_web_ui" "settings" {
    inactivity_timeout {
      nanoseconds = 900000000001
