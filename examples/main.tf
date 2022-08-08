@@ -127,16 +127,6 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #  private_key = var.some_key
 #}
 
-resource "qumulo_role" "actors" {
-    description = "Testing testing 123"
-    name        = "Actors"
-    privileges  = [
-        "PRIVILEGE_AD_READ",
-        "PRIVILEGE_AD_USE",
-        "PRIVILEGE_AD_WRITE",
-    ]
-}
-
 # resource "qumulo_local_user" "test_user" {
 #   name = "testuser"
 #   primary_group = 514
@@ -237,6 +227,12 @@ resource "qumulo_time_configuration" "time_config" {
     use_ad_for_primary = false
     ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
 }
+
+# resource "qumulo_web_ui" "settings" {
+#   inactivity_timeout {
+#     nanoseconds = 900000000001
+#   }
+# }
 
 # output "some_smb_server" {
 #   value = qumulo_smb_server.update_smb
