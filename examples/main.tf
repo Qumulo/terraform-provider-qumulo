@@ -134,6 +134,10 @@ resource "qumulo_nfs_settings" "my_new_settings" {
 #   home_directory = "/"
 # }
 
+# resource "qumulo_local_group" "test_group" {
+#     name = "testgroup"
+# }
+
 # resource "qumulo_role" "actors" {
 #     description = "Testing testing 123"
 #     name        = "Actors"
