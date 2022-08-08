@@ -52,6 +52,7 @@ func Provider() *schema.Provider {
 			"qumulo_web_ui":                  resourceWebUi(),
 			"qumulo_interface_configuration": resourceInterfaceConfiguration(),
 			"qumulo_network_configuration":   resourceNetworkConfiguration(),
+			"qumulo_ftp_server":              resourceFtpServer(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
