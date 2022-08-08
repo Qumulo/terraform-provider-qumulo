@@ -70,10 +70,10 @@ resource "qumulo_nfs_export" "new_nfs_export" {
   allow_fs_path_create = true
 }
 
-resource "qumulo_directory_quota" "new_quota" {
-    directory_id = "2"
-    limit = "1000000000"
-}
+# resource "qumulo_directory_quota" "new_quota" {
+#     directory_id = "2"
+#     limit = "1000000000"
+# }
 
  resource "qumulo_nfs_export" "some_nfs_export" {
    export_path = "/tmp"
@@ -103,10 +103,10 @@ resource "qumulo_nfs_settings" "my_new_settings" {
   auth_sys_enabled = true
 }
 
-resource "qumulo_ssl_cert" "update_ssl" {
-  certificate = var.some_cert
-  private_key = var.some_key
-}
+#resource "qumulo_ssl_cert" "update_ssl" {
+#  certificate = var.some_cert
+#  private_key = var.some_key
+#}
 
 resource "qumulo_role" "actors" {
     description = "Testing testing 123"
@@ -126,15 +126,17 @@ resource "qumulo_role" "actors" {
  }
 
  resource "qumulo_role" "actors" {
-     description = "Testing testing 123"
-     name        = "Actors"
-     privileges  = [
-         "PRIVILEGE_AD_READ",
-         "PRIVILEGE_AD_USE",
-         "PRIVILEGE_AD_WRITE",
-     ]
+   description = "Testing testing 123"
+   name        = "Actors"
+   privileges  = [
+     "PRIVILEGE_AD_READ",
+     "PRIVILEGE_AD_USE",
+     "PRIVILEGE_AD_WRITE",
+   ]
+ }
 
-     timeouts {}
+ resource "qumulo_local_group" "test_group" {
+     name = "testgroup"
  }
 
  resource "qumulo_ssl_ca" "update_ssl_ca" {
@@ -237,10 +239,15 @@ resource "qumulo_interface_configuration" "interface_config" {
   interface_id = "1"
 }
 
+ resource "qumulo_web_ui" "settings" {
+   inactivity_timeout {
+     nanoseconds = 900000000001
+   }
+ }
+
  output "some_smb_server" {
    value = qumulo_smb_server.update_smb
  }
-
 
  output "some_monitoring_config" {
    value = qumulo_monitoring.update_monitoring
@@ -254,7 +261,7 @@ resource "qumulo_interface_configuration" "interface_config" {
    value = qumulo_ssl_ca.update_ssl_ca
  }
 
-output "some_ssl" {
-  value = qumulo_ssl_cert.update_ssl
-}
+#output "some_ssl" {
+#  value = qumulo_ssl_cert.update_ssl
+#}
 

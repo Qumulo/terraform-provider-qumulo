@@ -48,6 +48,8 @@ func Provider() *schema.Provider {
 			"qumulo_time_configuration":      resourceTimeConfiguration(),
 			"qumulo_directory_quota":         resourceDirectoryQuota(),
 			"qumulo_local_user":              resourceUser(),
+			"qumulo_local_group":             resourceGroup(),
+			"qumulo_web_ui":                  resourceWebUi(),
 			"qumulo_interface_configuration": resourceInterfaceConfiguration(),
 			"qumulo_network_configuration":   resourceNetworkConfiguration(),
 		},
