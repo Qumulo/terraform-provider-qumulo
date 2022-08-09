@@ -33,7 +33,7 @@ func TestAccInterfaceConfiguration(t *testing.T) {
 var defaultInterfaceConfiguration = InterfaceConfigurationRequest{
 	Name:           "bond0",
 	DefaultGateway: "10.220.0.1",
-	BondingMode:    "IEEE_8023AD",
+	BondingMode:    Ieee8023Ad.String(),
 	Mtu:            1500,
 	InterfaceId:    "1",
 }
@@ -41,14 +41,14 @@ var defaultInterfaceConfiguration = InterfaceConfigurationRequest{
 var defaultInterfaceConfigurationResp = InterfaceConfigurationResponse{
 	Name:           "bond0",
 	DefaultGateway: "10.220.0.1",
-	BondingMode:    "IEEE_8023AD",
+	BondingMode:    Ieee8023Ad.String(),
 	Mtu:            1500,
 }
 
 var testInterfaceConfiguration = InterfaceConfigurationRequest{
 	Name:           "bond0",
 	DefaultGateway: "10.220.0.2",
-	BondingMode:    "IEEE_8023AD",
+	BondingMode:    Ieee8023Ad.String(),
 	Mtu:            1700,
 	InterfaceId:    "1",
 }
@@ -56,7 +56,7 @@ var testInterfaceConfiguration = InterfaceConfigurationRequest{
 var testInterfaceConfigurationResp = InterfaceConfigurationResponse{
 	Name:           "bond0",
 	DefaultGateway: "10.220.0.2",
-	BondingMode:    "IEEE_8023AD",
+	BondingMode:    Ieee8023Ad.String(),
 	Mtu:            1700,
 }
 

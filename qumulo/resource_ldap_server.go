@@ -16,8 +16,8 @@ import (
 type LdapSchema int
 
 const (
-	RFC2307 LdapSchema = iota + 1
-	CUSTOM
+	Rfc2307 LdapSchema = iota + 1
+	Custom
 )
 
 func (e LdapSchema) String() string {
@@ -91,7 +91,7 @@ func resourceLdapServer() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(LdapSchemaValues, false)),
-				Default:          RFC2307.String(),
+				Default:          Rfc2307.String(),
 			},
 			"ldap_schema_description": {
 				Type:     schema.TypeList,

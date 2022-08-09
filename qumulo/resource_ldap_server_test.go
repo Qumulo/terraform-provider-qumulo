@@ -34,13 +34,13 @@ func TestAccChangeLdapServer(t *testing.T) {
 
 var defaultLdapServerConfig = LdapServerSettingsBody{
 	UseLdap:           false,
-	LdapSchema:        "RFC2307",
+	LdapSchema:        Rfc2307.String(),
 	EncryptConnection: true,
 }
 
 var defaultLdapServerConfigApplied = LdapServerSettingsBody{
 	UseLdap:    false,
-	LdapSchema: "RFC2307",
+	LdapSchema: Rfc2307.String(),
 	// Default schema description that's applied by the API
 	LdapSchemaDescription: LdapSchemaDescription{
 		GroupMemberAttribute:         "memberUid",
@@ -59,7 +59,7 @@ var testingLdapServerConfig = LdapServerSettingsBody{
 	UseLdap:                true,
 	BindUri:                "ldap://ldap.denvrdata.com",
 	BaseDistinguishedNames: "dc=cloud,dc=denvrdata,dc=com",
-	LdapSchema:             "CUSTOM",
+	LdapSchema:             Custom.String(),
 	LdapSchemaDescription: LdapSchemaDescription{
 		GroupMemberAttribute:         "memberUid",
 		UserGroupIdentifierAttribute: "uid",

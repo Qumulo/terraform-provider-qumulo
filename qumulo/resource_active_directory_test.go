@@ -228,15 +228,15 @@ var testingActiveDirectoryConfigSettingsInvalid = ActiveDirectoryRequest{
 // Active Directory Settings configurations
 
 var defaultActiveDirectorySettingsConfig = ActiveDirectorySettingsBody{
-	Signing: "WANT_SIGNING",
-	Sealing: "WANT_SEALING",
-	Crypto:  "WANT_AES",
+	Signing: WantSigning.String(),
+	Sealing: WantSealing.String(),
+	Crypto:  WantCrypto.String(),
 }
 
 var testingActiveDirectorySettingsConfigFull = ActiveDirectorySettingsBody{
-	Signing: "REQUIRE_SIGNING",
-	Sealing: "WANT_SEALING",
-	Crypto:  "REQUIRE_AES",
+	Signing: RequireSigning.String(),
+	Sealing: WantSealing.String(),
+	Crypto:  RequireCrypto.String(),
 }
 
 var testingActiveDirectorySettingsConfigInvalid = ActiveDirectorySettingsBody{
