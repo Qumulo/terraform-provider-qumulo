@@ -55,7 +55,7 @@ func resourceCloudWatch() *schema.Resource {
 func resourceCloudWatchCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	err := c.modifyCloudWatchConfig(ctx, d, PUT)
+	err := modifyCloudWatchConfig(ctx, c, d, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -85,7 +85,7 @@ func resourceCloudWatchRead(ctx context.Context, d *schema.ResourceData, m inter
 func resourceCloudWatchUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	err := c.modifyCloudWatchConfig(ctx, d, PATCH)
+	err := modifyCloudWatchConfig(ctx, c, d, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -99,7 +99,7 @@ func resourceCloudWatchDelete(ctx context.Context, d *schema.ResourceData, m int
 	return nil
 }
 
-func (c *Client) modifyCloudWatchConfig(ctx context.Context, d *schema.ResourceData, method Method) error {
+func modifyCloudWatchConfig(ctx context.Context, c *Client, d *schema.ResourceData, method Method) error {
 	var config = CloudWatchConfigBody{
 		Enabled:      d.Get("enabled").(bool),
 		LogGroupName: d.Get("log_group_name").(string),
