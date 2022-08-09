@@ -25,12 +25,12 @@ func TestAccFtpServer(t *testing.T) {
 					testAccCompareFtpServers(testFtpServer),
 					testAccCheckFtpServer(testFtpServer)),
 			},
-			//{
-			//	Config: testAccFtpServer2(testFtpServer2),
-			//	Check: resource.ComposeTestCheckFunc(
-			//		testAccCompareFtpServers(testFtpServer2),
-			//		testAccCheckFtpServer(testFtpServer2)),
-			//},
+			{
+				Config: testAccFtpServer2(testFtpServer2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCompareFtpServers(testFtpServer2),
+					testAccCheckFtpServer(testFtpServer2)),
+			},
 		},
 	})
 }
@@ -66,7 +66,7 @@ var testFtpServer2 = FtpServerBody{
 	ExpandWildcards:             false,
 	AnonymousUser: &map[string]interface{}{
 		"id_type":  "LOCAL_USER",
-		"id_value": "ftp",
+		"id_value": "admin",
 	},
 	Greeting: "Hello!!!!",
 }
@@ -94,10 +94,13 @@ resource "qumulo_ftp_server" "some_ftp_server" {
   chroot_users = %v
   allow_unencrypted_connections = %v
   expand_wildcards = %v
-  anonymous_user = %v
+  anonymous_user = {
+	id_type = %q
+	id_value = %q
+	}
   greeting = %q
 }`, fs.Enabled, fs.CheckRemoteHost, fs.LogOperations, fs.ChrootUsers, fs.AllowUnencryptedConnections,
-		fs.ExpandWildcards, &fs.AnonymousUser, fs.Greeting)
+		fs.ExpandWildcards, (*fs.AnonymousUser)["id_type"], (*fs.AnonymousUser)["id_value"], fs.Greeting)
 }
 
 func testAccCompareFtpServers(fs FtpServerBody) resource.TestCheckFunc {
