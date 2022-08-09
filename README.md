@@ -37,6 +37,15 @@ Then, run the following command
 
     make testwip
 
+The above command runs all the acceptance tests in the provider.
+To run a specific test, set the TESTNAME environment variable to the corresponding test name:
+
+    export TESTNAME={testname}
+
+Then, run the following command
+
+    make runtest
+
 ## Developing the Qumulo Provider
 
 More information coming soon!
