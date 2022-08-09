@@ -210,6 +210,18 @@ func createOrUpdateNfsExport(ctx context.Context, d *schema.ResourceData, m inte
 	return res, err
 }
 
+func GetAllNfsExports(ctx context.Context, c *Client) (*[]NfsExport, error) {
+	res, err := DoRequest[NfsExport, []NfsExport](ctx, c, GET, NfsExportsEndpoint, nil)
+	return res, err
+}
+
+func DeleteNfsExport(ctx context.Context, c *Client, nfsExportId string) error {
+	deleteNfsExportByIdUri := NfsExportsEndpoint + nfsExportId
+
+	_, err := DoRequest[string, NfsExport](ctx, c, DELETE, deleteNfsExportByIdUri, nil)
+	return err
+}
+
 func expandRestrictions(ctx context.Context, tfRestrictions []interface{}) []NfsRestriction {
 	var restrictions []NfsRestriction
 
