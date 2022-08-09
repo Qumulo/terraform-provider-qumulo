@@ -96,7 +96,7 @@ func resourceLdapServer() *schema.Resource {
 			"ldap_schema_description": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
-				//API applies a default config for ldap schema description if ldap_schema = RFC2307
+				// API applies a default config for ldap schema description if ldap_schema = RFC2307
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

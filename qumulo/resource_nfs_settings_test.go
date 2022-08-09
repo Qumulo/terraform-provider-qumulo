@@ -14,8 +14,7 @@ func TestAccChangeNfsSettings(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			{
-				//Reset to default
+			{ // Reset state to default
 				Config: testAccNfsSettings(defaultNfsSettings),
 				Check:  testAccCheckNfsSettings(defaultNfsSettings),
 			},

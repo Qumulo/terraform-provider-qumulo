@@ -15,7 +15,7 @@ func TestAccCreateCloudWatchAuditLog(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			{
+			{ // Reset state to default
 				Config: testAccCloudWatchConfig(defaultCloudWatchConfig),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCompareCloudWatchResource(defaultCloudWatchConfig),
@@ -29,8 +29,7 @@ func TestAccCreateCloudWatchAuditLog(t *testing.T) {
 					testAccCheckCloudWatchSettings(testCloudWatchConfig),
 				),
 			},
-			{
-				// reset to default state; don't want to leave weird settings enabled post-test
+			{ // Reset state to default
 				Config: testAccCloudWatchConfig(defaultCloudWatchConfig),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCompareCloudWatchResource(defaultCloudWatchConfig),

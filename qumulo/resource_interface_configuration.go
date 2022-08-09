@@ -3,12 +3,13 @@ package qumulo
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strconv"
-	"time"
 )
 
 const InterfaceConfigurationEndpoint = "/v2/network/interfaces/"
@@ -149,7 +150,7 @@ func setOrPatchInterfaceConfiguration(ctx context.Context, d *schema.ResourceDat
 	interfaceId := d.Get("interface_id").(string)
 	interfaceConfigUri := InterfaceConfigurationEndpoint + interfaceId
 
-	//ID has to be set to the interface ID passed in the URI as per API validation
+	// ID has to be set to the interface ID passed in the URI as per API validation
 	id, _ := strconv.Atoi(interfaceId)
 
 	interfaceConfig := InterfaceConfigurationRequest{

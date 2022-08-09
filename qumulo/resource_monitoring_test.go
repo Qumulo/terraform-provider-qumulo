@@ -15,7 +15,6 @@ func TestAccChangeMonitoring(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{ // Reset state to default
-
 				Config: testAccMonitoringConf(defaultMonitoringConfig),
 				Check:  testAccCheckMonitoringSettings(defaultMonitoringConfig),
 			},
