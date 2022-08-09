@@ -1,14 +1,15 @@
 package qumulo
 
-//TODO testing after imports
+// TODO testing after imports
 import (
 	"context"
+	"strconv"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strconv"
-	"time"
 )
 
 const NetworksEndpointSuffix = "/networks/"
@@ -197,7 +198,7 @@ func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData,
 
 	networkId := d.Get("network_id").(string)
 
-	//ID has to be set to the network Id passed in the URI as per API validation
+	// ID has to be set to the network Id passed in the URI as per API validation
 	id, _ := strconv.Atoi(networkId)
 
 	networkConfig := NetworkConfigurationRequest{

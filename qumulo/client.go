@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type Method int
@@ -27,7 +28,6 @@ func (m Method) String() string {
 	return [...]string{"GET", "PUT", "POST", "PATCH", "DELETE"}[m-1]
 }
 
-// Client -
 type Client struct {
 	HostURL     string
 	HTTPClient  *http.Client
@@ -35,7 +35,6 @@ type Client struct {
 	Auth        AuthStruct
 }
 
-// AuthStruct -
 type AuthStruct struct {
 	Host     string `json:"host"`
 	Port     string `json:"port"`
@@ -43,12 +42,10 @@ type AuthStruct struct {
 	Password string `json:"password"`
 }
 
-// AuthResponse -
 type AuthResponse struct {
 	BearerToken string `json:"bearer_token"`
 }
 
-// NewClient -
 func NewClient(ctx context.Context, host, port, username, password *string) (*Client, error) {
 	HostURL := fmt.Sprintf("https://%s:%s", *host, *port)
 

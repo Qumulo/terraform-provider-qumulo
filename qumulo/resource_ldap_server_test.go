@@ -41,7 +41,7 @@ var defaultLdapServerConfig = LdapServerSettingsBody{
 var defaultLdapServerConfigApplied = LdapServerSettingsBody{
 	UseLdap:    false,
 	LdapSchema: "RFC2307",
-	//Default schema description that's applied by the API
+	// Default schema description that's applied by the API
 	LdapSchemaDescription: LdapSchemaDescription{
 		GroupMemberAttribute:         "memberUid",
 		UserGroupIdentifierAttribute: "uid",

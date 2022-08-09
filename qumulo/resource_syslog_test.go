@@ -15,7 +15,7 @@ func TestAccCreateSyslogAuditLog(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			{
+			{ // Reset state to default
 				Config: testAccSyslogConfig(defaultSyslogConfig),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCompareSyslogResource(defaultSyslogConfig),
@@ -29,8 +29,7 @@ func TestAccCreateSyslogAuditLog(t *testing.T) {
 					testAccCheckSyslogSettings(testSyslogConfig),
 				),
 			},
-			{
-				// reset to default state; don't want to leave weird settings enabled post-test
+			{ // Reset state to default
 				Config: testAccSyslogConfig(defaultSyslogConfig),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCompareSyslogResource(defaultSyslogConfig),

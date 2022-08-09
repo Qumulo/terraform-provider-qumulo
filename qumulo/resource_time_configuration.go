@@ -96,7 +96,6 @@ func resourceTimeConfigurationDelete(ctx context.Context, d *schema.ResourceData
 func setTimeConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
 	c := m.(*Client)
 
-	// convert the []interface{} into []string
 	ntpServers := InterfaceSliceToStringSlice(d.Get("ntp_servers").([]interface{}))
 
 	timeConfigurationRequest := TimeConfigurationBody{
