@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestAccTestInterfaceConfiguration(t *testing.T) {
+func TestAccInterfaceConfiguration(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,

@@ -253,9 +253,15 @@ resource "qumulo_file_system_settings" "fs_settings" {
    value = qumulo_smb_server.update_smb
  }
 
- output "some_monitoring_config" {
-   value = qumulo_monitoring.update_monitoring
- }
+resource "qumulo_ftp_server" "some_ftp_server" {
+  enabled = true
+  check_remote_host = false
+  log_operations = true
+  chroot_users = true
+  allow_unencrypted_connections = true
+  expand_wildcards = false
+  greeting = "Hello!"
+}
 
  output "some_name" {
    value = qumulo_cluster_name.update_name
