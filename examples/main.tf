@@ -46,6 +46,7 @@ resource "qumulo_cluster_name" "update_name" {
    sealing = "WANT_SEALING"
    crypto = "WANT_AES"
    domain = "ad.eng.qumulo.com"
+   domain_netbios = "AD"
    ad_username = "Administrator"
    ad_password = "a"
    use_ad_posix_attributes = false
@@ -247,6 +248,17 @@ resource "qumulo_file_system_settings" "fs_settings" {
    inactivity_timeout {
      nanoseconds = 900000000001
    }
+ }
+
+ resource "qumulo_syslog" "syslog_audit_log" {
+	enabled = false
+	server_address = ""
+	server_port = 0
+ }
+ resource "qumulo_cloudwatch" "cloudwatch_audit_log" {
+	enabled = false
+	log_group_name = ""
+	region = ""
  }
 
  output "some_smb_server" {
