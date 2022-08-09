@@ -41,3 +41,6 @@ testwip:
 
 runtest:
 	TF_ACC=1 go test -run $(TESTNAME) ./...
+
+sweep:
+	TF_ACC=1 go test -v ./... -sweep=sample_region
