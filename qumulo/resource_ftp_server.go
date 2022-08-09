@@ -134,8 +134,8 @@ func modifyFtpServerSettings(ctx context.Context, d *schema.ResourceData, m inte
 		ExpandWildcards:             d.Get("expand_wildcards").(bool),
 		Greeting:                    d.Get("greeting").(string),
 	}
-	if v, ok := d.Get("anonymous_user").(*map[string]interface{}); ok {
-		ftpServer.AnonymousUser = v
+	if v, ok := d.Get("anonymous_user").(map[string]interface{}); ok && len(v) > 0 {
+		ftpServer.AnonymousUser = &v
 	}
 	tflog.Debug(ctx, "Modifying FTP server settings")
 	_, err := DoRequest[FtpServerBody, FtpServerBody](ctx, c, method, FtpServerEndpoint, &ftpServer)
