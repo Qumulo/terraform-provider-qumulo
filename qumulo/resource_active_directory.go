@@ -412,9 +412,9 @@ func updateActiveDirectorySettings(ctx context.Context, c *Client, activeDirecto
 		tflog.Debug(ctx, "No Active Directory settings detected, will not apply changes.")
 		return nil, nil
 	} else if activeDirectorySettings.Signing == "" || activeDirectorySettings.Sealing == "" || activeDirectorySettings.Crypto == "" {
-		// TODO: decide if this should return an error
-		tflog.Warn(ctx, "Incomplete Active Directory settings detected, will not apply changes. Specify all or none of Signing, Sealing, and Crypto.")
-		return nil, nil
+		tflog.Error(ctx, "Incomplete Active Directory settings detected; this scenario should not occur. Report this error as an issue in the Qumulo provider.")
+		return nil, fmt.Errorf(`incomplete Active Directory settings detected, will not apply changes.
+			Specify all or none of Signing, Sealing, and Crypto. Settings detected: %v`, activeDirectorySettings)
 	} else {
 		settingsResponse, err := DoRequest[ActiveDirectorySettingsBody, ActiveDirectorySettingsBody](ctx, c, PUT, AdSettingsEndpoint, activeDirectorySettings)
 		if err != nil {
