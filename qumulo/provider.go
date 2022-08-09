@@ -55,6 +55,8 @@ func Provider() *schema.Provider {
 			"qumulo_network_configuration":   resourceNetworkConfiguration(),
 			"qumulo_ftp_server":              resourceFtpServer(),
 			"qumulo_local_group_member":      resourceGroupMember(),
+			"qumulo_syslog":                  resourceSyslog(),
+			"qumulo_cloudwatch":              resourceCloudWatch(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
