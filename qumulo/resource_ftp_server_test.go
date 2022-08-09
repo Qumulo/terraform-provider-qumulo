@@ -22,13 +22,13 @@ func TestAccFtpServer(t *testing.T) {
 			{
 				Config: testAccFtpServer1(testFtpServer),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCompareFtpServers(testFtpServer),
+					testAccCompareFtpServers(testFtpServer, false),
 					testAccCheckFtpServer(testFtpServer)),
 			},
 			{
 				Config: testAccFtpServer2(testFtpServer2),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCompareFtpServers(testFtpServer2),
+					testAccCompareFtpServers(testFtpServer2, true),
 					testAccCheckFtpServer(testFtpServer2)),
 			},
 		},
@@ -103,7 +103,29 @@ resource "qumulo_ftp_server" "some_ftp_server" {
 		fs.ExpandWildcards, (*fs.AnonymousUser)["id_type"], (*fs.AnonymousUser)["id_value"], fs.Greeting)
 }
 
-func testAccCompareFtpServers(fs FtpServerBody) resource.TestCheckFunc {
+func testAccCompareFtpServers(fs FtpServerBody, checkAnonymousUser bool) resource.TestCheckFunc {
+	if checkAnonymousUser {
+		return resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "enabled",
+				fmt.Sprintf("%v", fs.Enabled)),
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "check_remote_host",
+				fmt.Sprintf("%v", fs.CheckRemoteHost)),
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "log_operations",
+				fmt.Sprintf("%v", fs.LogOperations)),
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "chroot_users",
+				fmt.Sprintf("%v", fs.ChrootUsers)),
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "allow_unencrypted_connections",
+				fmt.Sprintf("%v", fs.AllowUnencryptedConnections)),
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "expand_wildcards",
+				fmt.Sprintf("%v", fs.ExpandWildcards)),
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "anonymous_user.id_type",
+				fmt.Sprintf("%v", (*fs.AnonymousUser)["id_type"])),
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "anonymous_user.id_value",
+				fmt.Sprintf("%v", (*fs.AnonymousUser)["id_value"])),
+			resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "greeting",
+				fmt.Sprintf("%v", fs.Greeting)),
+		)
+	}
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_ftp_server.some_ftp_server", "enabled",
 			fmt.Sprintf("%v", fs.Enabled)),
