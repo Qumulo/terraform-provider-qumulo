@@ -17,6 +17,39 @@ type VpnKeysBody struct {
 	QumuloCaCrt    string `json:"qumulo_ca_crt"`
 }
 
+func resourceVpnKeys() *schema.Resource {
+	return &schema.Resource{
+		CreateContext: resourceVpnKeysCreate,
+		ReadContext:   resourceVpnKeysRead,
+		UpdateContext: resourceVpnKeysUpdate,
+		DeleteContext: resourceVpnKeysDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(1 * time.Minute),
+			Update: schema.DefaultTimeout(1 * time.Minute),
+			Delete: schema.DefaultTimeout(1 * time.Minute),
+		},
+
+		Schema: map[string]*schema.Schema{
+			"mqvpn_client_crt": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"mqvpn_client_key": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"qumulo_ca_crt": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+		},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+	}
+}
+
 func resourceVpnKeysCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	err := setVpnkeys(ctx, d, m, PUT)
 	if err != nil {
