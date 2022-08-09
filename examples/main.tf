@@ -249,9 +249,11 @@ resource "qumulo_file_system_settings" "fs_settings" {
    }
  }
 
- output "some_smb_server" {
-   value = qumulo_smb_server.update_smb
- }
+resource "qumulo_vpn_keys" "vpn_keys" {
+  mqvpn_client_crt = "xyz"
+  mqvpn_client_key = "abcd"
+  qumulo_ca_crt = "testing"
+}
 
 resource "qumulo_ftp_server" "some_ftp_server" {
   enabled = true
@@ -261,6 +263,10 @@ resource "qumulo_ftp_server" "some_ftp_server" {
   allow_unencrypted_connections = true
   expand_wildcards = false
   greeting = "Hello!"
+}
+
+output "some_smb_server" {
+  value = qumulo_smb_server.update_smb
 }
 
  output "some_name" {
