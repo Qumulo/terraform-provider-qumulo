@@ -4,17 +4,21 @@ The Terraform Qumulo provider is a plugin for Terraform that allows for the upda
 
 ## Supported Features
 - API Authentication
-- Cluster Name
-- Monitoring (MQ)
-- SSL & SSL CA
-- LDAP Server
 - Active Directory
-- NFS Exports & Settings
-- SMB Server & Shares
-- Roles
-- Time Configuration
+- Audit Log
+- Cluster Name
 - Directory Quotas
+- File System Settings
+- FTP Server
 - Interface and Network Configuration
+- LDAP Server
+- Local Users & Groups
+- Monitoring (MQ)
+- NFS Exports & Settings
+- Roles
+- SMB Server & Shares
+- SSL & SSL CA
+- Time Configuration
 - Web UI Settings
 
 ## To Run Acceptance Tests
@@ -25,7 +29,7 @@ First, set the following environment variables, specifying the host and port of 
     export QUMULO_USERNAME={username}
     export QUMULO_PASSWORD={password}
 
-Make sure the TF_ACC environment varialbe is set to enable acceptance testing
+Make sure the TF_ACC environment variable is set to enable acceptance testing
 
     export TF_ACC=1
 
