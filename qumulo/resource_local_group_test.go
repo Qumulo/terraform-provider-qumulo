@@ -81,11 +81,11 @@ func testAccCheckGroup(group CreateGroupRequest) resource.TestCheckFunc {
 			return err
 		}
 
-		if !(group.Name == remoteGroup.Name) {
+		if group.Name != remoteGroup.Name {
 			return fmt.Errorf("Group name mismatch: Expected %v, got %v", group.Name, remoteGroup.Name)
 		}
-		if !(group.Gid == remoteGroup.Gid) {
-			return fmt.Errorf("Group name mismatch: Expected %v, got %v", group.Gid, remoteGroup.Gid)
+		if group.Gid != remoteGroup.Gid {
+			return fmt.Errorf("Group NFS GID mismatch: Expected %v, got %v", group.Gid, remoteGroup.Gid)
 		}
 
 		return nil

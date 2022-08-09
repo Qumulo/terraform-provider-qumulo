@@ -50,9 +50,11 @@ func Provider() *schema.Provider {
 			"qumulo_local_user":              resourceUser(),
 			"qumulo_local_group":             resourceGroup(),
 			"qumulo_web_ui":                  resourceWebUi(),
+			"qumulo_file_system_settings":    resourceFileSystemSettings(),
 			"qumulo_interface_configuration": resourceInterfaceConfiguration(),
 			"qumulo_network_configuration":   resourceNetworkConfiguration(),
 			"qumulo_ftp_server":              resourceFtpServer(),
+			"qumulo_local_group_member":      resourceGroupMember(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
