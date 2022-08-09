@@ -155,7 +155,7 @@ const AdReconfigureEndpoint = "/v1/ad/reconfigure"
 const AdLeaveEndpoint = "/v1/ad/leave"
 
 const AdJoinWaitTime = 1 * time.Second
-const AdJoinTimeoutIterations = 60
+const AdJoinTimeoutIterations = 120
 
 func resourceActiveDirectory() *schema.Resource {
 	return &schema.Resource{
@@ -487,7 +487,8 @@ func waitForADMonitorUpdate(ctx context.Context, c *Client) error {
 		// XXX amanning32: remove since the resource itself has a timeout?
 		if numIterations > AdJoinTimeoutIterations {
 			tflog.Error(ctx, "Active Directory operation timed out, exiting")
-			return fmt.Errorf("ERROR: Active Directory operation timed out after %d seconds, aborting", AdJoinTimeoutIterations)
+			//lint:ignore ST1005 proper nouns should be capitalized
+			return fmt.Errorf("Active Directory operation timed out after %d seconds, aborting", AdJoinTimeoutIterations)
 		}
 	}
 

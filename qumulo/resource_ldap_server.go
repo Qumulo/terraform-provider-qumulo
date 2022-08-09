@@ -178,7 +178,7 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 	err = d.Set("ldap_schema_description", flattenLdapSchemaDescription(
 		ls.LdapSchemaDescription))
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error setting Ldap schema description: %w", err))
+		return diag.FromErr(fmt.Errorf("error setting LDAP schema description: %w", err))
 	}
 	return errs.diags
 }

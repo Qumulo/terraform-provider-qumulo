@@ -97,6 +97,7 @@ func testAccCheckSmbServerSettings(smb SmbServerBody) resource.TestCheckFunc {
 			return err
 		}
 		if !reflect.DeepEqual(*settings, smb) {
+			//lint:ignore ST1005 proper nouns should be capitalized
 			return fmt.Errorf("SMB server settings mismatch: Expected %v, got %v", smb, *settings)
 		}
 		return nil

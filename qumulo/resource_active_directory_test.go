@@ -369,6 +369,7 @@ func testAccCheckActiveDirectorySettings(adSettingsRequest ActiveDirectorySettin
 		}
 
 		if adSettings.Sealing != adSettingsRequest.Sealing || adSettings.Signing != adSettingsRequest.Signing || adSettings.Crypto != adSettingsRequest.Crypto {
+			//lint:ignore ST1005 proper nouns should be capitalized
 			return fmt.Errorf("Active Directory settings mismatch: Expected %v, got %v", adSettingsRequest, adSettings)
 		}
 		return nil
@@ -386,7 +387,7 @@ func testAccCheckActiveDirectoryStatus(adJoinSettingsRequest ActiveDirectoryJoin
 
 		if adStatus.Domain != adJoinSettingsRequest.Domain || adStatus.DomainNetBios != adJoinSettingsRequest.DomainNetBios || adStatus.Ou != adJoinSettingsRequest.Ou ||
 			adStatus.UseAdPosixAttributes != adJoinSettingsRequest.UseAdPosixAttributes || adStatus.BaseDn != adJoinSettingsRequest.BaseDn {
-
+			//lint:ignore ST1005 proper nouns should be capitalized
 			return fmt.Errorf("Active Directory status mismatch: Expected %v, got %v", adJoinSettingsRequest, adStatus)
 		}
 		return nil

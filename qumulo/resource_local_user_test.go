@@ -81,11 +81,11 @@ func testAccCheckUser(user UserBody) resource.TestCheckFunc {
 
 		userResource, ok := s.RootModule().Resources["qumulo_local_user.test_user"]
 		if !ok {
-			return fmt.Errorf("User resource not found, %v", userResource)
+			return fmt.Errorf("user resource not found, %v", userResource)
 		}
 
 		if userResource.Primary.ID == "" {
-			return fmt.Errorf("User ID is not set")
+			return fmt.Errorf("user ID is not set")
 		}
 
 		readUserByNameUri := UsersEndpoint + userResource.Primary.ID
@@ -95,13 +95,13 @@ func testAccCheckUser(user UserBody) resource.TestCheckFunc {
 		}
 
 		if !(user.Name == remoteUser.Name) {
-			return fmt.Errorf("Users name mismatch: Expected %v, got %v", user.Name, remoteUser.Name)
+			return fmt.Errorf("users name mismatch: Expected %v, got %v", user.Name, remoteUser.Name)
 		}
 		if !(user.PrimaryGroup == remoteUser.PrimaryGroup) {
-			return fmt.Errorf("Users name mismatch: Expected %v, got %v", user.PrimaryGroup, remoteUser.PrimaryGroup)
+			return fmt.Errorf("users name mismatch: Expected %v, got %v", user.PrimaryGroup, remoteUser.PrimaryGroup)
 		}
 		if !(user.Uid == remoteUser.Uid) {
-			return fmt.Errorf("Users name mismatch: Expected %v, got %v", user.Uid, remoteUser.Uid)
+			return fmt.Errorf("users name mismatch: Expected %v, got %v", user.Uid, remoteUser.Uid)
 		}
 
 		return nil

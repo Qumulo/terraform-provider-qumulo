@@ -157,7 +157,8 @@ func testAccCheckLdapServerSettings(ldap LdapServerSettingsBody) resource.TestCh
 			return err
 		}
 		if !reflect.DeepEqual(*settings, ldap) {
-			return fmt.Errorf("SMB server settings mismatch: Expected %v, got %v", ldap, *settings)
+			//lint:ignore ST1005 proper nouns should be capitalized
+			return fmt.Errorf("LDAP server settings mismatch: Expected %v, got %v", ldap, *settings)
 		}
 		return nil
 	}

@@ -89,11 +89,11 @@ func testAccCheckRole(role Role) resource.TestCheckFunc {
 
 		roleResource, ok := s.RootModule().Resources["qumulo_role.test_role"]
 		if !ok {
-			return fmt.Errorf("Role resource not found, %v", roleResource)
+			return fmt.Errorf("role resource not found, %v", roleResource)
 		}
 
 		if roleResource.Primary.ID == "" {
-			return fmt.Errorf("Role ID is not set")
+			return fmt.Errorf("role ID is not set")
 		}
 
 		readRoleByNameUri := RolesEndpoint + roleResource.Primary.ID
@@ -103,10 +103,10 @@ func testAccCheckRole(role Role) resource.TestCheckFunc {
 		}
 
 		if !(role.Description == remoteRole.Description) {
-			return fmt.Errorf("Roles descriptions mismatch: Expected %v, got %v", role.Description, remoteRole.Description)
+			return fmt.Errorf("roles descriptions mismatch: Expected %v, got %v", role.Description, remoteRole.Description)
 		}
 		if !reflect.DeepEqual(role.Privileges, remoteRole.Privileges) {
-			return fmt.Errorf("Roles privileges mismatch: Expected %v, got %v", role.Privileges, remoteRole.Privileges)
+			return fmt.Errorf("roles privileges mismatch: Expected %v, got %v", role.Privileges, remoteRole.Privileges)
 		}
 
 		return nil

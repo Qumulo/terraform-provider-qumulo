@@ -84,6 +84,7 @@ func testAccCheckCloudWatchSettings(settings CloudWatchConfigBody) resource.Test
 		}
 
 		if !(reflect.DeepEqual(*remoteSettings, settings)) {
+			//lint:ignore ST1005 proper nouns should be capitalized
 			return fmt.Errorf("CloudWatch configuration mismatch: Expected %v, got %v", settings, *remoteSettings)
 		}
 

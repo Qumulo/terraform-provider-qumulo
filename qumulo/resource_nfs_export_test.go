@@ -146,6 +146,7 @@ func testAccCheckNfsExport(ne NfsExport, resourceName string) resource.TestCheck
 		}
 		ne.Id = nfsExportId
 		if !reflect.DeepEqual(*export, ne) {
+			//lint:ignore ST1005 proper nouns should be capitalized
 			return fmt.Errorf("NFS export mismatch: Expected %v, got %v", ne, *export)
 		}
 		return nil

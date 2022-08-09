@@ -84,7 +84,7 @@ func testAccCheckSyslogSettings(settings SyslogConfigBody) resource.TestCheckFun
 		}
 
 		if !(reflect.DeepEqual(*remoteSettings, settings)) {
-			return fmt.Errorf("Syslog configuration mismatch: Expected %v, got %v", settings, *remoteSettings)
+			return fmt.Errorf("syslog configuration mismatch: Expected %v, got %v", settings, *remoteSettings)
 		}
 
 		return nil
