@@ -79,15 +79,6 @@ func testAccCheckCloudWatchSettings(settings CloudWatchConfigBody) resource.Test
 		c := testAccProvider.Meta().(*Client)
 		ctx := context.Background()
 
-		settingsResource, ok := s.RootModule().Resources["qumulo_cloudwatch.test_cloudwatch_settings"]
-		if !ok {
-			return fmt.Errorf("CloudWatch settings resource not found, %v", settingsResource)
-		}
-
-		if settingsResource.Primary.ID == "" {
-			return fmt.Errorf("CloudWatch settings ID is not set")
-		}
-
 		remoteSettings, err := DoRequest[CloudWatchConfigBody, CloudWatchConfigBody](ctx, c, GET, CloudWatchConfigEndpoint, nil)
 		if err != nil {
 			return err

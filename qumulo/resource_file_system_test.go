@@ -98,15 +98,6 @@ func testAccCheckFileSystemPermissionsSettings(permissions FileSystemPermissions
 		c := testAccProvider.Meta().(*Client)
 		ctx := context.Background()
 
-		settingsResource, ok := s.RootModule().Resources["qumulo_file_system_settings.test_fs_settings"]
-		if !ok {
-			return fmt.Errorf("File system settings resource not found, %v", settingsResource)
-		}
-
-		if settingsResource.Primary.ID == "" {
-			return fmt.Errorf("File system settings ID is not set")
-		}
-
 		remotePermissions, err := DoRequest[FileSystemPermissionsSettingsBody, FileSystemPermissionsSettingsBody](ctx,
 			c, GET, FileSystemPermissionsEndpoint, nil)
 		if err != nil {
@@ -125,15 +116,6 @@ func testAccCheckFileSystemAtimeSettings(atime FileSystemAtimeSettingsBody) reso
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
 		ctx := context.Background()
-
-		settingsResource, ok := s.RootModule().Resources["qumulo_file_system_settings.test_fs_settings"]
-		if !ok {
-			return fmt.Errorf("File system settings resource not found, %v", settingsResource)
-		}
-
-		if settingsResource.Primary.ID == "" {
-			return fmt.Errorf("File system settings ID is not set")
-		}
 
 		remoteAtime, err := DoRequest[FileSystemAtimeSettingsBody, FileSystemAtimeSettingsBody](ctx,
 			c, GET, FileSystemAtimeEndpoint, nil)

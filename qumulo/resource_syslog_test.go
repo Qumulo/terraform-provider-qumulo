@@ -79,15 +79,6 @@ func testAccCheckSyslogSettings(settings SyslogConfigBody) resource.TestCheckFun
 		c := testAccProvider.Meta().(*Client)
 		ctx := context.Background()
 
-		settingsResource, ok := s.RootModule().Resources["qumulo_syslog.test_syslog_settings"]
-		if !ok {
-			return fmt.Errorf("Syslog settings resource not found, %v", settingsResource)
-		}
-
-		if settingsResource.Primary.ID == "" {
-			return fmt.Errorf("Syslog settings ID is not set")
-		}
-
 		remoteSettings, err := DoRequest[SyslogConfigBody, SyslogConfigBody](ctx, c, GET, SyslogConfigEndpoint, nil)
 		if err != nil {
 			return err
