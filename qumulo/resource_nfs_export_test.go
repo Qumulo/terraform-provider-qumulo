@@ -5,11 +5,36 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 )
+
+func init() {
+	resource.AddTestSweepers("qumulo_nfs_export", &resource.Sweeper{
+		Name: "qumulo_nfs_export",
+		F: func(region string) error {
+			client := testAccProvider.Meta().(*Client)
+			ctx := context.Background()
+			nfsExports, err := GetAllNfsExports(ctx, client)
+			if err != nil {
+				return fmt.Errorf("error getting nfs exports: %s", err)
+			}
+			for _, nfsExport := range *nfsExports {
+				if strings.HasPrefix(nfsExport.Description, "test-acc") {
+					err := DeleteNfsExport(ctx, client, nfsExport.Id)
+
+					if err != nil {
+						log.Printf("Error destroying nfs export with ID %s during sweep: %s", nfsExport.Id, err)
+					}
+				}
+			}
+			return nil
+		},
+	})
+}
 
 func TestAccTestNfsExport(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -32,8 +57,9 @@ func TestAccTestNfsExport(t *testing.T) {
 }
 
 var defaultNfsExport = NfsExport{
-	ExportPath: "/my_very_own_export",
-	FsPath:     "/home/testing/my_very_own_export",
+	ExportPath:  "/my_very_own_export",
+	FsPath:      "/home/testing/my_very_own_export",
+	Description: "test-acc",
 	Restrictions: []NfsRestriction{{
 		HostRestrictions:      []string{},
 		ReadOnly:              false,
@@ -44,8 +70,9 @@ var defaultNfsExport = NfsExport{
 }
 
 var testNfsExport = NfsExport{
-	ExportPath: "/my_very_own_export",
-	FsPath:     "/home/testing/my_very_own_export",
+	ExportPath:  "/my_very_own_export",
+	FsPath:      "/home/testing/my_very_own_export",
+	Description: "test-acc",
 	Restrictions: []NfsRestriction{{
 		HostRestrictions:      []string{"10.100.38.31"},
 		ReadOnly:              false,
@@ -130,6 +157,7 @@ func testAccCompareNfsExports(ne NfsExport) resource.TestCheckFunc {
 func testAccCheckNfsExport(ne NfsExport, resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := testAccProvider.Meta().(*Client)
+
 		ctx := context.Background()
 
 		res, ok := s.RootModule().Resources[resourceName]
