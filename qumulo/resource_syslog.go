@@ -58,7 +58,7 @@ func resourceSyslog() *schema.Resource {
 func resourceSyslogCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	err := c.modifySyslogConfig(ctx, d, PUT)
+	err := modifySyslogConfig(ctx, c, d, PUT)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -88,7 +88,7 @@ func resourceSyslogRead(ctx context.Context, d *schema.ResourceData, m interface
 func resourceSyslogUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	err := c.modifySyslogConfig(ctx, d, PATCH)
+	err := modifySyslogConfig(ctx, c, d, PATCH)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -102,7 +102,7 @@ func resourceSyslogDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	return nil
 }
 
-func (c *Client) modifySyslogConfig(ctx context.Context, d *schema.ResourceData, method Method) error {
+func modifySyslogConfig(ctx context.Context, c *Client, d *schema.ResourceData, method Method) error {
 	var config = SyslogConfigBody{
 		Enabled:       d.Get("enabled").(bool),
 		ServerAddress: d.Get("server_address").(string),
