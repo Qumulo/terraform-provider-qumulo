@@ -65,7 +65,7 @@ func testAccCheckClusterName(name string) resource.TestCheckFunc {
 		}
 		if cs.ClusterName != name {
 			fmt.Println(cs.ClusterName)
-			return fmt.Errorf("Cluster name is not updated: Expected %s, got %s", name, cs.ClusterName)
+			return fmt.Errorf("cluster name mismatch: Expected %s, got %s", name, cs.ClusterName)
 		}
 		return nil
 	}

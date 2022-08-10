@@ -105,7 +105,7 @@ func testAccCheckFileSystemPermissionsSettings(permissions FileSystemPermissions
 		}
 
 		if !(permissions.Mode == remotePermissions.Mode) {
-			return fmt.Errorf("File system permissions mode mismatch: Expected %v, got %v", permissions.Mode, remotePermissions.Mode)
+			return fmt.Errorf("file system permissions mode mismatch: Expected %v, got %v", permissions.Mode, remotePermissions.Mode)
 		}
 
 		return nil
@@ -124,7 +124,7 @@ func testAccCheckFileSystemAtimeSettings(atime FileSystemAtimeSettingsBody) reso
 		}
 
 		if !reflect.DeepEqual(*remoteAtime, atime) {
-			return fmt.Errorf("File system atime settings mismatch: Expected %v, got %v", atime, remoteAtime)
+			return fmt.Errorf("file system atime settings mismatch: Expected %v, got %v", atime, remoteAtime)
 		}
 
 		return nil

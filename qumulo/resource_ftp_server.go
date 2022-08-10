@@ -2,11 +2,12 @@ package qumulo
 
 import (
 	"context"
+	"strconv"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strconv"
-	"time"
 )
 
 const FtpServerEndpoint = "/v0/ftp/settings"
@@ -121,7 +122,7 @@ func resourceFtpServerUpdate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceFtpServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	tflog.Info(ctx, "Deleting Ftp server resource")
+	tflog.Info(ctx, "Deleting FTP server resource")
 	return nil
 }
 

@@ -66,7 +66,8 @@ func testAccCheckNfsSettings(ns NfsSettingsBody) resource.TestCheckFunc {
 			return err
 		}
 		if *settings != ns {
-			return fmt.Errorf("Nfs settings mismatch: Expected %v, got %v", ns, settings)
+			//lint:ignore ST1005 proper nouns should be capitalized
+			return fmt.Errorf("NFS settings mismatch: Expected %v, got %v", ns, settings)
 		}
 		return nil
 	}

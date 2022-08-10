@@ -155,7 +155,7 @@ const AdReconfigureEndpoint = "/v1/ad/reconfigure"
 const AdLeaveEndpoint = "/v1/ad/leave"
 
 const AdJoinWaitTime = 1 * time.Second
-const AdJoinTimeoutIterations = 60
+const AdJoinTimeoutIterations = 120
 
 func resourceActiveDirectory() *schema.Resource {
 	return &schema.Resource{
@@ -412,9 +412,9 @@ func updateActiveDirectorySettings(ctx context.Context, c *Client, activeDirecto
 		tflog.Debug(ctx, "No Active Directory settings detected, will not apply changes.")
 		return nil, nil
 	} else if activeDirectorySettings.Signing == "" || activeDirectorySettings.Sealing == "" || activeDirectorySettings.Crypto == "" {
-		// TODO: decide if this should return an error
-		tflog.Warn(ctx, "Incomplete Active Directory settings detected, will not apply changes. Specify all or none of Signing, Sealing, and Crypto.")
-		return nil, nil
+		tflog.Error(ctx, "Incomplete Active Directory settings detected; this scenario should not occur. Report this error as an issue in the Qumulo provider.")
+		return nil, fmt.Errorf(`incomplete Active Directory settings detected, will not apply changes.
+			Specify all or none of Signing, Sealing, and Crypto. Settings detected: %v`, activeDirectorySettings)
 	} else {
 		settingsResponse, err := DoRequest[ActiveDirectorySettingsBody, ActiveDirectorySettingsBody](ctx, c, PUT, AdSettingsEndpoint, activeDirectorySettings)
 		if err != nil {
@@ -487,7 +487,8 @@ func waitForADMonitorUpdate(ctx context.Context, c *Client) error {
 		// XXX amanning32: remove since the resource itself has a timeout?
 		if numIterations > AdJoinTimeoutIterations {
 			tflog.Error(ctx, "Active Directory operation timed out, exiting")
-			return fmt.Errorf("ERROR: Active Directory operation timed out after %d seconds, aborting", AdJoinTimeoutIterations)
+			//lint:ignore ST1005 proper nouns should be capitalized
+			return fmt.Errorf("Active Directory operation timed out after %d seconds, aborting", AdJoinTimeoutIterations)
 		}
 	}
 
