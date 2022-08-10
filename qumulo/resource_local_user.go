@@ -24,6 +24,14 @@ type UserBody struct {
 	Password          string `json:"password"`
 }
 
+type UserModify struct {
+	Id            string `json:"id"`
+	Name          string `json:"name"`
+	PrimaryGroup  string `json:"primary_group"`
+	Uid           string `json:"uid"`
+	HomeDirectory string `json:"home_directory"`
+}
+
 func resourceUser() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceUserCreate,
@@ -60,7 +68,7 @@ func resourceUser() *schema.Resource {
 			},
 			"password": &schema.Schema{
 				Type:      schema.TypeString,
-				Required:  true,
+				Optional:  true,
 				Sensitive: true,
 			},
 			"can_change_password": &schema.Schema{
@@ -77,6 +85,10 @@ func resourceUser() *schema.Resource {
 
 func resourceUserCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
+
+	if d.Get("password") == "" {
+		return diag.FromErr(fmt.Errorf("password must be set when creating user"))
+	}
 
 	userSettings := setUserSettings(ctx, d, m)
 
@@ -118,17 +130,26 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, m interface{}
 func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	userSettings := setUserSettings(ctx, d, m)
-	userSettings.Id = d.Id()
 	updateUserByNameUri := UsersEndpoint + d.Id()
 
-	tflog.Debug(ctx, fmt.Sprintf("Updating local user with name %q", userSettings.Name))
+	tflog.Debug(ctx, fmt.Sprintf("Updating local user with name %q", d.Get("name")))
 
-	_, err := DoRequest[UserBody, UserBody](ctx, c, PUT, updateUserByNameUri, &userSettings)
+	var err error
+
+	if d.Get("password") != "" {
+		userSettings := setUserSettings(ctx, d, m)
+		userSettings.Id = d.Id()
+		_, err = DoRequest[UserBody, UserBody](ctx, c, PUT, updateUserByNameUri, &userSettings)
+	} else {
+		userSettings := modifyUserSettings(ctx, d, m)
+		userSettings.Id = d.Id()
+		_, err = DoRequest[UserModify, UserModify](ctx, c, PUT, updateUserByNameUri, &userSettings)
+	}
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	return resourceUserRead(ctx, d, m)
 }
 
@@ -156,6 +177,18 @@ func setUserSettings(ctx context.Context, d *schema.ResourceData, m interface{})
 		Uid:           d.Get("uid").(string),
 		HomeDirectory: d.Get("home_directory").(string),
 		Password:      d.Get("password").(string),
+	}
+
+	return userConfig
+}
+
+func modifyUserSettings(ctx context.Context, d *schema.ResourceData, m interface{}) UserModify {
+
+	userConfig := UserModify{
+		Name:          d.Get("name").(string),
+		PrimaryGroup:  d.Get("primary_group").(string),
+		Uid:           d.Get("uid").(string),
+		HomeDirectory: d.Get("home_directory").(string),
 	}
 
 	return userConfig

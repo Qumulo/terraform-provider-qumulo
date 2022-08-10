@@ -41,17 +41,17 @@ variable "some_cluster_name" {
 #   cluster_name = var.some_cluster_name
 # }
 
- resource "qumulo_ad_settings" "ad_settings" {
-   signing = "WANT_SIGNING"
-   sealing = "WANT_SEALING"
-   crypto = "WANT_AES"
-   domain = "ad.eng.qumulo.com"
-   domain_netbios = "AD"
-   ad_username = "Administrator"
-   ad_password = "a"
-   use_ad_posix_attributes = false
-   base_dn = "CN=Users,DC=ad,DC=eng,DC=qumulo,DC=com"
- }
+#  resource "qumulo_ad_settings" "ad_settings" {
+#    signing = "WANT_SIGNING"
+#    sealing = "WANT_SEALING"
+#    crypto = "WANT_AES"
+#    domain = "ad.eng.qumulo.com"
+#    domain_netbios = "AD"
+#    ad_username = "Administrator"
+#    ad_password = "a"
+#    use_ad_posix_attributes = false
+#    base_dn = "CN=Users,DC=ad,DC=eng,DC=qumulo,DC=com"
+#  }
 
 # resource "qumulo_nfs_export" "new_nfs_export" {
 #   export_path = "/lib"
@@ -117,6 +117,13 @@ variable "some_cluster_name" {
 #   password = "Test1234"
 #   home_directory = "/"
 # }
+
+resource "qumulo_local_user" "test_user" {
+  name = "mytestuser32"
+  primary_group = 514
+  #password = "Test1234"
+  home_directory = "/"
+}
 
 # resource "qumulo_local_group" "test_group" {
 #     name = "testgroup2"
@@ -261,9 +268,9 @@ variable "some_cluster_name" {
 	region = ""
  }
 
- output "some_smb_server" {
-   value = qumulo_smb_server.update_smb
- }
+#  output "some_smb_server" {
+#    value = qumulo_smb_server.update_smb
+#  }
 
 # resource "qumulo_ftp_server" "some_ftp_server" {
 #   enabled = true
