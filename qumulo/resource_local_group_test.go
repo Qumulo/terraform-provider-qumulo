@@ -68,11 +68,11 @@ func testAccCheckGroup(group CreateGroupRequest) resource.TestCheckFunc {
 
 		groupResource, ok := s.RootModule().Resources["qumulo_local_group.test_group"]
 		if !ok {
-			return fmt.Errorf("Group resource not found, %v", groupResource)
+			return fmt.Errorf("local group resource not found, %v", groupResource)
 		}
 
 		if groupResource.Primary.ID == "" {
-			return fmt.Errorf("Group ID is not set")
+			return fmt.Errorf("local group ID is not set")
 		}
 
 		readGroupByNameUri := GroupsEndpoint + groupResource.Primary.ID
@@ -82,10 +82,10 @@ func testAccCheckGroup(group CreateGroupRequest) resource.TestCheckFunc {
 		}
 
 		if group.Name != remoteGroup.Name {
-			return fmt.Errorf("Group name mismatch: Expected %v, got %v", group.Name, remoteGroup.Name)
+			return fmt.Errorf("local group name mismatch: Expected %v, got %v", group.Name, remoteGroup.Name)
 		}
 		if group.Gid != remoteGroup.Gid {
-			return fmt.Errorf("Group NFS GID mismatch: Expected %v, got %v", group.Gid, remoteGroup.Gid)
+			return fmt.Errorf("local group NFS GID mismatch: Expected %v, got %v", group.Gid, remoteGroup.Gid)
 		}
 
 		return nil

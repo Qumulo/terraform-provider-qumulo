@@ -154,7 +154,8 @@ func testAccCheckFtpServer(fs FtpServerBody) resource.TestCheckFunc {
 		}
 
 		if !reflect.DeepEqual(*ftpServer, fs) {
-			return fmt.Errorf("ftp server mismatch: Expected %v, got %v", fs, *ftpServer)
+			//lint:ignore ST1005 proper nouns should be capitalized
+			return fmt.Errorf("FTP server mismatch: Expected %v, got %v", fs, *ftpServer)
 		}
 		return nil
 	}

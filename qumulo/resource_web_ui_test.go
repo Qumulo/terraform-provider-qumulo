@@ -53,7 +53,7 @@ func testAccCheckWebUi(uiConfig WebUiBody) resource.TestCheckFunc {
 		}
 
 		if !reflect.DeepEqual(*settings, uiConfig) {
-			return fmt.Errorf("Web UI settings mismatch: Expected %v, got %v", uiConfig, *settings)
+			return fmt.Errorf("web UI settings mismatch: Expected %v, got %v", uiConfig, *settings)
 		}
 		return nil
 	}

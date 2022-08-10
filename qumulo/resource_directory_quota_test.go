@@ -65,7 +65,7 @@ func testAccCheckDirectoryQuota(quota DirectoryQuotaBody) resource.TestCheckFunc
 		}
 
 		if !reflect.DeepEqual(*settings, quota) {
-			return fmt.Errorf("Directory quota settings mismatch: Expected %v, got %v", quota, *settings)
+			return fmt.Errorf("directory quota settings mismatch: Expected %v, got %v", quota, *settings)
 		}
 		return nil
 	}

@@ -34,8 +34,6 @@ func TestAccAddSmbShare(t *testing.T) {
 	})
 }
 
-var defaultSmbShareConfig = " "
-
 var share1 = SmbShare{
 	ShareName:   "ShareForTesting",
 	FsPath:      "/",
@@ -214,11 +212,13 @@ func testAccCheckShare(share SmbShare) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources["qumulo_smb_share.share"]
 		if !ok {
-			return fmt.Errorf("Share not found, %v", rs)
+			//lint:ignore ST1005 proper nouns should be capitalized
+			return fmt.Errorf("SMB share not found, %v", rs)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("Share ID is not set")
+			//lint:ignore ST1005 proper nouns should be capitalized
+			return fmt.Errorf("SMB share ID is not set")
 		}
 
 		readSmbShareByIdUri := SmbSharesEndpoint + rs.Primary.ID
@@ -231,7 +231,8 @@ func testAccCheckShare(share SmbShare) resource.TestCheckFunc {
 		}
 
 		if sh.ShareName != share.ShareName {
-			return fmt.Errorf("Share names do not match - Local: %v, Cluster: %v", share.ShareName, sh.ShareName)
+			//lint:ignore ST1005 proper nouns should be capitalized
+			return fmt.Errorf("SMB share name mismatch: Expected %v, got %v", share.ShareName, sh.ShareName)
 		}
 		return nil
 	}

@@ -112,7 +112,7 @@ func testAccCheckMonitoringSettings(ms MonitoringSettings) resource.TestCheckFun
 			return err
 		}
 		if *settings != ms {
-			return fmt.Errorf("Monitoring settings mismatch: Expected %v, got %v", ms, settings)
+			return fmt.Errorf("monitoring settings mismatch: Expected %v, got %v", ms, settings)
 		}
 		return nil
 	}

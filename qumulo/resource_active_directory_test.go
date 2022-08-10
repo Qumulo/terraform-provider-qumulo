@@ -228,15 +228,15 @@ var testingActiveDirectoryConfigSettingsInvalid = ActiveDirectoryRequest{
 // Active Directory Settings configurations
 
 var defaultActiveDirectorySettingsConfig = ActiveDirectorySettingsBody{
-	Signing: "WANT_SIGNING",
-	Sealing: "WANT_SEALING",
-	Crypto:  "WANT_AES",
+	Signing: WantSigning.String(),
+	Sealing: WantSealing.String(),
+	Crypto:  WantCrypto.String(),
 }
 
 var testingActiveDirectorySettingsConfigFull = ActiveDirectorySettingsBody{
-	Signing: "REQUIRE_SIGNING",
-	Sealing: "WANT_SEALING",
-	Crypto:  "REQUIRE_AES",
+	Signing: RequireSigning.String(),
+	Sealing: WantSealing.String(),
+	Crypto:  RequireCrypto.String(),
 }
 
 var testingActiveDirectorySettingsConfigInvalid = ActiveDirectorySettingsBody{
@@ -369,6 +369,7 @@ func testAccCheckActiveDirectorySettings(adSettingsRequest ActiveDirectorySettin
 		}
 
 		if adSettings.Sealing != adSettingsRequest.Sealing || adSettings.Signing != adSettingsRequest.Signing || adSettings.Crypto != adSettingsRequest.Crypto {
+			//lint:ignore ST1005 proper nouns should be capitalized
 			return fmt.Errorf("Active Directory settings mismatch: Expected %v, got %v", adSettingsRequest, adSettings)
 		}
 		return nil
@@ -386,7 +387,7 @@ func testAccCheckActiveDirectoryStatus(adJoinSettingsRequest ActiveDirectoryJoin
 
 		if adStatus.Domain != adJoinSettingsRequest.Domain || adStatus.DomainNetBios != adJoinSettingsRequest.DomainNetBios || adStatus.Ou != adJoinSettingsRequest.Ou ||
 			adStatus.UseAdPosixAttributes != adJoinSettingsRequest.UseAdPosixAttributes || adStatus.BaseDn != adJoinSettingsRequest.BaseDn {
-
+			//lint:ignore ST1005 proper nouns should be capitalized
 			return fmt.Errorf("Active Directory status mismatch: Expected %v, got %v", adJoinSettingsRequest, adStatus)
 		}
 		return nil

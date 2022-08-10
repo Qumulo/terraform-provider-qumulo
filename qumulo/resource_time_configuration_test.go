@@ -63,7 +63,7 @@ func testAccCheckTimeConfiguration(timeConfig TimeConfigurationBody) resource.Te
 		}
 
 		if !reflect.DeepEqual(*settings, timeConfig) {
-			return fmt.Errorf("Time configuration settings mismatch: Expected %v, got %v", timeConfig, *settings)
+			return fmt.Errorf("time configuration settings mismatch: Expected %v, got %v", timeConfig, *settings)
 		}
 		return nil
 	}

@@ -16,8 +16,8 @@ import (
 type LdapSchema int
 
 const (
-	RFC2307 LdapSchema = iota + 1
-	CUSTOM
+	Rfc2307 LdapSchema = iota + 1
+	Custom
 )
 
 func (e LdapSchema) String() string {
@@ -91,7 +91,7 @@ func resourceLdapServer() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(LdapSchemaValues, false)),
-				Default:          RFC2307.String(),
+				Default:          Rfc2307.String(),
 			},
 			"ldap_schema_description": {
 				Type:     schema.TypeList,
@@ -178,7 +178,7 @@ func resourceLdapServerRead(ctx context.Context, d *schema.ResourceData, m inter
 	err = d.Set("ldap_schema_description", flattenLdapSchemaDescription(
 		ls.LdapSchemaDescription))
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error setting Ldap schema description: %w", err))
+		return diag.FromErr(fmt.Errorf("error setting LDAP schema description: %w", err))
 	}
 	return errs.diags
 }
