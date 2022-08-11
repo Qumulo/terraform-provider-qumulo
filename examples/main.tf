@@ -145,10 +145,10 @@ resource "qumulo_local_user" "test_user" {
 #    ]
 #  }
 
-# resource "qumulo_role_member" "actors" {
-#   domain = "LOCAL"
-#   uid = "1021"
-#   role_name = "Actors"
+# resource "qumulo_role_member" "actors_member" {
+#   for_each = qumulo_local_user.test_user
+#   name = each.value.name
+#   role_name = qumulo_role.actors.name
 # }
 
 #  resource "qumulo_ssl_ca" "update_ssl_ca" {
