@@ -46,6 +46,18 @@ $ terraform import qumulo_cluster_name.name 1
 
 $ terraform import qumulo_smb_share.share2 2
 ```
+
+For network configuration, you will need to specify the ID in a different format which includes the network and interface
+ID as follows:
+```
+$ terraform import qumulo_network_configuration.RESOURCE_NAME NETWORK_ID:INTERFACE_ID
+```
+For example, for a network resource with name "network_config" and 
+network ID of 4 and interface ID of 1, the command would look like:
+```
+$ terraform import qumulo_network_configuration.network_config 1:4
+```
+
 The resources are now imported into the Terraform state. However, you still need to update the configuration file.
 
 <a id="update-configuration"></a>
