@@ -3,7 +3,9 @@ package qumulo
 // TODO testing after imports
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -100,7 +102,8 @@ func resourceNetworkConfiguration() *schema.Resource {
 			},
 			"netmask": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "",
 			},
 			"mtu": &schema.Schema{
 				Type:     schema.TypeInt,
@@ -121,7 +124,18 @@ func resourceNetworkConfiguration() *schema.Resource {
 			},
 		},
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			State: func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+				// d.Id() here is the last argument passed to the
+				//`terraform import RESOURCE_TYPE.RESOURCE_NAME RESOURCE_ID` command
+				interfaceId, networkId, err := parseImportID(d.Id())
+				if err != nil {
+					return nil, err
+				}
+				d.Set("interface_id", interfaceId)
+				d.Set("network_id", networkId)
+				d.SetId(networkId)
+				return []*schema.ResourceData{d}, nil
+			},
 		},
 	}
 }
@@ -218,4 +232,14 @@ func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData,
 	tflog.Debug(ctx, "Adding/Patching network configuration")
 	_, err := DoRequest[NetworkConfigurationRequest, NetworkConfigurationResponse](ctx, c, method, uri, &networkConfig)
 	return err
+}
+
+func parseImportID(id string) (string, string, error) {
+	parts := strings.SplitN(id, ":", 2)
+
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("unexpected format of ID (%s), expected attribute1:attribute2", id)
+	}
+
+	return parts[0], parts[1], nil
 }
