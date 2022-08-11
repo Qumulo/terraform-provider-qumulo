@@ -13,7 +13,7 @@ import (
 
 const MembersSuffix = "/members/"
 
-type MemberRequest struct {
+type GroupMemberRequest struct {
 	MemberId string `json:"member_id"`
 	GroupId  string `json:"group_id"`
 }
@@ -68,7 +68,7 @@ func resourceGroupMember() *schema.Resource {
 func resourceGroupMemberCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	memberSettings := MemberRequest{
+	memberSettings := GroupMemberRequest{
 		MemberId: d.Get("member_id").(string),
 		GroupId:  d.Get("group_id").(string),
 	}
@@ -78,7 +78,7 @@ func resourceGroupMemberCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	addMemberUri := GroupsEndpoint + memberSettings.GroupId + MembersSuffix
 
-	_, err := DoRequest[MemberRequest, MemberRequest](ctx, c, POST, addMemberUri, &memberSettings)
+	_, err := DoRequest[GroupMemberRequest, GroupMemberRequest](ctx, c, POST, addMemberUri, &memberSettings)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -105,14 +105,14 @@ func resourceGroupMemberRead(ctx context.Context, d *schema.ResourceData, m inte
 func resourceGroupMemberDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	deleteGroupMemberByIdUri := GroupsEndpoint + d.Get("group_id").(string) +
-		MembersSuffix + d.Get("member_id").(string)
+	groupId := d.Get("group_id").(string)
+	memberId := d.Get("member_id").(string)
 
-	tflog.Debug(ctx, fmt.Sprintf("Removing member with id %q to group with id %q",
-		d.Get("member_id").(string), d.Get("group_id").(string)))
+	deleteGroupMemberByIdUri := GroupsEndpoint + groupId + MembersSuffix + memberId
 
-	_, err := DoRequest[MemberRequest, MemberRequest](ctx, c, DELETE, deleteGroupMemberByIdUri, nil)
+	tflog.Debug(ctx, fmt.Sprintf("Removing member with id %q from group with id %q", memberId, groupId))
 
+	_, err := DoRequest[GroupMemberRequest, GroupMemberRequest](ctx, c, DELETE, deleteGroupMemberByIdUri, nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
