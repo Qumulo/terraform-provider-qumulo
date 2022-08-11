@@ -127,7 +127,7 @@ func resourceNetworkConfiguration() *schema.Resource {
 			State: func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 				// d.Id() here is the last argument passed to the
 				//`terraform import RESOURCE_TYPE.RESOURCE_NAME RESOURCE_ID` command
-				networkId, interfaceId, err := parseImportID(d.Id())
+				interfaceId, networkId, err := parseImportID(d.Id())
 				if err != nil {
 					return nil, err
 				}
