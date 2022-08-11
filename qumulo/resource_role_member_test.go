@@ -67,10 +67,6 @@ resource "qumulo_role_member" "test_member" {
 
 func testAccValidateRoleMember() resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
-		// XXX amanning32: This check should work, but for some reason checking the auth_id happens before it is set, causing a failure
-		// Leaving it commented out does pass, and the auth ID is clearly set due to the other Check function as well as the DELETE working
-		// resource.TestCheckResourceAttrSet("qumulo_role_member.test_member", "domain"),
-		// resource.TestCheckResourceAttrSet("qumulo_role_member.test_member", "auth_id"),
 		resource.TestCheckResourceAttrSet("qumulo_role_member.test_member", "role_name"),
 	)
 }
