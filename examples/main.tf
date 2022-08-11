@@ -145,6 +145,12 @@ resource "qumulo_local_user" "test_user" {
 #    ]
 #  }
 
+# resource "qumulo_role_member" "actors" {
+#   domain = "LOCAL"
+#   uid = "1021"
+#   role_name = "Actors"
+# }
+
 #  resource "qumulo_ssl_ca" "update_ssl_ca" {
 #    ca_certificate = var.some_cert
 #  }

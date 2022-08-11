@@ -56,6 +56,7 @@ func Provider() *schema.Provider {
 			"qumulo_local_group_member":      resourceGroupMember(),
 			"qumulo_syslog":                  resourceSyslog(),
 			"qumulo_cloudwatch":              resourceCloudWatch(),
+			"qumulo_role_member":             resourceRoleMember(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
