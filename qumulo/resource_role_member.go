@@ -16,12 +16,12 @@ import (
 const MembersEnding = "/members"
 
 type RoleMemberAddRequest struct {
-	Domain   string `json:"domain"`
-	AuthId   string `json:"auth_id"`
-	Uid      string `json:"uid"`
-	Gid      string `json:"gid"`
-	Sid      string `json:"sid"`
-	Name     string `json:"name"`
+	Domain   string `json:"domain,omitempty"`
+	AuthId   string `json:"auth_id,omitempty"`
+	Uid      string `json:"uid,omitempty"`
+	Gid      string `json:"gid,omitempty"`
+	Sid      string `json:"sid,omitempty"`
+	Name     string `json:"name,omitempty"`
 	RoleName string `json:"role_name"`
 }
 
@@ -52,33 +52,39 @@ func resourceRoleMember() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"domain": &schema.Schema{
 				Type:             schema.TypeString,
-				Required:         true,
+				Optional:         true,
+				Computed:         true,
 				ForceNew:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(RoleDomainValues, false)),
 			},
 			"auth_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"uid": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"gid": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"sid": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"role_name": &schema.Schema{
@@ -88,8 +94,6 @@ func resourceRoleMember() *schema.Resource {
 			},
 		},
 
-		// Note that the import function does not verify with the API whether this user is actually a member
-		// of this group
 		Importer: &schema.ResourceImporter{
 			State: func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 				// d.Id() here is the last argument passed to the
