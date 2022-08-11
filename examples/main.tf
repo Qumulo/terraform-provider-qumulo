@@ -138,9 +138,15 @@ resource "qumulo_local_group_member" "test_member" {
    ]
  }
 
- resource "qumulo_ssl_ca" "update_ssl_ca" {
-   ca_certificate = var.some_cert
- }
+# resource "qumulo_role_member" "actors" {
+#   domain = "LOCAL"
+#   uid = "1021"
+#   role_name = "Actors"
+# }
+
+#  resource "qumulo_ssl_ca" "update_ssl_ca" {
+#    ca_certificate = var.some_cert
+#  }
 
 resource "qumulo_monitoring" "update_monitoring" {
   mq_host = "missionq.qumulo.com"
@@ -197,7 +203,7 @@ resource "qumulo_monitoring" "update_monitoring" {
    permissions {
      type = "DENIED"
      trustee {
-       domain = "LOCAL"
+       domain = "POSIX_USER"
        uid = 65534
      }
      rights = ["WRITE"]
@@ -216,22 +222,22 @@ resource "qumulo_time_configuration" "time_config" {
     ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
 }
 
-resource "qumulo_network_configuration" "network_config" {
-  interface_id = "1"
-  assigned_by        = "DHCP"
-  dns_search_domains = []
-  dns_servers        = []
-  floating_ip_ranges = []
-  ip_ranges          = []
-  mtu                = 1500
-  name               = "Default"
-  vlan_id            = 0
-  netmask = ""
-  network_id = "1"
-}
+# resource "qumulo_network_configuration" "network_config" {
+#   interface_id = "1"
+#   assigned_by        = "DHCP"
+#   dns_search_domains = []
+#   dns_servers        = []
+#   floating_ip_ranges = []
+#   ip_ranges          = []
+#   mtu                = 1500
+#   name               = "Default"
+#   vlan_id            = 0
+#   netmask = ""
+#   network_id = "1"
+# }
 
 resource "qumulo_interface_configuration" "interface_config" {
-  name = "bond0"
+  name = "lo"
   default_gateway = "10.220.0.1"
   bonding_mode = "IEEE_8023AD"
   mtu = 1500
@@ -244,11 +250,11 @@ resource "qumulo_file_system_settings" "fs_settings" {
   atime_granularity = "HOUR"
 }
 
- resource "qumulo_web_ui" "settings" {
-   inactivity_timeout {
-     nanoseconds = 900000000001
-   }
- }
+#  resource "qumulo_web_ui" "settings" {
+#    inactivity_timeout {
+#      nanoseconds = 900000000001
+#    }
+#  }
 
  resource "qumulo_syslog" "syslog_audit_log" {
 	enabled = false
@@ -279,9 +285,9 @@ resource "qumulo_ftp_server" "some_ftp_server" {
    value = qumulo_cluster_name.update_name
  }
 
- output "some_authority" {
-   value = qumulo_ssl_ca.update_ssl_ca
- }
+#  output "some_authority" {
+#    value = qumulo_ssl_ca.update_ssl_ca
+#  }
 
 #output "some_ssl" {
 #  value = qumulo_ssl_cert.update_ssl
