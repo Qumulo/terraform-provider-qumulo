@@ -55,7 +55,7 @@ $ terraform import qumulo_network_configuration.RESOURCE_NAME NETWORK_ID:INTERFA
 For example, for a network resource with name "network_config" and 
 network ID of 4 and interface ID of 1, the command would look like:
 ```
-$ terraform import qumulo_network_configuration.network_config 1:4
+$ terraform import qumulo_network_configuration.network_config 4:1
 ```
 
 The resources are now imported into the Terraform state. However, you still need to update the configuration file.
