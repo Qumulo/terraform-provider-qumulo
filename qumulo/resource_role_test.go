@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -68,7 +67,7 @@ resource "qumulo_role" "test_role" {
 	description = %q
 	privileges  = %v
 }
-  `, role.Name, role.Description, strings.ReplaceAll(fmt.Sprintf("%+q", role.Privileges), "\" \"", "\", \""))
+  `, role.Name, role.Description, PrintTerraformListFromList(role.Privileges))
 }
 
 func testAccCompareRoleResource(role Role) resource.TestCheckFunc {

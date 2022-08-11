@@ -7,11 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"reflect"
 	"strconv"
-	"strings"
 	"testing"
 )
 
-func TestAccTestNfsExport(t *testing.T) {
+func TestAccCreateNfsExport(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -77,9 +76,9 @@ func defaultAccNfsExport(ne NfsExport) string {
    }
    fields_to_present_as_32_bit = %v
    allow_fs_path_create = true
- }`, ne.ExportPath, ne.FsPath, ne.Description, strings.ReplaceAll(fmt.Sprintf("%+q", ne.Restrictions[0].HostRestrictions), "\" \"", "\", \""), ne.Restrictions[0].ReadOnly,
+ }`, ne.ExportPath, ne.FsPath, ne.Description, PrintTerraformListFromList(ne.Restrictions[0].HostRestrictions), ne.Restrictions[0].ReadOnly,
 		ne.Restrictions[0].RequirePrivilegedPort, ne.Restrictions[0].UserMapping,
-		strings.ReplaceAll(fmt.Sprintf("%+q", ne.FieldsToPresentAs32Bit), "\" \"", "\", \""))
+		PrintTerraformListFromList(ne.FieldsToPresentAs32Bit))
 }
 
 func testAccNfsExport(ne NfsExport) string {
@@ -104,10 +103,10 @@ func testAccNfsExport(ne NfsExport) string {
    }
    fields_to_present_as_32_bit = %v
    allow_fs_path_create = true
- }`, ne.ExportPath, ne.FsPath, ne.Description, strings.ReplaceAll(fmt.Sprintf("%+q", ne.Restrictions[0].HostRestrictions), "\" \"", "\", \""), ne.Restrictions[0].ReadOnly,
+ }`, ne.ExportPath, ne.FsPath, ne.Description, PrintTerraformListFromList(ne.Restrictions[0].HostRestrictions), ne.Restrictions[0].ReadOnly,
 		ne.Restrictions[0].RequirePrivilegedPort, ne.Restrictions[0].UserMapping, ne.Restrictions[0].MapToUser["id_type"],
 		ne.Restrictions[0].MapToUser["id_value"], ne.Restrictions[0].MapToGroup["id_type"], ne.Restrictions[0].MapToGroup["id_value"],
-		strings.ReplaceAll(fmt.Sprintf("%+q", ne.FieldsToPresentAs32Bit), "\" \"", "\", \""))
+		PrintTerraformListFromList(ne.FieldsToPresentAs32Bit))
 }
 
 func testAccCompareNfsExports(ne NfsExport) resource.TestCheckFunc {

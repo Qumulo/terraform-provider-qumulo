@@ -58,6 +58,14 @@ func InterfaceSliceToStringSlice(interfaceSlice []interface{}) []string {
 	return stringSlice
 }
 
+func PrintTerraformListFromList(list []string) string {
+	return strings.ReplaceAll(fmt.Sprintf("%+q", list), "\" \"", "\", \"")
+}
+
+func PrintTerraformListFromString(str string) string {
+	return strings.ReplaceAll(fmt.Sprintf("%+q", str), "\" \"", "\", \"")
+}
+
 func ParseLocalGroupMemberId(id string) ([]string, error) {
 	ids := strings.Split(id, ":")
 	if len(ids) != 2 {
