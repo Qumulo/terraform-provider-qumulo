@@ -14,6 +14,7 @@ The Terraform Qumulo provider is a plugin for Terraform that allows for the upda
 - LDAP Server
 - Local Users & Groups
 - Monitoring (MQ)
+- Network & Interface Configuration
 - NFS Exports & Settings
 - Roles
 - SMB Server & Shares
