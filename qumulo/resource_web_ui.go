@@ -15,10 +15,12 @@ const WebUiEndpoint = "/v1/web-ui/settings"
 
 type WebUiBody struct {
 	InactivityTimeout WebUiTimeout `json:"inactivity_timeout"`
+	LoginBanner       *string      `json:"login_banner"`
 }
 
 type WebUiEmpty struct {
 	InactivityTimeout *string `json:"inactivity_timeout"`
+	LoginBanner       *string `json:"login_banner"`
 }
 
 type WebUiTimeout struct {
@@ -52,6 +54,11 @@ func resourceWebUi() *schema.Resource {
 						},
 					},
 				},
+			},
+			"login_banner": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  nil,
 			},
 		},
 
@@ -90,6 +97,7 @@ func resourceWebUiRead(ctx context.Context, d *schema.ResourceData, m interface{
 	tfList = append(tfList, tfMap)
 
 	errs.addMaybeError(d.Set("inactivity_timeout", tfList))
+	errs.addMaybeError(d.Set("login_banner", *uiConfig.LoginBanner))
 
 	return errs.diags
 }
@@ -112,6 +120,7 @@ func resourceWebUiDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	// as null in json, and a nil string pointer is the simplest way to do that.
 	nullTimeout := WebUiEmpty{}
 	nullTimeout.InactivityTimeout = nil
+	nullTimeout.LoginBanner = nil
 
 	_, err := DoRequest[WebUiEmpty, WebUiEmpty](ctx, c, PATCH, WebUiEndpoint, &nullTimeout)
 
@@ -135,6 +144,10 @@ func setWebUi(ctx context.Context, d *schema.ResourceData, m interface{}, method
 
 	webUiRequest := WebUiBody{
 		InactivityTimeout: timeout,
+	}
+
+	if v, ok := d.Get("login_banner").(string); ok {
+		webUiRequest.LoginBanner = &v
 	}
 
 	tflog.Debug(ctx, "Updating web UI")
