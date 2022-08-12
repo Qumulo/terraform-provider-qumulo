@@ -27,10 +27,13 @@ func TestAccSetWebUi(t *testing.T) {
 	})
 }
 
+var loginBanner = "SampleBanner"
+
 var testingWebUi = WebUiBody{
 	InactivityTimeout: WebUiTimeout{
 		Nanoseconds: "900000000000",
 	},
+	LoginBanner: &loginBanner,
 }
 
 func testAccWebUiConfig(req WebUiBody) string {
@@ -39,8 +42,9 @@ func testAccWebUiConfig(req WebUiBody) string {
 		inactivity_timeout {
 			nanoseconds = %v
 		}
+		login_banner = %q
 	}
-  `, req.InactivityTimeout.Nanoseconds)
+  `, req.InactivityTimeout.Nanoseconds, *testingWebUi.LoginBanner)
 }
 
 func testAccCheckWebUi(uiConfig WebUiBody) resource.TestCheckFunc {
@@ -63,5 +67,7 @@ func testAccCompareWebUiSettings(uiConfig WebUiBody) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_web_ui.settings", "inactivity_timeout.0.nanoseconds",
 			fmt.Sprintf("%v", uiConfig.InactivityTimeout.Nanoseconds)),
+		resource.TestCheckResourceAttr("qumulo_web_ui.settings", "login_banner",
+			fmt.Sprintf("%v", *uiConfig.LoginBanner)),
 	)
 }

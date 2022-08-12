@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -64,7 +63,7 @@ resource "qumulo_smb_server" "update_smb" {
 	bypass_traverse_checking = %v
 	signing_required = %v
 }
-  `, smb.SessionEncryption, strings.ReplaceAll(fmt.Sprintf("%+q", smb.SupportedDialects), "\" \"", "\", \""),
+  `, smb.SessionEncryption, PrintTerraformListFromList(smb.SupportedDialects),
 		smb.HideSharesFromUnauthorizedUsers, smb.HideSharesFromUnauthorizedHosts, smb.SnapshotDirectoryMode,
 		smb.BypassTraverseChecking, smb.SigningRequired)
 }

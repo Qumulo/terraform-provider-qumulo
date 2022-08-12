@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -50,7 +49,7 @@ func testAccTimeConfigurationConfig(req TimeConfigurationBody) string {
 		use_ad_for_primary = %v
 		ntp_servers = %v
 	}
-  `, req.UseAdForPrimary, strings.ReplaceAll(fmt.Sprintf("%+q", req.NtpServers), "\" \"", "\", \""))
+  `, req.UseAdForPrimary, PrintTerraformListFromList(req.NtpServers))
 }
 
 func testAccCheckTimeConfiguration(timeConfig TimeConfigurationBody) resource.TestCheckFunc {

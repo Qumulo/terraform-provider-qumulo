@@ -174,7 +174,8 @@ func resourceNetworkConfigurationRead(ctx context.Context, d *schema.ResourceDat
 	errs.addMaybeError(d.Set("netmask", networkConfig.Netmask))
 	errs.addMaybeError(d.Set("mtu", networkConfig.Mtu))
 	errs.addMaybeError(d.Set("vlan_id", networkConfig.VlanId))
-
+	errs.addMaybeError(d.Set("network_id", networkId))
+	errs.addMaybeError(d.Set("interface_id", interfaceId))
 	return errs.diags
 }
 

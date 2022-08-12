@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -105,7 +104,7 @@ func testAccLdapServerConfig(ldap LdapServerSettingsBody) string {
      gid_number_attribute = %q
    }
    encrypt_connection = %v
- }`, ldap.UseLdap, ldap.BindUri, ldap.User, strings.ReplaceAll(fmt.Sprintf("%+q", ldap.BaseDistinguishedNames), "\" \"", "\", \""), ldap.LdapSchema, ldap.LdapSchemaDescription.GroupMemberAttribute,
+ }`, ldap.UseLdap, ldap.BindUri, ldap.User, PrintTerraformListFromString(ldap.BaseDistinguishedNames), ldap.LdapSchema, ldap.LdapSchemaDescription.GroupMemberAttribute,
 		ldap.LdapSchemaDescription.UserGroupIdentifierAttribute, ldap.LdapSchemaDescription.LoginNameAttribute, ldap.LdapSchemaDescription.GroupNameAttribute,
 		ldap.LdapSchemaDescription.UserObjectClass, ldap.LdapSchemaDescription.GroupObjectClass, ldap.LdapSchemaDescription.UidNumberAttribute, ldap.LdapSchemaDescription.GidNumberAttribute,
 		ldap.EncryptConnection)

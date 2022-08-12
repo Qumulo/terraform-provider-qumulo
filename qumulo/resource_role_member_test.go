@@ -3,7 +3,6 @@ package qumulo
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -61,7 +60,7 @@ resource "qumulo_role_member" "test_member" {
 	name = qumulo_local_user.test_user.name
 	role_name = qumulo_role.test_role.name
 }
-  `, role.Name, role.Description, strings.ReplaceAll(fmt.Sprintf("%+q", role.Privileges), "\" \"", "\", \""),
+  `, role.Name, role.Description, PrintTerraformListFromList(role.Privileges),
 		user.Name, user.PrimaryGroup, user.Uid, user.HomeDirectory, user.Password)
 }
 

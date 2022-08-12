@@ -3,7 +3,6 @@ package qumulo
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -105,11 +104,9 @@ resource "qumulo_smb_share" "share" {
 		access_based_enumeration_enabled = %v
 		require_encryption = %v
 	  }`, share1.ShareName, share1.FsPath, share1.Description, share1.Permissions[0].Type, share1.Permissions[0].Trustee.Name,
-	strings.ReplaceAll(fmt.Sprintf("%+q", share1.Permissions[0].Rights), "\" \"", "\", \""), share1.Permissions[1].Type,
-	share1.Permissions[1].Trustee.Name, strings.ReplaceAll(fmt.Sprintf("%+q", share1.Permissions[1].Rights), "\" \"", "\", \""),
-	share1.NetworkPermissions[0].Type, "[]",
-	strings.ReplaceAll(fmt.Sprintf("%+q", share1.NetworkPermissions[0].Rights), "\" \"", "\", \""),
-	share1.AccessBasedEnumEnabled, share1.RequireEncryption)
+	PrintTerraformListFromList(share1.Permissions[0].Rights), share1.Permissions[1].Type, share1.Permissions[1].Trustee.Name,
+	PrintTerraformListFromList(share1.Permissions[1].Rights), share1.NetworkPermissions[0].Type, "[]",
+	PrintTerraformListFromList(share1.NetworkPermissions[0].Rights), share1.AccessBasedEnumEnabled, share1.RequireEncryption)
 
 var share1Updated = SmbShare{
 	ShareName:   "ShareForTesting",
@@ -181,13 +178,11 @@ resource "qumulo_smb_share" "share" {
 		access_based_enumeration_enabled = %v
 		require_encryption = %v
 	  }`, share1Updated.ShareName, share1Updated.FsPath, share1Updated.Description, share1Updated.Permissions[0].Type,
-	share1Updated.Permissions[0].Trustee.Name,
-	strings.ReplaceAll(fmt.Sprintf("%+q", share1Updated.Permissions[0].Rights), "\" \"", "\", \""),
+	share1Updated.Permissions[0].Trustee.Name, PrintTerraformListFromList(share1Updated.Permissions[0].Rights),
 	share1Updated.Permissions[1].Type, share1Updated.Permissions[1].Trustee.Name,
-	strings.ReplaceAll(fmt.Sprintf("%+q", share1Updated.Permissions[1].Rights), "\" \"", "\", \""),
-	share1Updated.NetworkPermissions[0].Type, "[]",
-	strings.ReplaceAll(fmt.Sprintf("%+q", share1Updated.NetworkPermissions[0].Rights), "\" \"", "\", \""),
-	share1Updated.AccessBasedEnumEnabled, share1Updated.RequireEncryption)
+	PrintTerraformListFromList(share1Updated.Permissions[1].Rights), share1Updated.NetworkPermissions[0].Type, "[]",
+	PrintTerraformListFromList(share1Updated.NetworkPermissions[0].Rights), share1Updated.AccessBasedEnumEnabled,
+	share1Updated.RequireEncryption)
 
 func testAccCompareShare(share SmbShare) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
