@@ -37,9 +37,9 @@ def main(config_file, dry, enabled_features):
     # print([p for p in dir(rc) if not p.startswith('_')])
 
     # See SDK endpoints within a particular API group
-    # print([p for p in dir(rc.ad) if not p.startswith('_')])
+    # print([p for p in dir(rc.network) if not p.startswith('_')])
 
-    # print(rc.ad.get_advanced_settings())
+    # print(rc.network.list_interfaces())
 
     # dry = True
     
@@ -75,7 +75,8 @@ def main(config_file, dry, enabled_features):
                "smb_settings": True,
                "smb_shares": True,
                "nfs_settings": True,
-               "nfs_exports": True}
+               "nfs_exports": True,
+               "interfaces": True}
 
     if enabled_features:
         for k in enabled:
@@ -115,6 +116,7 @@ def main(config_file, dry, enabled_features):
         if enabled["smb_shares"]: importSMBShares(rc, f)
         if enabled["cluster_name"]: importNFSSettings(rc, f)
         if enabled["nfs_settings"]: importNFSExports(rc, f)
+        if enabled["interfaces"]: importInterfaces(rc, f)
         
 
 def importClusterName(rc, f):
@@ -187,7 +189,16 @@ def importRoles(rc, f):
         f.write(getRoleBlock(name=name, role=role))
         f.write("\n")
         f.flush()
-        os.system(f"terraform import qumulo_role.{name.lower()} {name}")
+        os.system(f"terraform import qumulo_role.{name} {name}")
+
+        members = [m for m in rc.roles.list_members(role_name=name)["members"]]
+        f.write(getRoleMembersBlock(role_name=name, members=members))
+        f.write("\n")
+        f.flush()
+        for id in members:
+            # we use subprocess here because os.system doesn't handle quotes well
+            subprocess.call(["terraform", "import", f'qumulo_role_member.{name}["{str(id)}"]', 
+                            f'{name}:{id}'])
 
 def importQuotas(rc, f):
     quotas = next(rc.quota.get_all_quotas())["quotas"]
@@ -252,6 +263,21 @@ def importActiveDirectory(rc, f):
     f.flush()
 
     os.system("terraform import qumulo_ad_settings.ad_settings 1")
+
+def importInterfaces(rc, f):
+    interfaces = rc.network.list_interfaces()
+    for i in interfaces:
+        f.write(getInterfaceBlock(i))
+        f.write("\n")
+        f.flush()
+        os.system(f'terraform import qumulo_interface_configuration.{i["name"]} {i["id"]}')
+
+        networks = rc.network.list_networks(interface_id=i["id"])
+        for n in networks:
+            f.write(getNetworkConfigBlock(network=n, interface_id=i["id"]))
+            f.write("\n")
+            f.flush()
+            os.system(f'terraform import qumulo_network_configuration.i{i["id"]}n{n["id"]} {i["id"]}:{n["id"]}')
 
 
 
@@ -360,10 +386,18 @@ def getAuditLogConfigBlock(config) -> str:
 
 def getRoleBlock(role, name) -> str:
     privileges = str(role["privileges"]).replace("'", '"').replace(" ", "\n\t\t\t\t")
-    return f"""resource "qumulo_role" "{name.lower()}" {{
+    return f"""resource "qumulo_role" "{name}" {{
   description = "{role["description"]}"
   name        = "{name}"
   privileges  = {privileges}
+}}
+"""
+
+def getRoleMembersBlock(role_name, members) -> str:
+    return f"""resource qumulo_role_member "{role_name}" {{
+  for_each = toset( {str(members).replace("'", '"')} )
+  auth_id = each.key
+  role_name = qumulo_role.{role_name}.id
 }}
 """
 
@@ -579,6 +613,37 @@ def getActiveDirectoryBlock(ad, settings) -> str:
   ad_username = "insert_ad_username_here"
   ad_password = "insert_ad_password_here"
   use_ad_posix_attributes = {str(ad["use_ad_posix_attributes"]).lower()}
+}}
+"""
+
+def getInterfaceBlock(interface) -> str:
+    default_ipv6 = ""
+    if interface["default_gateway_ipv6"]:
+        default_ipv6 = f'  default_gateway_ipv6 = "{interface["default_gateway_ipv6"]}"\n'
+
+    return f"""resource "qumulo_interface_configuration" "{interface["name"]}" {{
+  name = "{interface["name"]}"
+  default_gateway = "{interface["default_gateway"]}"
+{default_ipv6}\
+  bonding_mode = "{interface["bonding_mode"]}"
+  mtu = {interface["mtu"]}
+  interface_id = "{interface["id"]}"
+}}
+"""
+
+def getNetworkConfigBlock(network, interface_id) -> str:
+    return f"""resource "qumulo_network_configuration" "i{interface_id}n{network["id"]}" {{
+  interface_id = "{interface_id}"
+  assigned_by        = "{network["assigned_by"]}"
+  dns_search_domains = {str(network["dns_search_domains"]).replace("'", '"')}
+  dns_servers        = {str(network["dns_servers"]).replace("'", '"')}
+  floating_ip_ranges = {str(network["floating_ip_ranges"]).replace("'", '"')}
+  ip_ranges          = {str(network["ip_ranges"]).replace("'", '"')}
+  mtu                = {network["mtu"]}
+  name               = "{network["name"]}"
+  vlan_id            = {network["vlan_id"]}
+  netmask = "{network["netmask"]}"
+  network_id = "{network["id"]}"
 }}
 """
 
