@@ -256,6 +256,13 @@ resource "qumulo_local_user" "test_user" {
 #   atime_enabled = false
 #   atime_granularity = "HOUR"
 # }
+#
+  resource "qumulo_web_ui" "settings" {
+    inactivity_timeout {
+      nanoseconds = 900000000001
+    }
+     login_banner = "SampleBanner"
+  }
 
 #  resource "qumulo_web_ui" "settings" {
 #    inactivity_timeout {
