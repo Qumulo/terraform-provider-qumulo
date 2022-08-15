@@ -43,6 +43,7 @@ type NetworkConfigurationRequest struct {
 	Mtu              int      `json:"mtu"`
 	VlanId           int      `json:"vlan_id"`
 	InterfaceId      string   `json:"interface_id"`
+	NetworkId        string   `json:"network_id"`
 }
 
 func resourceNetworkConfiguration() *schema.Resource {
@@ -228,6 +229,7 @@ func addOrPatchNetworkConfiguration(ctx context.Context, d *schema.ResourceData,
 		Mtu:              d.Get("mtu").(int),
 		VlanId:           d.Get("vlan_id").(int),
 		InterfaceId:      d.Get("interface_id").(string),
+		NetworkId:        networkId,
 	}
 
 	tflog.Debug(ctx, "Adding/Patching network configuration")
