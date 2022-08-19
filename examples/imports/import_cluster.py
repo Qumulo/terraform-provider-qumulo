@@ -32,23 +32,13 @@ def main(config_file, dry, enabled_features):
 
     # Log in to Qumulo Core using local user or Active Directory credentials
     rc.login(username, password)
-
-    # See REST API groups:
-    # print([p for p in dir(rc) if not p.startswith('_')])
-
-    # See SDK endpoints within a particular API group
-    # print([p for p in dir(rc.network) if not p.startswith('_')])
-
-    # print(rc.network.list_interfaces())
-
-    # dry = True
     
     if dry:
         return
 
     while True:
         print(f"Warning: This will overwrite your config file ({config_file}) and terraform state.")
-        response = input("Do you wish to continue? (y/n) ")
+        response = input("Do you wish to continue? (y/n) ").lower()
         if response == "y" or response == "yes":
             print("Starting import")
             break
