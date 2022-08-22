@@ -62,7 +62,6 @@ Required:
 ### Nested Schema for `permissions.trustee`
 
 Optional:
-(Must specify one of auth_id, gid, name, sid, uid)
 
 - `auth_id` (String)
 - `domain` (String)

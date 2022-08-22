@@ -33,7 +33,7 @@ var defaultNetworkConfigurationReq = NetworkConfigurationRequest{
 	DnsSearchDomains: []string{},
 	IpRanges:         []string{},
 	Netmask:          "",
-	Mtu:              1500,
+	Mtu:              1700,
 	VlanId:           0,
 	InterfaceId:      "1",
 	NetworkId:        "1",
@@ -48,7 +48,7 @@ var defaultNetworkConfigurationResp = NetworkConfigurationResponse{
 	DnsSearchDomains: []string{},
 	IpRanges:         []string{},
 	Netmask:          "",
-	Mtu:              1500,
+	Mtu:              1700,
 	VlanId:           0,
 }
 

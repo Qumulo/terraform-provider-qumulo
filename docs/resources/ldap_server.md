@@ -19,12 +19,12 @@ description: |-
 
 - `base_distinguished_names` (String)
 - `bind_uri` (String)
-- `ldap_schema_description` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--ldap_schema_description))
 
 ### Optional
 
 - `encrypt_connection` (Boolean)
 - `ldap_schema` (String)
+- `ldap_schema_description` (Block List, Max: 1) (see [below for nested schema](#nestedblock--ldap_schema_description))
 - `password` (String, Sensitive)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `use_ldap` (Boolean)
