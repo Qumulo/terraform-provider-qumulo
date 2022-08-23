@@ -1,4 +1,6 @@
 import argparse
+import json
+import logging
 import os
 import subprocess
 import sys
@@ -8,7 +10,7 @@ import qumulo.lib.request
 
 from qumulo.rest_client import RestClient
 
-def main(config_file, dry, enabled_features):
+def main(opts):
 
     host = os.environ['QUMULO_HOST']
     port = os.environ['QUMULO_PORT']
@@ -33,12 +35,13 @@ def main(config_file, dry, enabled_features):
     # Log in to Qumulo Core using local user or Active Directory credentials
     rc.login(username, password)
     
-    if dry:
+    if opts.dry:
         return
 
     while True:
-        print(f"Warning: This will overwrite your config file ({config_file}) and terraform state.")
-        response = input("Do you wish to continue? (y/n) ").lower()
+        print(f"Warning: This will overwrite your config file ({opts.config_file}) and terraform state.")
+        response = input("Do you wish to continue? (y/n) ")
+        response = response.lower()
         if response == "y" or response == "yes":
             print("Starting import")
             break
@@ -68,17 +71,66 @@ def main(config_file, dry, enabled_features):
                "nfs_exports": True,
                "interfaces": True}
 
-    if enabled_features:
+    if opts.enabled_features:
         for k in enabled:
             enabled[k] = False
-        for feat in enabled_features:
+        for feat in opts.enabled_features:
             if feat in enabled.keys():
                 enabled[feat] = True
             else:
                 print(f"Feature {feat} not supported. Supported features include {[f for f in enabled.keys()]}")
                 return
 
-    with open(config_file, "w") as f:
+    with open(opts.config_file, "w") as f:
+
+        if opts.json_dump:
+            # Dump settings to a json file instead
+            settings = {}
+
+            if enabled["cluster_name"]: settings["cluster_name"] = rc.cluster.get_cluster_conf()
+            if enabled["monitoring"]: settings["monitoring"] = rc.support.get_config()
+            if enabled["ssl_ca"]: 
+                try:
+                    settings["ssl_ca"] = rc.cluster.get_ssl_ca_certificate()
+                except Exception as e:
+                    logging.error('Unable to get SSL CA (%s)', e)
+            if enabled["active_directory"]:
+                settings["active_directory"] = {}
+                settings["active_directory"]["settings"] = rc.ad.get_advanced_settings()
+                settings["active_directory"]["ad"] = rc.ad.list_ad()
+            if enabled["ldap"]: settings["ldap"] = rc.ldap.settings_get_v2()
+            if enabled["time_config"]: settings["time_config"] = rc.time_config.get_time_status()["config"]
+            if enabled["ftp"]: settings["ftp"] = rc.ftp.get_settings()
+            if enabled["fs_settings"]: 
+                settings["fs_settings"] = {}
+                settings["fs_settings"]["perms"] = rc.fs.get_permissions_settings()
+                settings["fs_settings"]["atime"] = rc.fs.get_atime_settings()
+            if enabled["audit_log"]: settings["audit_log"] = rc.audit.get_syslog_config()
+            if enabled["quotas"]: settings["quotas"] = next(rc.quota.get_all_quotas())["quotas"]
+            if enabled["local_users"]: settings["local_users"] = rc.users.list_users()
+            if enabled["local_groups"]: 
+                settings["local_groups"] = rc.groups.list_groups()
+                for g in settings["local_groups"]:
+                    g["members"] = [str(m["id"]) for m in rc.groups.group_get_members(group_id=g["id"])]
+            if enabled["roles"]: 
+                settings["roles"] = rc.roles.list_roles()
+                for name, r in settings["roles"].items():
+                    r["members"] = [m for m in rc.roles.list_members(role_name=name)["members"]]
+            if enabled["smb_settings"]: settings["smb_settings"] = rc.smb.get_smb_settings()
+            if enabled["smb_shares"]: settings["smb_shares"] = rc.smb.smb_list_shares()
+            if enabled["nfs_exports"]: settings["nfs_exports"] = rc.nfs.nfs_list_exports()
+            if enabled["nfs_settings"]: settings["nfs_settings"] = rc.nfs.get_nfs_config()
+            if enabled["interfaces"]: 
+                settings["interfaces"] = rc.network.list_interfaces()
+                settings["networks"] = {}
+                for i in settings["interfaces"]:
+                    settings["networks"][i["id"]] = rc.network.list_networks(interface_id=i["id"])
+
+            
+            f.write(json.dumps(settings, indent=4))
+
+            return
+                    
 
         # Setting up the provider
         f.write(getProviderBlock("qumulo.com/terraform-intern/qumulo"))
@@ -104,8 +156,8 @@ def main(config_file, dry, enabled_features):
         if enabled["roles"]: importRoles(rc, f)
         if enabled["smb_settings"]: importSmbServerSettings(rc, f)
         if enabled["smb_shares"]: importSMBShares(rc, f)
-        if enabled["cluster_name"]: importNFSSettings(rc, f)
-        if enabled["nfs_settings"]: importNFSExports(rc, f)
+        if enabled["nfs_settings"]: importNFSSettings(rc, f)
+        if enabled["nfs_exports"]: importNFSExports(rc, f)
         if enabled["interfaces"]: importInterfaces(rc, f)
         
 
@@ -645,7 +697,10 @@ if __name__ == "__main__":
                         default='main.tf')
     parser.add_argument('--dry','-d', dest='dry', action='store_true', help='Dry run, test rc commands',
                         default=False)
-    parser.add_argument('--enable', '-e', action='extend', nargs="+", type=str, 
+    parser.add_argument('--enable', '-e', action='extend', dest='enabled_features', nargs="+", type=str, 
                         help="Enable specific features to be imported. If this flag is not present, all features are imported.")
+    parser.add_argument('--json','-j', dest='json_dump', action='store_true',
+                        help='Dump to a JSON file instead of a Terraform config', default=False)
     args = parser.parse_args()
-    main(config_file=args.config_file, dry=args.dry, enabled_features=args.enable)
+    main(args)
+    # main(config_file=args.config_file, dry=args.dry, enabled_features=args.enable, json_dump=args.json)
