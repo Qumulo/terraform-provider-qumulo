@@ -11,6 +11,7 @@ default: install
 build:
 	go build -o ${BINARY}
 
+
 release:
 	GOOS=darwin GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
 	GOOS=freebsd GOARCH=386 go build -o ./bin/${BINARY}_${VERSION}_freebsd_386
@@ -41,3 +42,8 @@ testwip:
 
 runtest:
 	TF_ACC=1 go test -run $(TESTNAME) ./...
+
+generate-client:
+	rm -rf openapi/*
+	mkdir openapi
+	openapi-generator generate -i openapi.json -g go -o openapi
