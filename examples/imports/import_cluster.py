@@ -51,7 +51,6 @@ def main(opts):
         else:
             print("Invalid response, prompting again.")
 
-    # TODO: implement selective importing
     enabled = {"cluster_name": True,
                "monitoring": True,
                "ssl_ca": True,
@@ -707,4 +706,3 @@ if __name__ == "__main__":
                         help='Dump to a JSON file instead of a Terraform config', default=False)
     args = parser.parse_args()
     main(args)
-    # main(config_file=args.config_file, dry=args.dry, enabled_features=args.enable, json_dump=args.json)
