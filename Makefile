@@ -44,6 +44,6 @@ runtest:
 	TF_ACC=1 go test -run $(TESTNAME) ./...
 
 generate-client:
-	rm -rf openapi/*
+	rm -rf openapi
 	mkdir openapi
 	openapi-generator generate -i openapi.json -g go -o openapi
