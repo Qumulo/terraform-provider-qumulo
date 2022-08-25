@@ -143,7 +143,11 @@ def main(opts):
 
         if enabled["cluster_name"]: importClusterName(rc, f)
         if enabled["monitoring"]: importMonitoring(rc, f)
-        if enabled["ssl_ca"]: importSSLCA(rc, f)
+        if enabled["ssl_ca"]: 
+            try:
+                importSSLCA(rc, f)
+            except Exception as e:
+                logging.error('Unable to get SSL CA (%s)', e)
         if enabled["active_directory"]: importActiveDirectory(rc, f)
         if enabled["ldap"]: importLDAP(rc, f)
         if enabled["time_config"]: importTimeConfig(rc, f)
