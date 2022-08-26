@@ -8,7 +8,7 @@ description: |-
 
 # qumulo Provider
 
-Compatible with Qumulo Core 5.2.1
+Compatible with Qumulo Core 5.2.3
 
 
 
