@@ -11,7 +11,7 @@ import (
 func main() {
 	var client *openapi.APIClient
 
-	const testHost = "10.116.100.137:22582"
+	const testHost = "10.116.10.215:22848"
 	const testScheme = "https"
 
 	cfg := openapi.NewConfiguration()

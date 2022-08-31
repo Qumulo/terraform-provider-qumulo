@@ -2,20 +2,15 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"terraform-provider-qumulo/openapi"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
-
-const ClusterSettingsEndpoint = "/v1/cluster/settings"
-
-type ClusterSettingsBody struct {
-	ClusterName string `json:"cluster_name"`
-}
 
 func resourceClusterSettings() *schema.Resource {
 	return &schema.Resource{
@@ -54,13 +49,20 @@ func resourceClusterSettingsCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceClusterSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
+	c := m.(*openapi.APIClient)
 
-	cs, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, GET, ClusterSettingsEndpoint, nil)
+	resp, r, err := c.ClusterApi.V1ClusterSettingsGet(context.Background()).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `ClusterApi.V1ClusterSettingsGet``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
-	if err := d.Set("cluster_name", cs.ClusterName); err != nil {
+
+	// response from `V1ClusterSettingsGet`: V1ClusterSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `ClusterApi.V1ClusterSettingsGet`: %v\n",
+		resp.GetClusterName()))
+
+	if err := d.Set("cluster_name", resp.GetClusterName()); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -83,15 +85,23 @@ func resourceClusterSettingsDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func setClusterSettings(ctx context.Context, d *schema.ResourceData, m interface{}) error {
-	c := m.(*Client)
+	c := m.(*openapi.APIClient)
 
 	clusterName := d.Get("cluster_name").(string)
 
-	cs := ClusterSettingsBody{
-		ClusterName: clusterName,
-	}
+	cs := openapi.NewV1ClusterSettingsGet200Response()
+	cs.SetClusterName(clusterName)
 
 	tflog.Debug(ctx, "Updating cluster settings")
-	_, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, PUT, ClusterSettingsEndpoint, &cs)
+
+	resp, r, err := c.ClusterApi.V1ClusterSettingsPut(context.Background()).
+		V1ClusterSettingsGet200Response(*cs).Execute()
+	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `ClusterApi.V1ClusterSettingsPut``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
+	}
+	// response from `V1ClusterSettingsPut`: V1ClusterSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `ClusterApi.V1ClusterSettingsPut`: %v\n", resp))
+
 	return err
 }

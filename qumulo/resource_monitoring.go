@@ -2,7 +2,9 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"terraform-provider-qumulo/openapi"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -108,25 +110,31 @@ func resourceMonitoringCreate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceMonitoringRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
+	c := m.(*openapi.APIClient)
 
 	var errs ErrorCollection
 
-	settings, err := DoRequest[MonitoringSettings, MonitoringSettings](ctx, c, GET, MonitoringEndpoint, nil)
+	// settings, err := DoRequest[MonitoringSettings, MonitoringSettings](ctx, c, GET, MonitoringEndpoint, nil)
+	resp, r, err := c.SupportApi.V1SupportSettingsGet(context.Background()).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `SupportApi.V1SupportSettingsGet``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
-	errs.addMaybeError(d.Set("enabled", settings.Enabled))
-	errs.addMaybeError(d.Set("mq_host", settings.MqHost))
-	errs.addMaybeError(d.Set("mq_port", settings.MqPort))
-	errs.addMaybeError(d.Set("mq_proxy_host", settings.MqProxyHost))
-	errs.addMaybeError(d.Set("mq_proxy_port", settings.MqProxyPort))
-	errs.addMaybeError(d.Set("s3_proxy_host", settings.S3ProxyHost))
-	errs.addMaybeError(d.Set("s3_proxy_port", settings.S3ProxyPort))
-	errs.addMaybeError(d.Set("s3_proxy_disable_https", settings.S3ProxyDisableHttps))
-	errs.addMaybeError(d.Set("vpn_enabled", settings.VpnEnabled))
-	errs.addMaybeError(d.Set("vpn_host", settings.VpnHost))
-	errs.addMaybeError(d.Set("period", settings.Period))
+	// response from `V1SupportSettingsGet`: V1SupportSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `SupportApi.V1SupportSettingsGet`: %v\n", resp))
+
+	errs.addMaybeError(d.Set("enabled", resp.GetEnabled()))
+	errs.addMaybeError(d.Set("mq_host", resp.GetMqHost()))
+	errs.addMaybeError(d.Set("mq_port", resp.GetMqPort()))
+	errs.addMaybeError(d.Set("mq_proxy_host", resp.GetMqProxyHost()))
+	errs.addMaybeError(d.Set("mq_proxy_port", resp.GetMqProxyPort()))
+	errs.addMaybeError(d.Set("s3_proxy_host", resp.GetS3ProxyHost()))
+	errs.addMaybeError(d.Set("s3_proxy_port", resp.GetS3ProxyPort()))
+	errs.addMaybeError(d.Set("s3_proxy_disable_https", resp.GetS3ProxyDisableHttps()))
+	errs.addMaybeError(d.Set("vpn_enabled", resp.GetVpnEnabled()))
+	errs.addMaybeError(d.Set("vpn_host", resp.GetVpnHost()))
+	errs.addMaybeError(d.Set("period", resp.GetPeriod()))
 
 	return errs.diags
 }

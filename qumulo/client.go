@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"terraform-provider-qumulo/openapi"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -44,6 +45,41 @@ type AuthStruct struct {
 
 type AuthResponse struct {
 	BearerToken string `json:"bearer_token"`
+}
+
+func NewClientGen(ctx context.Context, host, port, username, password *string) (*openapi.APIClient, error) {
+	var apiClient *openapi.APIClient
+
+	testHost := *host + ":" + *port
+	const testScheme = "https"
+
+	cfg := openapi.NewConfiguration()
+	cfg.Debug = true
+	cfg.Host = testHost
+	cfg.Scheme = testScheme
+	transCfg := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	cfg.HTTPClient = &http.Client{Timeout: 10 * time.Second, Transport: transCfg} // ignore expired SSL certificates
+
+	apiClient = openapi.NewAPIClient(cfg)
+	authReq := openapi.V1SessionLoginPostRequest{Username: username, Password: password}
+	apiRes, _, err := apiClient.SessionApi.V1SessionLoginPost(context.Background()).
+		V1SessionLoginPostRequest(authReq).Execute()
+	if err != nil {
+		return nil, err
+	}
+	bearerToken := "Bearer " + *apiRes.BearerToken
+
+	cfg.AddDefaultHeader("Authorization", bearerToken)
+	tflog.Info(ctx, "Qumulo client configured", map[string]interface{}{
+		"host":     host,
+		"port":     port,
+		"username": username,
+	})
+
+	return apiClient, nil
+
 }
 
 func NewClient(ctx context.Context, host, port, username, password *string) (*Client, error) {
