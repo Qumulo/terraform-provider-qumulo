@@ -29,7 +29,15 @@ resource "qumulo_monitoring" "update_monitoring" {
   mq_proxy_host = ""
   mq_proxy_port = 32
   s3_proxy_host = "monitor.qumulo.com"
-  s3_proxy_port = 443
+  s3_proxy_port = 445
   vpn_host = "ep1.qumulo.com"
   period = 60
+}
+
+# Configuring NFS settings
+resource "qumulo_nfs_settings" "my_new_settings" {
+  v4_enabled = false
+  krb5_enabled = false
+  krb5p_enabled = false
+  auth_sys_enabled = true
 }
