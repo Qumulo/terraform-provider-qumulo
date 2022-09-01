@@ -52,3 +52,9 @@ resource "qumulo_smb_server" "update_smb" {
   bypass_traverse_checking = false
   signing_required = false
 }
+
+# Setting the server's time configuration
+resource "qumulo_time_configuration" "time_config" {
+    use_ad_for_primary = false
+    ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
+}
