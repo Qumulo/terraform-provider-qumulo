@@ -58,3 +58,9 @@ resource "qumulo_time_configuration" "time_config" {
     use_ad_for_primary = false
     ntp_servers = ["0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"]
 }
+
+# Setting a directory quota for the directory with ID 2
+resource "qumulo_directory_quota" "new_quota" {
+    directory_id = "2"
+    limit = "5000000000"
+}
