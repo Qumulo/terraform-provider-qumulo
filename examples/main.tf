@@ -41,3 +41,14 @@ resource "qumulo_nfs_settings" "my_new_settings" {
   krb5p_enabled = false
   auth_sys_enabled = true
 }
+
+# Configuring the SMB server settings
+resource "qumulo_smb_server" "update_smb" {
+  session_encryption = "NONE"
+  supported_dialects =["SMB2_DIALECT_2_002"]
+  hide_shares_from_unauthorized_users = false
+  hide_shares_from_unauthorized_hosts = false
+  snapshot_directory_mode = "VISIBLE"
+  bypass_traverse_checking = false
+  signing_required = false
+}
