@@ -22,13 +22,36 @@ The Terraform Qumulo provider is a plugin for Terraform that allows for the upda
 - Time Configuration
 - Web UI Settings
 
-## To Run Acceptance Tests
-First, set the following environment variables, specifying the host and port of the cluster you wish to test on, and the appropriate credentials to log in to that cluster
+## Starting Out
+### Connecting to a Cluster
+First, set the following environment variables, specifying the host and port of the cluster you wish to connect, and the appropriate credentials to log in to that cluster
 
     export QUMULO_HOST={host}
     export QUMULO_PORT={port}
     export QUMULO_USERNAME={username}
     export QUMULO_PASSWORD={password}
+
+### Creating a Terraform Config File
+Create a folder in which you want to initialize your Terraform workspace. Then, create a main.tf file within that folder, with the following header:
+
+    terraform {
+      required_providers {
+        qumulo = {
+          source = "qumulo.com/terraform-intern/qumulo"
+        }
+      }
+    }
+
+Run `terraform init` to initialize the workspace.
+
+If you'd like to import some or all of the current state of your cluster, you can either use [import_cluster.py](/examples/imports/import_cluster.py) (run `python3 import_cluster.py -h` to view usage), or import resources manually as shown [here](/IMPORT.md)
+
+Then, add resources that you want to manage with Terraform. Examples of resources can be found [here](/examples/main.tf)
+
+Now, run `terraform apply` to create those resources with the REST API. You're good to go!
+
+## To Run Acceptance Tests
+Make sure the environment variables as mentioned above are set. 
 
 Make sure the TF_ACC environment variable is set to enable acceptance testing
 
