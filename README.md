@@ -49,6 +49,8 @@ Then, run the following command
 
 ## Developing the Qumulo Provider
 
-More information coming soon!
+For contributing to the Qumulo terraform provider, refer to the [development docs](https://github.com/Qumulo/terraform-provider-qumulo/blob/main/docs/TF-RESOURCE.md). It provides a brief overview for getting started on adding new Qumulo resources to be managed via Terraform and adding tests for the same. 
 
 Check out our [style guide](/STYLE.md) before contributing to ensure the code base remains unified.
+
+For further help on writing custom providers, refer to the [official Terraform documentation](https://www.hashicorp.com/blog/writing-custom-terraform-providers).
