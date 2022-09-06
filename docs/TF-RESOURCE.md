@@ -11,7 +11,7 @@ to create an ``example_settings`` resource, create a file named ``resource_examp
 
 3. Next, we define any enum values (using Go string slices and constants) that might be present as part of the Terraform schema. 
 
-4. The next step is to define the Go structs for the HTTP request and response bodies. In the case the request body of the CREATE/UPDATE endpoints is similar to the response body of the READ endpoint, we define a common struct for both of them. Refer to the [STYLE guide](https://github.com/Qumulo/terraform-provider-qumulo/blob/dev-docs/STYLE.md#structs) to understand the conventions followed while defining structs.
+4. The next step is to define the Go structs for the HTTP request and response bodies. In the case the request body of the CREATE/UPDATE endpoints is similar to the response body of the READ endpoint, we define a common struct for both of them. Refer to the [STYLE guide](https://github.com/Qumulo/terraform-provider-qumulo/blob/main/docs/STYLE.md#structs) to understand the conventions followed while defining structs.
 5. The resource structure and data schema along with the CRUD operations are defined as a function returning a ``schema.Resource`` type. For example,
           
       ```golang
