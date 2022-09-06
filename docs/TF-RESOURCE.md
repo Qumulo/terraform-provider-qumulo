@@ -40,7 +40,7 @@ to create an ``example_settings`` resource, create a file named ``resource_examp
       name = "nameMe!"
    }
     ```
-6. The four fields ``CreateContext``, ``ReadContext``, ``UpdateContext``, and ``DeleteContext`` are mandatory for the management of the resource via Terraform. There are other functions, like ``Importer`` which are optional and have been defined for most/all of Qumulo's resources. Based on the schema and current state of the resource, Terraform determines which of the functions to call. You can refer to any of the existing resource_.go files for what goes inside each of these function definitions!
+6. The four fields ``CreateContext``, ``ReadContext``, ``UpdateContext`` (optional if all the fields are marked ForceNew), and ``DeleteContext`` are mandatory for the management of the resource via Terraform. There are other functions, like ``Importer`` which are optional and have been defined for most/all of Qumulo's resources. Based on the schema and current state of the resource, Terraform determines which of the functions to call. You can refer to any of the existing resource_.go files for what goes inside each of these function definitions!
 7. In order to register the new terraform resource, update ``provider.go`` with the new resource.
       ```golang 
        func Provider() *schema.Provider {
