@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 
@@ -282,10 +283,13 @@ def importLocalUsers(rc, f):
 def importSMBShares(rc, f):
     shares = rc.smb.smb_list_shares()
     for s in shares:
+        if s["share_name"] != cleanName(s["share_name"]):
+            logging.error(f'SMB Share name does not match terraform standard, must import manually {s["share_name"]}')
+            continue
         f.write(getSMBShareBlock(s))
         f.write("\n")
         f.flush()
-        os.system(f'terraform import qumulo_smb_share.{s["share_name"]} {s["id"]}')
+        os.system(f'terraform import qumulo_smb_share.{s["share_name"].replace(" ", "_")} {s["id"]}')
 
 def importNFSSettings(rc, f):
     f.write(getNFSSettingsBlock(rc.nfs.get_nfs_config()))
@@ -409,7 +413,9 @@ def getFTPServerBlock(ftp) -> str:
   allow_unencrypted_connections = {str(ftp["allow_unencrypted_connections"]).lower()}
   expand_wildcards = {str(ftp["expand_wildcards"]).lower()}
 {anonymous_user}\
-  greeting = "{ftp["greeting"]}"
+  greeting = <<GREETDELIM
+{ftp["greeting"]}
+GREETDELIM
 }}
 """
 
@@ -527,7 +533,7 @@ def getSMBShareBlock(share) -> str:
     if v := share["bytes_per_sector"]:
         bytes_per_sector = f'  bytes_per_sector = "{v}"\n'
 
-    return f"""resource "qumulo_smb_share" "{share["share_name"]}" {{
+    return f"""resource "qumulo_smb_share" "{share["share_name"].replace(" ", "_")}" {{
   share_name = "{share["share_name"]}"
   fs_path = "{share["fs_path"]}"
   description = "{share["description"]}"\
@@ -625,7 +631,8 @@ def getNFSRestrictionsBlock(restriction) -> str:
       id_value = "{v["id_value"]}"
     }}\n"""
 
-    return f"""  restrictions {{
+    return f"""
+  restrictions {{
     host_restrictions = {str(restriction["host_restrictions"]).replace("'", '"')}
     read_only = {str(restriction["read_only"]).lower()}
     require_privileged_port = {str(restriction["require_privileged_port"]).lower()}
@@ -692,6 +699,10 @@ def getNetworkConfigBlock(network, interface_id) -> str:
 }}
 """
 
+def cleanName(name: str) -> str:
+    nospace = name.replace(" ", "_")
+    newstr = re.sub("[^a-zA-Z0-9\-_]+", "", nospace)
+    return newstr
 
 
 if __name__ == "__main__":
