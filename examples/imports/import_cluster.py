@@ -133,7 +133,7 @@ def main(opts):
                     
 
         # Setting up the provider
-        f.write(getProviderBlock("Qumulo/qumulo"))
+        f.write(getProviderBlock("Qumulo/qumulo","0.1.1"))
         f.write("\n")
         f.flush()
 
