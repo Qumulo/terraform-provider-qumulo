@@ -4,7 +4,7 @@ terraform {
   required_providers {
     qumulo = {
       source = "Qumulo/qumulo"
-      version = 0.1.1
+      version = "0.1.1"
     }
   }
 }

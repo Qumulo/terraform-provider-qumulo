@@ -133,7 +133,7 @@ def main(opts):
                     
 
         # Setting up the provider
-        f.write(getProviderBlock("qumulo.com/terraform-intern/qumulo"))
+        f.write(getProviderBlock("Qumulo/qumulo"))
         f.write("\n")
         f.flush()
 
@@ -330,11 +330,12 @@ def importInterfaces(rc, f):
 
 
 
-def getProviderBlock(source: str) -> str:
+def getProviderBlock(source: str, version: str) -> str:
     return  """terraform {{
   required_providers {{
     qumulo = {{
       source = "{0}"
+      version = "{1}"
     }}
   }}
 }}

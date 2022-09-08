@@ -126,7 +126,8 @@ Copy that output to the .tf file, writing over the empty resource blocks we incl
 terraform {
   required_providers {
     qumulo = {
-      source = "qumulo.com/terraform-intern/qumulo"
+      source = "Qumulo/qumulo"
+      version = "0.1.1"
     }
   }
 }
