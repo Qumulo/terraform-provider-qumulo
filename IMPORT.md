@@ -15,7 +15,8 @@ First, create a .tf file with the qumulo provider configured. For example, creat
 terraform {
   required_providers {
     qumulo = {
-      source = "qumulo.com/terraform-intern/qumulo"
+        source = "Qumulo/qumulo"
+        version = "0.1.1"
     }
   }
 }

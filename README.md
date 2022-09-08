@@ -37,7 +37,8 @@ Create a folder in which you want to initialize your Terraform workspace. Then, 
     terraform {
       required_providers {
         qumulo = {
-          source = "qumulo.com/terraform-intern/qumulo"
+          source = "Qumulo/qumulo"
+          version = "0.1.1"
         }
       }
     }
