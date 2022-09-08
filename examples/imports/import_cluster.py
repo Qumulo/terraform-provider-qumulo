@@ -331,15 +331,15 @@ def importInterfaces(rc, f):
 
 
 def getProviderBlock(source: str, version: str) -> str:
-    return  """terraform {{
+    return  f"""terraform {{
   required_providers {{
     qumulo = {{
-      source = "{0}"
-      version = "{1}"
+      source = "{source}"
+      version = "{version}"
     }}
   }}
 }}
-""".format(source)
+"""
 
 def getClusterNameBlock(cluster_conf) -> str:
     return f"""resource "qumulo_cluster_name" "name" {{
