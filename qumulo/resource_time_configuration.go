@@ -2,7 +2,9 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"terraform-provider-qumulo/openapi"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -10,13 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
-
-const TimeConfigurationEndpoint = "/v1/time/settings"
-
-type TimeConfigurationBody struct {
-	UseAdForPrimary bool     `json:"use_ad_for_primary"`
-	NtpServers      []string `json:"ntp_servers"`
-}
 
 func resourceTimeConfiguration() *schema.Resource {
 	return &schema.Resource{
@@ -52,10 +47,19 @@ func resourceTimeConfiguration() *schema.Resource {
 }
 
 func resourceTimeConfigurationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setTimeConfiguration(ctx, d, m, PUT)
+	c := m.(*openapi.APIClient)
+
+	config := setTimeConfiguration(ctx, d, m)
+
+	resp, r, err := c.TimeApi.V1TimeSettingsPut(context.Background()).
+		V1TimeSettingsGet200Response(config).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `TimeApi.V1TimeSettingsPut``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1TimeSettingsPut`: V1TimeSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `TimeApi.V1TimeSettingsPut`: %v\n", resp))
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
@@ -63,26 +67,39 @@ func resourceTimeConfigurationCreate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceTimeConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
+	c := m.(*openapi.APIClient)
 
 	var errs ErrorCollection
 
-	timeConfig, err := DoRequest[TimeConfigurationBody, TimeConfigurationBody](ctx, c, GET, TimeConfigurationEndpoint, nil)
+	resp, r, err := c.TimeApi.V1TimeSettingsGet(context.Background()).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `TimeApi.V1TimeSettingsGet``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1TimeSettingsGet`: V1TimeSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `TimeApi.V1TimeSettingsGet`: %v\n", resp))
 
-	errs.addMaybeError(d.Set("use_ad_for_primary", timeConfig.UseAdForPrimary))
-	errs.addMaybeError(d.Set("ntp_servers", timeConfig.NtpServers))
+	errs.addMaybeError(d.Set("use_ad_for_primary", resp.GetUseAdForPrimary()))
+	errs.addMaybeError(d.Set("ntp_servers", resp.GetNtpServers()))
 
 	return errs.diags
 }
 
 func resourceTimeConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setTimeConfiguration(ctx, d, m, PATCH)
+	c := m.(*openapi.APIClient)
+
+	config := setTimeConfiguration(ctx, d, m)
+
+	resp, r, err := c.TimeApi.V1TimeSettingsPatch(context.Background()).
+		V1TimeSettingsGet200Response(config).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `TimeApi.V1TimeSettingsPatch``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1TimeSettingsPatch`: V1TimeSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `TimeApi.V1TimeSettingsPatch`: %v\n", resp))
 
 	return resourceTimeConfigurationRead(ctx, d, m)
 }
@@ -93,18 +110,16 @@ func resourceTimeConfigurationDelete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func setTimeConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
-	c := m.(*Client)
+func setTimeConfiguration(ctx context.Context, d *schema.ResourceData, m interface{}) openapi.V1TimeSettingsGet200Response {
+
+	config := *openapi.NewV1TimeSettingsGet200Response()
 
 	ntpServers := InterfaceSliceToStringSlice(d.Get("ntp_servers").([]interface{}))
 
-	timeConfigurationRequest := TimeConfigurationBody{
-		UseAdForPrimary: d.Get("use_ad_for_primary").(bool),
-		NtpServers:      ntpServers,
-	}
+	config.SetUseAdForPrimary(d.Get("use_ad_for_primary").(bool))
+	config.SetNtpServers(ntpServers)
 
 	tflog.Debug(ctx, "Updating time configuration")
-	_, err := DoRequest[TimeConfigurationBody, TimeConfigurationBody](ctx, c, method, TimeConfigurationEndpoint, &timeConfigurationRequest)
 
-	return err
+	return config
 }

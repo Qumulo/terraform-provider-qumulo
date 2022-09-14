@@ -2,7 +2,9 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"terraform-provider-qumulo/openapi"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -11,18 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
-
-const SmbServerEndpoint = "/v1/smb/settings"
-
-type SmbServerBody struct {
-	SessionEncryption               string   `json:"session_encryption"`
-	SupportedDialects               []string `json:"supported_dialects"`
-	HideSharesFromUnauthorizedUsers bool     `json:"hide_shares_from_unauthorized_users"`
-	HideSharesFromUnauthorizedHosts bool     `json:"hide_shares_from_unauthorized_hosts"`
-	SnapshotDirectoryMode           string   `json:"snapshot_directory_mode"`
-	BypassTraverseChecking          bool     `json:"bypass_traverse_checking"`
-	SigningRequired                 bool     `json:"signing_required"`
-}
 
 var SmbEncryptionSettings = []string{"NONE", "PREFERRED", "REQUIRED"}
 var SmbValidDialects = []string{"SMB2_DIALECT_2_002", "SMB2_DIALECT_2_1", "SMB2_DIALECT_3_0", "SMB2_DIALECT_3_11"}
@@ -84,10 +74,19 @@ func resourceSmbServer() *schema.Resource {
 }
 
 func resourceSmbServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setSmbServerSettings(ctx, d, m, PUT)
+	c := m.(*openapi.APIClient)
+
+	settings := setSmbServerSettings(ctx, d, m)
+
+	resp, r, err := c.SmbApi.V1SmbSettingsPut(context.Background()).
+		V1SmbSettingsGet200Response(*settings).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `SmbApi.V1SmbSettingsPut``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1SmbSettingsPut`: V1SmbSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `SmbApi.V1SmbSettingsPut`: %v\n", resp))
 
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 
@@ -95,31 +94,45 @@ func resourceSmbServerCreate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceSmbServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
+	c := m.(*openapi.APIClient)
 
 	var errs ErrorCollection
 
-	smbSettings, err := DoRequest[SmbServerBody, SmbServerBody](ctx, c, GET, SmbServerEndpoint, nil)
+	resp, r, err := c.SmbApi.V1SmbSettingsGet(context.Background()).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `SmbApi.V1SmbSettingsGet``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1SmbSettingsGet`: V1SmbSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `SmbApi.V1SmbSettingsGet`: %v\n", resp))
 
-	errs.addMaybeError(d.Set("session_encryption", smbSettings.SessionEncryption))
-	errs.addMaybeError(d.Set("supported_dialects", smbSettings.SupportedDialects))
-	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_users", smbSettings.HideSharesFromUnauthorizedUsers))
-	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_hosts", smbSettings.HideSharesFromUnauthorizedHosts))
-	errs.addMaybeError(d.Set("snapshot_directory_mode", smbSettings.SnapshotDirectoryMode))
-	errs.addMaybeError(d.Set("bypass_traverse_checking", smbSettings.BypassTraverseChecking))
-	errs.addMaybeError(d.Set("signing_required", smbSettings.SigningRequired))
+	errs.addMaybeError(d.Set("session_encryption", resp.GetSessionEncryption()))
+	errs.addMaybeError(d.Set("supported_dialects", resp.GetSupportedDialects()))
+	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_users", resp.GetHideSharesFromUnauthorizedUsers()))
+	errs.addMaybeError(d.Set("hide_shares_from_unauthorized_hosts", resp.GetHideSharesFromUnauthorizedHosts()))
+	errs.addMaybeError(d.Set("snapshot_directory_mode", resp.GetSnapshotDirectoryMode()))
+	errs.addMaybeError(d.Set("bypass_traverse_checking", resp.GetBypassTraverseChecking()))
+	errs.addMaybeError(d.Set("signing_required", resp.GetSigningRequired()))
 
 	return errs.diags
 }
 
 func resourceSmbServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setSmbServerSettings(ctx, d, m, PATCH)
+	c := m.(*openapi.APIClient)
+
+	settings := setSmbServerSettings(ctx, d, m)
+
+	resp, r, err := c.SmbApi.V1SmbSettingsPatch(context.Background()).
+		V1SmbSettingsGet200Response(*settings).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `SmbApi.V1SmbSettingsPatch``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1SmbSettingsPatch`: V1SmbSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `SmbApi.V1SmbSettingsPatch`: %v\n", resp))
+
 	return resourceSmbServerRead(ctx, d, m)
 }
 
@@ -129,22 +142,21 @@ func resourceSmbServerDelete(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func setSmbServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
-	c := m.(*Client)
+func setSmbServerSettings(ctx context.Context, d *schema.ResourceData, m interface{}) *openapi.V1SmbSettingsGet200Response {
 
 	dialects := InterfaceSliceToStringSlice(d.Get("supported_dialects").([]interface{}))
 
-	smbServerConfig := SmbServerBody{
-		SessionEncryption:               d.Get("session_encryption").(string),
-		SupportedDialects:               dialects,
-		HideSharesFromUnauthorizedUsers: d.Get("hide_shares_from_unauthorized_users").(bool),
-		HideSharesFromUnauthorizedHosts: d.Get("hide_shares_from_unauthorized_hosts").(bool),
-		SnapshotDirectoryMode:           d.Get("snapshot_directory_mode").(string),
-		BypassTraverseChecking:          d.Get("bypass_traverse_checking").(bool),
-		SigningRequired:                 d.Get("signing_required").(bool),
-	}
+	settings := openapi.NewV1SmbSettingsGet200Response()
+
+	settings.SetSessionEncryption(d.Get("session_encryption").(string))
+	settings.SetSupportedDialects(dialects)
+	settings.SetHideSharesFromUnauthorizedUsers(d.Get("hide_shares_from_unauthorized_users").(bool))
+	settings.SetHideSharesFromUnauthorizedHosts(d.Get("hide_shares_from_unauthorized_hosts").(bool))
+	settings.SetSnapshotDirectoryMode(d.Get("snapshot_directory_mode").(string))
+	settings.SetBypassTraverseChecking(d.Get("bypass_traverse_checking").(bool))
+	settings.SetSigningRequired(d.Get("signing_required").(bool))
 
 	tflog.Debug(ctx, "Updating SMB settings")
-	_, err := DoRequest[SmbServerBody, SmbServerBody](ctx, c, method, SmbServerEndpoint, &smbServerConfig)
-	return err
+
+	return settings
 }
