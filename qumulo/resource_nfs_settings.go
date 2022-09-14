@@ -2,7 +2,9 @@ package qumulo
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"terraform-provider-qumulo/openapi"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -42,6 +44,11 @@ func resourceNfsSettings() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
+			"krb5p_enabled": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
 			"auth_sys_enabled": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -56,35 +63,57 @@ func resourceNfsSettings() *schema.Resource {
 }
 
 func resourceNfsSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setNfsSettings(ctx, d, m, PUT)
+	c := m.(*openapi.APIClient)
+	settings := setNfsSettings(ctx, d, m)
+
+	resp, r, err := c.NfsApi.V2NfsSettingsPut(context.Background()).V2NfsSettingsGet200Response(settings).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `NfsApi.V2NfsSettingsPut``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V2NfsSettingsPut`: V2NfsSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `NfsApi.V2NfsSettingsPut`: %v\n", resp))
+
 	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
 	return resourceNfsSettingsRead(ctx, d, m)
 }
 
 func resourceNfsSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
+	c := m.(*openapi.APIClient)
 
 	var errs ErrorCollection
-	s, err := DoRequest[NfsSettingsBody, NfsSettingsBody](ctx, c, GET, NfsSettingsEndpoint, nil)
+
+	resp, r, err := c.NfsApi.V2NfsSettingsGet(context.Background()).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `NfsApi.V2NfsSettingsGet``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
-	errs.addMaybeError(d.Set("v4_enabled", s.V4Enabled))
-	errs.addMaybeError(d.Set("krb5_enabled", s.Krb5Enabled))
-	errs.addMaybeError(d.Set("auth_sys_enabled", s.AuthSysEnabled))
+	// response from `V2NfsSettingsGet`: V2NfsSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `NfsApi.V2NfsSettingsGet`: %v\n", resp))
+
+	errs.addMaybeError(d.Set("v4_enabled", resp.GetV4Enabled()))
+	errs.addMaybeError(d.Set("krb5_enabled", resp.GetKrb5Enabled()))
+	errs.addMaybeError(d.Set("krb5p_enabled", resp.GetKrb5pEnabled()))
+	errs.addMaybeError(d.Set("auth_sys_enabled", resp.GetAuthSysEnabled()))
 
 	return errs.diags
 }
 
 func resourceNfsSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := setNfsSettings(ctx, d, m, PATCH)
+	c := m.(*openapi.APIClient)
+	settings := setNfsSettings(ctx, d, m)
+
+	resp, r, err := c.NfsApi.V2NfsSettingsPatch(context.Background()).V2NfsSettingsGet200Response(settings).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `NfsApi.V2NfsSettingsPatch``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
+	// response from `V2NfsSettingsPatch`: V2NfsSettingsGet200Response
+	tflog.Debug(ctx, fmt.Sprintf("Response from `NfsApi.V2NfsSettingsPatch`: %v\n", resp))
+
 	return resourceNfsSettingsRead(ctx, d, m)
 }
 
@@ -94,16 +123,15 @@ func resourceNfsSettingsDelete(ctx context.Context, d *schema.ResourceData, m in
 	return nil
 }
 
-func setNfsSettings(ctx context.Context, d *schema.ResourceData, m interface{}, method Method) error {
-	c := m.(*Client)
+func setNfsSettings(ctx context.Context, d *schema.ResourceData, m interface{}) openapi.V2NfsSettingsGet200Response {
 
-	nfsSettings := NfsSettingsBody{
-		V4Enabled:      d.Get("v4_enabled").(bool),
-		Krb5Enabled:    d.Get("krb5_enabled").(bool),
-		AuthSysEnabled: d.Get("auth_sys_enabled").(bool),
-	}
+	settings := *openapi.NewV2NfsSettingsGet200Response()
+	settings.SetV4Enabled(d.Get("v4_enabled").(bool))
+	settings.SetKrb5Enabled(d.Get("krb5_enabled").(bool))
+	settings.SetKrb5pEnabled(d.Get("krb5p_enabled").(bool))
+	settings.SetAuthSysEnabled(d.Get("auth_sys_enabled").(bool))
 
 	tflog.Debug(ctx, "Updating NFS Settings")
-	_, err := DoRequest[NfsSettingsBody, NfsSettingsBody](ctx, c, method, NfsSettingsEndpoint, &nfsSettings)
-	return err
+
+	return settings
 }
