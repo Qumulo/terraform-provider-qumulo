@@ -48,8 +48,7 @@ func TestAccChangeClusterName(t *testing.T) {
 }
 
 func testAccClusterNameConf(name string) string {
-	return fmt.Sprintf(`
-resource "qumulo_cluster_name" "update_name" {
+	return fmt.Sprintf(`resource "qumulo_cluster_name" "update_name" {
 	cluster_name = %q
 }
 `, name)
@@ -64,7 +63,6 @@ func testAccCheckClusterName(name string) resource.TestCheckFunc {
 			return err
 		}
 		if cs.ClusterName != name {
-			fmt.Println(cs.ClusterName)
 			return fmt.Errorf("cluster name mismatch: Expected %s, got %s", name, cs.ClusterName)
 		}
 		return nil
