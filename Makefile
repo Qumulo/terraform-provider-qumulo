@@ -4,7 +4,7 @@ NAMESPACE=terraform-intern
 NAME=qumulo
 BINARY=terraform-provider-${NAME}
 VERSION=0.2
-OS_ARCH=darwin_arm64
+OS_ARCH=darwin_amd64
 
 default: install
 
@@ -31,14 +31,10 @@ install: build
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
 test:
-	go test -i $(TEST) || exit 1
-	echo $(TEST) | xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
+	TF_ACC=1 go test -v ./...
 
 testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
-
-testwip:
-	TF_ACC=1 go test -v ./...
 
 runtest:
 	TF_ACC=1 go test -run $(TESTNAME) ./...

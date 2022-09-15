@@ -60,7 +60,7 @@ Make sure the TF_ACC environment variable is set to enable acceptance testing
 
 Then, run the following command
 
-    make testwip
+    make test
 
 The above command runs all the acceptance tests in the provider.
 To run a specific test, set the TESTNAME environment variable to the corresponding test name:
