@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"terraform-provider-qumulo/openapi"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,6 +12,8 @@ import (
 )
 
 func TestAccChangeDirectoryQuota(t *testing.T) {
+	defaultDirectoryQuota := getAccDirectoryQuota("2", "1000000000")
+	testingDirectoryQuota := getAccDirectoryQuota("2", "2000000000")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -34,48 +37,44 @@ func TestAccChangeDirectoryQuota(t *testing.T) {
 	})
 }
 
-var defaultDirectoryQuota = DirectoryQuotaBody{
-	Id:    "2",
-	Limit: "1000000000",
+func getAccDirectoryQuota(id string, limit string) openapi.V1FilesQuotasGet200ResponseQuotasInner {
+	var reqBody = openapi.V1FilesQuotasGet200ResponseQuotasInner{
+		Id:    &id,
+		Limit: &limit,
+	}
+	return reqBody
 }
 
-var testingDirectoryQuota = DirectoryQuotaBody{
-	Id:    "2",
-	Limit: "2000000000",
-}
-
-func testAccDirectoryQuotaConfig(req DirectoryQuotaBody) string {
+func testAccDirectoryQuotaConfig(req openapi.V1FilesQuotasGet200ResponseQuotasInner) string {
 	return fmt.Sprintf(`
 	resource "qumulo_directory_quota" "test_quota" {
 		directory_id = %v
 		limit = %v
 	}
-  `, req.Id, req.Limit)
+  `, *req.Id, *req.Limit)
 }
 
-func testAccCheckDirectoryQuota(quota DirectoryQuotaBody) resource.TestCheckFunc {
+func testAccCheckDirectoryQuota(quota openapi.V1FilesQuotasGet200ResponseQuotasInner) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		c := testAccProvider.Meta().(*Client)
-		ctx := context.Background()
-		quotaUrl := DirectoryQuotaEndpoint + quota.Id
+		c := testAccProvider.Meta().(*openapi.APIClient)
 
-		settings, err := DoRequest[DirectoryQuotaEmptyBody, DirectoryQuotaBody](ctx, c, GET, quotaUrl, nil)
+		resp, _, err := c.FilesApi.V1FilesQuotasIdGet(context.Background(), *quota.Id).Execute()
 		if err != nil {
 			return err
 		}
 
-		if !reflect.DeepEqual(*settings, quota) {
-			return fmt.Errorf("directory quota settings mismatch: Expected %v, got %v", quota, *settings)
+		if !reflect.DeepEqual(*resp, quota) {
+			return fmt.Errorf("directory quota settings mismatch: Expected %v, got %v", quota, *resp)
 		}
 		return nil
 	}
 }
 
-func testAccCompareDirectoryQuotaSettings(quota DirectoryQuotaBody) resource.TestCheckFunc {
+func testAccCompareDirectoryQuotaSettings(quota openapi.V1FilesQuotasGet200ResponseQuotasInner) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_directory_quota.test_quota", "directory_id",
-			fmt.Sprintf("%v", quota.Id)),
+			fmt.Sprintf("%v", *quota.Id)),
 		resource.TestCheckResourceAttr("qumulo_directory_quota.test_quota", "limit",
-			fmt.Sprintf("%v", quota.Limit)),
+			fmt.Sprintf("%v", *quota.Limit)),
 	)
 }

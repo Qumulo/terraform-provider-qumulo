@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"terraform-provider-qumulo/openapi"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,6 +12,11 @@ import (
 )
 
 func TestAccChangeSmbServer(t *testing.T) {
+	defaultSmbServerConfig := getSmbServerConfig("NONE", []string{}, false, false, "DISABLED",
+		false, false)
+
+	testingSmbServerConfig := getSmbServerConfig("PREFERRED", []string{}, true, true, "VISIBLE",
+		true, true)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -32,27 +38,19 @@ func TestAccChangeSmbServer(t *testing.T) {
 	})
 }
 
-var defaultSmbServerConfig = SmbServerBody{
-	SessionEncryption:               "NONE",
-	SupportedDialects:               []string{},
-	HideSharesFromUnauthorizedUsers: false,
-	HideSharesFromUnauthorizedHosts: false,
-	SnapshotDirectoryMode:           "DISABLED",
-	BypassTraverseChecking:          false,
-	SigningRequired:                 false,
+func getSmbServerConfig(sessionEncryption string, supportedDialects []string, hideSharesFromUnauthorizedUsers bool, hideSharesFromUnauthorizedHosts bool,
+	snapshotDirectoryMode string, bypassTraverseChecking bool, signingRequired bool) openapi.V1SmbSettingsGet200Response {
+	return openapi.V1SmbSettingsGet200Response{
+		SessionEncryption:               &sessionEncryption,
+		SupportedDialects:               supportedDialects,
+		HideSharesFromUnauthorizedUsers: &hideSharesFromUnauthorizedUsers,
+		HideSharesFromUnauthorizedHosts: &hideSharesFromUnauthorizedHosts,
+		SnapshotDirectoryMode:           &snapshotDirectoryMode,
+		BypassTraverseChecking:          &bypassTraverseChecking,
+		SigningRequired:                 &signingRequired,
+	}
 }
-
-var testingSmbServerConfig = SmbServerBody{
-	SessionEncryption:               "PREFERRED",
-	SupportedDialects:               []string{},
-	HideSharesFromUnauthorizedUsers: true,
-	HideSharesFromUnauthorizedHosts: true,
-	SnapshotDirectoryMode:           "VISIBLE",
-	BypassTraverseChecking:          true,
-	SigningRequired:                 true,
-}
-
-func testAccSmbServerConfig(smb SmbServerBody) string {
+func testAccSmbServerConfig(smb openapi.V1SmbSettingsGet200Response) string {
 	return fmt.Sprintf(`
 resource "qumulo_smb_server" "update_smb" {
 	session_encryption = %q
@@ -63,35 +61,34 @@ resource "qumulo_smb_server" "update_smb" {
 	bypass_traverse_checking = %v
 	signing_required = %v
 }
-  `, smb.SessionEncryption, PrintTerraformListFromList(smb.SupportedDialects),
-		smb.HideSharesFromUnauthorizedUsers, smb.HideSharesFromUnauthorizedHosts, smb.SnapshotDirectoryMode,
-		smb.BypassTraverseChecking, smb.SigningRequired)
+  `, *smb.SessionEncryption, PrintTerraformListFromList(smb.SupportedDialects),
+		*smb.HideSharesFromUnauthorizedUsers, *smb.HideSharesFromUnauthorizedHosts, *smb.SnapshotDirectoryMode,
+		*smb.BypassTraverseChecking, *smb.SigningRequired)
 }
 
-func testAccCompareSmbServerSettings(smb SmbServerBody) resource.TestCheckFunc {
+func testAccCompareSmbServerSettings(smb openapi.V1SmbSettingsGet200Response) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "session_encryption",
-			smb.SessionEncryption),
+			*smb.SessionEncryption),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "supported_dialects.#",
 			fmt.Sprintf("%v", len(smb.SupportedDialects))),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "hide_shares_from_unauthorized_users",
-			fmt.Sprintf("%v", smb.HideSharesFromUnauthorizedUsers)),
+			fmt.Sprintf("%v", *smb.HideSharesFromUnauthorizedUsers)),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "hide_shares_from_unauthorized_hosts",
-			fmt.Sprintf("%v", smb.HideSharesFromUnauthorizedUsers)),
+			fmt.Sprintf("%v", *smb.HideSharesFromUnauthorizedUsers)),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "snapshot_directory_mode",
-			smb.SnapshotDirectoryMode),
+			*smb.SnapshotDirectoryMode),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "bypass_traverse_checking",
-			fmt.Sprintf("%v", smb.BypassTraverseChecking)),
+			fmt.Sprintf("%v", *smb.BypassTraverseChecking)),
 		resource.TestCheckResourceAttr("qumulo_smb_server.update_smb", "signing_required",
-			fmt.Sprintf("%v", smb.SigningRequired)),
+			fmt.Sprintf("%v", *smb.SigningRequired)),
 	)
 }
 
-func testAccCheckSmbServerSettings(smb SmbServerBody) resource.TestCheckFunc {
+func testAccCheckSmbServerSettings(smb openapi.V1SmbSettingsGet200Response) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		c := testAccProvider.Meta().(*Client)
-		ctx := context.Background()
-		settings, err := DoRequest[SmbServerBody, SmbServerBody](ctx, c, GET, SmbServerEndpoint, nil)
+		c := testAccProvider.Meta().(*openapi.APIClient)
+		settings, _, err := c.SmbApi.V1SmbSettingsGet(context.Background()).Execute()
 		if err != nil {
 			return err
 		}

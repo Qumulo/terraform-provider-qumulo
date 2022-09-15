@@ -25,7 +25,7 @@ variable "some_cluster_name" {
 
 # Setting the cluster name and SSL Certificate Authority
 resource "qumulo_cluster_name" "update_name" {
-  cluster_name = "InigiMontoya"
+  cluster_name = var.some_cluster_name
 }
 
 # Configuring the monitoring settings
@@ -44,7 +44,6 @@ resource "qumulo_monitoring" "update_monitoring" {
 resource "qumulo_nfs_settings" "my_new_settings" {
   v4_enabled = false
   krb5_enabled = false
-  krb5p_enabled = false
   auth_sys_enabled = true
 }
 
