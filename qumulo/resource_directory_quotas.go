@@ -3,6 +3,7 @@ package qumulo
 import (
 	"context"
 	"fmt"
+	"terraform-provider-qumulo/openapi"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -10,17 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
-
-const DirectoryQuotaEndpoint = "/v1/files/quotas/"
-
-// Create body, Read response, Update body
-type DirectoryQuotaBody struct {
-	Id    string `json:"id"`
-	Limit string `json:"limit"`
-}
-
-// Read request, Delete body
-type DirectoryQuotaEmptyBody struct{}
 
 func resourceDirectoryQuota() *schema.Resource {
 	return &schema.Resource{
@@ -54,10 +44,19 @@ func resourceDirectoryQuota() *schema.Resource {
 }
 
 func resourceDirectoryQuotaCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	err := createOrUpdateDirectoryQuota(ctx, d, m, POST, DirectoryQuotaEndpoint)
+	c := m.(*openapi.APIClient)
+
+	quota := createOrUpdateDirectoryQuota(ctx, d, m)
+
+	resp, r, err := c.FilesApi.V1FilesQuotasPost(context.Background()).
+		V1FilesQuotasGet200ResponseQuotasInner(quota).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `FilesApi.V1FilesQuotasIdPost``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1FilesQuotasIdPost`: V1FilesQuotasGet200ResponseQuotasInner
+	tflog.Debug(ctx, fmt.Sprintf("Response from `FilesApi.V1FilesQuotasIdPost`: %v\n", resp))
 
 	d.SetId(d.Get("directory_id").(string))
 
@@ -65,61 +64,71 @@ func resourceDirectoryQuotaCreate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceDirectoryQuotaRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	c := m.(*Client)
+	c := m.(*openapi.APIClient)
 
 	var errs ErrorCollection
 
-	quotaUrl := DirectoryQuotaEndpoint + d.Id()
+	id := d.Id() // string | Directory ID (uint64)
 
-	directoryQuota, err := DoRequest[DirectoryQuotaEmptyBody, DirectoryQuotaBody](ctx, c, GET, quotaUrl, nil)
+	resp, r, err := c.FilesApi.V1FilesQuotasIdGet(context.Background(), id).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `FilesApi.V1FilesQuotasIdGet``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1FilesQuotasIdGet`: V1FilesQuotasGet200ResponseQuotasInner
+	tflog.Debug(ctx, fmt.Sprintf("Response from `FilesApi.V1FilesQuotasIdGet`: %v\n", resp))
 
-	errs.addMaybeError(d.Set("directory_id", directoryQuota.Id))
-	errs.addMaybeError(d.Set("limit", directoryQuota.Limit))
+	errs.addMaybeError(d.Set("directory_id", resp.GetId()))
+	errs.addMaybeError(d.Set("limit", resp.GetLimit()))
 
 	return errs.diags
 }
 
 func resourceDirectoryQuotaUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	quotaUrl := DirectoryQuotaEndpoint + d.Id()
+	c := m.(*openapi.APIClient)
 
-	err := createOrUpdateDirectoryQuota(ctx, d, m, PUT, quotaUrl)
+	quota := createOrUpdateDirectoryQuota(ctx, d, m)
+
+	resp, r, err := c.FilesApi.V1FilesQuotasIdPut(context.Background(), d.Get("directory_id").(string)).
+		V1FilesQuotasGet200ResponseQuotasInner(quota).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `FilesApi.V1FilesQuotasIdPut``: %v\n", err))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
+	// response from `V1FilesQuotasIdPut`: V1FilesQuotasGet200ResponseQuotasInner
+	tflog.Debug(ctx, fmt.Sprintf("Response from `FilesApi.V1FilesQuotasIdPut`: %v\n", resp))
 
 	return resourceDirectoryQuotaRead(ctx, d, m)
 }
 
 func resourceDirectoryQuotaDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*openapi.APIClient)
+
 	tflog.Info(ctx, fmt.Sprintf("Deleting directory quota with id %q", d.Id()))
 
-	c := m.(*Client)
+	id := d.Id() // string | Directory ID (uint64)
 
-	quotaUrl := DirectoryQuotaEndpoint + d.Id()
-
-	_, err := DoRequest[DirectoryQuotaEmptyBody, DirectoryQuotaEmptyBody](ctx, c, DELETE, quotaUrl, nil)
+	r, err := c.FilesApi.V1FilesQuotasIdDelete(context.Background(), id).Execute()
 	if err != nil {
+		tflog.Debug(ctx, fmt.Sprintf("Error when calling `FilesApi.V1FilesQuotasIdDelete``\n"))
+		tflog.Debug(ctx, fmt.Sprintf("Full HTTP response: %v\n", r))
 		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func createOrUpdateDirectoryQuota(ctx context.Context, d *schema.ResourceData, m interface{}, method Method, url string) error {
-	c := m.(*Client)
+func createOrUpdateDirectoryQuota(ctx context.Context, d *schema.ResourceData, m interface{}) openapi.V1FilesQuotasGet200ResponseQuotasInner {
+	quota := *openapi.NewV1FilesQuotasGet200ResponseQuotasInner()
 
 	directoryId := d.Get("directory_id").(string)
 
-	directoryQuotaRequest := DirectoryQuotaBody{
-		Id:    directoryId,
-		Limit: d.Get("limit").(string),
-	}
+	quota.SetId(directoryId)
+	quota.SetLimit(d.Get("limit").(string))
 
 	tflog.Debug(ctx, fmt.Sprintf("Updating directory quota with id %q", directoryId))
-	_, err := DoRequest[DirectoryQuotaBody, DirectoryQuotaBody](ctx, c, method, url, &directoryQuotaRequest)
 
-	return err
+	return quota
 }

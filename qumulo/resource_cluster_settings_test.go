@@ -3,6 +3,8 @@ package qumulo
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"terraform-provider-qumulo/openapi"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -10,8 +12,8 @@ import (
 )
 
 func TestAccChangeClusterName(t *testing.T) {
-	defaultName := "qfsd"
-	rName := "InigoMontoya"
+	defaultName := "InigoMontoya"
+	rName := "qfsd"
 	rName2 := "Buttercup"
 
 	resource.Test(t, resource.TestCase{
@@ -48,8 +50,7 @@ func TestAccChangeClusterName(t *testing.T) {
 }
 
 func testAccClusterNameConf(name string) string {
-	return fmt.Sprintf(`
-resource "qumulo_cluster_name" "update_name" {
+	return fmt.Sprintf(`resource "qumulo_cluster_name" "update_name" {
 	cluster_name = %q
 }
 `, name)
@@ -57,15 +58,13 @@ resource "qumulo_cluster_name" "update_name" {
 
 func testAccCheckClusterName(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		c := testAccProvider.Meta().(*Client)
-		ctx := context.Background()
-		cs, err := DoRequest[ClusterSettingsBody, ClusterSettingsBody](ctx, c, GET, ClusterSettingsEndpoint, nil)
+		c := testAccProvider.Meta().(*openapi.APIClient)
+		res, _, err := c.ClusterApi.V1ClusterSettingsGet(context.Background()).Execute()
 		if err != nil {
 			return err
 		}
-		if cs.ClusterName != name {
-			fmt.Println(cs.ClusterName)
-			return fmt.Errorf("cluster name mismatch: Expected %s, got %s", name, cs.ClusterName)
+		if !reflect.DeepEqual(*res.ClusterName, name) {
+			return fmt.Errorf("cluster name mismatch: Expected %s, got %s", name, *res.ClusterName)
 		}
 		return nil
 	}

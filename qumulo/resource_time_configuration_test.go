@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"terraform-provider-qumulo/openapi"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,6 +12,8 @@ import (
 )
 
 func TestAccSetTimeConfiguration(t *testing.T) {
+	defaultTimeConfiguration := getTimeConfiguration(false, []string{"0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"})
+	testingTimeConfiguration := getTimeConfiguration(true, []string{"0.qumulo.pool.ntp.org"})
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -33,30 +36,26 @@ func TestAccSetTimeConfiguration(t *testing.T) {
 	})
 }
 
-var defaultTimeConfiguration = TimeConfigurationBody{
-	UseAdForPrimary: false,
-	NtpServers:      []string{"0.qumulo.pool.ntp.org", "1.qumulo.pool.ntp.org"},
+func getTimeConfiguration(useAdForPrimary bool, ntpServers []string) openapi.V1TimeSettingsGet200Response {
+	return openapi.V1TimeSettingsGet200Response{
+		UseAdForPrimary: &useAdForPrimary,
+		NtpServers:      ntpServers,
+	}
 }
 
-var testingTimeConfiguration = TimeConfigurationBody{
-	UseAdForPrimary: true,
-	NtpServers:      []string{"0.qumulo.pool.ntp.org"},
-}
-
-func testAccTimeConfigurationConfig(req TimeConfigurationBody) string {
+func testAccTimeConfigurationConfig(req openapi.V1TimeSettingsGet200Response) string {
 	return fmt.Sprintf(`
 	resource "qumulo_time_configuration" "time_config" {
 		use_ad_for_primary = %v
 		ntp_servers = %v
 	}
-  `, req.UseAdForPrimary, PrintTerraformListFromList(req.NtpServers))
+  `, *req.UseAdForPrimary, PrintTerraformListFromList(req.NtpServers))
 }
 
-func testAccCheckTimeConfiguration(timeConfig TimeConfigurationBody) resource.TestCheckFunc {
+func testAccCheckTimeConfiguration(timeConfig openapi.V1TimeSettingsGet200Response) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		c := testAccProvider.Meta().(*Client)
-		ctx := context.Background()
-		settings, err := DoRequest[TimeConfigurationBody, TimeConfigurationBody](ctx, c, GET, TimeConfigurationEndpoint, nil)
+		c := testAccProvider.Meta().(*openapi.APIClient)
+		settings, _, err := c.TimeApi.V1TimeSettingsGet(context.Background()).Execute()
 		if err != nil {
 			return err
 		}
@@ -68,10 +67,10 @@ func testAccCheckTimeConfiguration(timeConfig TimeConfigurationBody) resource.Te
 	}
 }
 
-func testAccCompareTimeConfigurationSettings(timeConfig TimeConfigurationBody) resource.TestCheckFunc {
+func testAccCompareTimeConfigurationSettings(timeConfig openapi.V1TimeSettingsGet200Response) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr("qumulo_time_configuration.time_config", "use_ad_for_primary",
-			fmt.Sprintf("%v", timeConfig.UseAdForPrimary)),
+			fmt.Sprintf("%v", *timeConfig.UseAdForPrimary)),
 		resource.TestCheckResourceAttr("qumulo_time_configuration.time_config", "ntp_servers.#",
 			fmt.Sprintf("%v", len(timeConfig.NtpServers))),
 	)
